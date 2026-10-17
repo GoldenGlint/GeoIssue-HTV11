@@ -1,11 +1,14 @@
 // Personal workspace pages: Saved, Recents, and the volunteer Verify queue.
 import { icon } from '../icons.js';
 import { esc, badge, date, typeIcon, typeColor } from '../format.js';
-import { state, filtered, findIssue } from '../state.js';
+import { state, filtered, findIssue, isSighting, reviewQueue } from '../state.js';
 import { emptyHtml, issueRow, toast } from '../ui.js';
 import { render } from '../app.js';
 
-const pendingCard = i => `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · LOCAL SUBMISSION${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>${esc(i.category)}</h3><p>${esc(i.description)}</p><p>${esc(i.address)}${i.coordinates ? ` · ${i.coordinates[1].toFixed(3)}, ${i.coordinates[0].toFixed(3)}` : ''}</p></div>${badge('Pending review')}<span class="subtle-label">Privacy processing not connected</span></div>`;
+const where = i => `${esc(i.address)}${i.coordinates ? ` · ${i.coordinates[1].toFixed(3)}, ${i.coordinates[0].toFixed(3)}` : ''}`;
+const pendingCard = i => isSighting(i)
+  ? `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · SIGHTING${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>Added to ${esc(i.joined_issue_id)} · ${esc(i.category)}</h3>${i.description ? `<p>${esc(i.description)}</p>` : ''}<p>${where(i)}</p></div>${badge('Sighting added', 'verified')}<button class="button small" data-issue="${esc(i.joined_issue_id)}">Open issue</button></div>`
+  : `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · LOCAL SUBMISSION${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>${esc(i.category)}${i.severity ? ` · ${esc(i.severity)} severity` : ''}</h3><p>${esc(i.description)}</p><p>${where(i)}</p>${i.ai_suggestion ? `<p class="fine-print">Gemini suggested ${esc(i.ai_suggestion.category)} · ${esc(i.ai_suggestion.severity)} (${Math.round(i.ai_suggestion.confidence * 100)}%)${i.blurred_areas ? ` · ${i.blurred_areas} area${i.blurred_areas === 1 ? '' : 's'} blurred` : ''}</p>` : ''}</div>${badge('Pending review')}<span class="subtle-label">Privacy processing not connected</span></div>`;
 
 const savedCard = i => `<article class="card saved-card"><div class="saved-card-top">${badge(i.severity)}<button class="icon-button" data-save="${i.issue_id}" aria-label="Toggle saved issue">${icon('bookmark', state.saved.includes(i.issue_id) ? 'saved-icon' : '')}</button></div><button class="saved-card-main" data-issue="${i.issue_id}"><span class="type-orb" style="--type-color:${typeColor(i.issue_type)}">${typeIcon(i.issue_type)}</span><h3>${esc(i.issue_type)}</h3><p>${esc(i.address)}</p><span>${esc(i.neighbourhood_name)} · ${date(i.first_seen_at)}</span></button><div class="saved-card-footer">${badge(i.resolution_status)}<span>${i.issue_id}</span></div></article>`;
 
@@ -22,7 +25,8 @@ export function verifyHtml() {
   if (state.role === 'Public') return emptyHtml('Volunteer access required', 'Switch the demo account to Volunteer to preview the review workflow.');
   const queue = state.issues.filter(i => i.verification_status === 'Needs review');
   const review = queue.map(i => `<div class="review-item">${issueRow(i)}<div class="review-actions"><button class="button small" data-review="${i.issue_id}" data-decision="confirm">${icon('check')} Confirm sample</button><button class="button small" data-review="${i.issue_id}" data-decision="dismiss">Dismiss sample</button></div></div>`).join('');
-  return `<div class="collection-page"><div class="notice-banner">${icon('shield')} Demo role switcher only. Production access must be enforced by your server.</div><div class="collection-heading"><h2>Awaiting a human review <span>${queue.length + state.pending.length}</span></h2></div>${state.pending.map(pendingCard).join('')}<div class="card review-list">${review || (!state.pending.length ? emptyHtml('You’re all caught up', 'No sample issues are waiting for review.') : '')}</div></div>`;
+  const submissions = reviewQueue();
+  return `<div class="collection-page"><div class="notice-banner">${icon('shield')} Demo role switcher only. Production access must be enforced by your server.</div><div class="collection-heading"><h2>Awaiting a human review <span>${queue.length + submissions.length}</span></h2></div>${submissions.map(pendingCard).join('')}<div class="card review-list">${review || (!submissions.length ? emptyHtml('You’re all caught up', 'No sample issues are waiting for review.') : '')}</div></div>`;
 }
 
 export function bindWorkspace() {

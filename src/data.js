@@ -1,11 +1,14 @@
 /** Fictional demo dataset for the CivicLens prototype.
  * Replace issueRepository.list() with your API; data-contract.md documents the issue shape.
  * Records are generated deterministically, so every reload (and every teammate) sees the same data.
- * Coordinates are coarse and fictional. Wards are assigned per neighbourhood as an approximation;
- * production should assign them by point-in-polygon against City of Toronto ward boundaries.
+ * Coordinates are coarse and fictional. Wards come from the City of Toronto ward boundaries (point-in-polygon).
  * Backend authorization/privacy processing must happen before returning real records.
  */
 import { osmStations, osmRoads } from './osm-infrastructure.js';
+import { wardBoundaries } from './ward-boundaries.js';
+import { scorePriority } from './priority.js';
+
+export { wardBoundaries };
 
 export const DEMO_DATE = '2026-10-17T12:00:00Z';
 export const ELECTION_DATE = '2026-10-26T12:00:00Z';
@@ -92,6 +95,7 @@ const weighted = entries => { let r = random() * entries.reduce((sum, [, w]) => 
 const round = (value, digits = 0) => Number(value.toFixed(digits));
 
 const metres = ([lng1, lat1], [lng2, lat2]) => { const k = Math.cos((lat1 + lat2) / 2 * Math.PI / 180); return Math.hypot((lng2 - lng1) * 111320 * k, (lat2 - lat1) * 110540); };
+export const distanceMetres = metres;
 function distanceTo(point, asset) {
   if (asset.geometry.type === 'Point') return metres(point, asset.geometry.coordinates);
   // Distance to the nearest segment, in a local metric plane centred on the point.
@@ -107,6 +111,26 @@ function distanceTo(point, asset) {
   }
   return best;
 }
+// Even-odd point-in-polygon over every ring of a ward (outer rings and holes), with a bounding-box pre-check.
+const wardIndex = wardBoundaries.map(w => {
+  const all = w.rings.flat();
+  return { ...w, box: [Math.min(...all.map(p => p[0])), Math.min(...all.map(p => p[1])), Math.max(...all.map(p => p[0])), Math.max(...all.map(p => p[1]))] };
+});
+export function wardAt([lng, lat]) {
+  for (const w of wardIndex) {
+    if (lng < w.box[0] || lat < w.box[1] || lng > w.box[2] || lat > w.box[3]) continue;
+    let inside = false;
+    for (const ring of w.rings) {
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, yi] = ring[i], [xj, yj] = ring[j];
+        if ((yi > lat) !== (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside;
+      }
+    }
+    if (inside) return w.id;
+  }
+  return null;
+}
+
 function nearbyAssets(point) {
   return ['TTC', 'Schools', 'Roads'].map(type => {
     const [asset, distance] = infrastructure.filter(a => a.type === type).map(a => [a, distanceTo(point, a)]).sort((a, b) => a[1] - b[1])[0];
@@ -177,9 +201,10 @@ function generateIssues(count) {
     const verification = resolution === 'Resolved' ? 'Verified' : random() < (day < 2 ? 0.5 : geo.method === 'Visual clues' ? 0.45 : 0.12) ? 'Needs review' : 'Verified';
     const sightings = 1 + Math.floor(random() ** 2 * (day < 7 ? 4 : 7));
     const finding = pick(findings[type]);
+    const ward = wardAt(coordinates) || hood.ward; // jittered points can land in the lake; fall back to the neighbourhood's ward
     issues.push({
       issue_type: type, severity, resolution_status: resolution, verification_status: verification,
-      neighbourhood_id: hood.id, neighbourhood_name: hood.name, ward_id: hood.ward, ward_name: wards[hood.ward], address,
+      neighbourhood_id: hood.id, neighbourhood_name: hood.name, ward_id: ward, ward_name: wards[ward], address,
       geometry: { type: 'Point', coordinates }, location_radius_m: geo.radius, geo_confidence: round(geo.confidence, 2),
       geo_method: geo.method, geo_trace: geo.trace, geo_clues: geo.clues,
       infrastructure_type: near.type, asset_id: near.asset_id, asset_name: near.name, distance_m: near.distance_m, nearby_assets: nearby,
@@ -192,8 +217,11 @@ function generateIssues(count) {
       is_demo: true,
     });
   }
-  // Newest issues get the highest IDs, like a real sequence.
-  return issues.sort((a, b) => b.first_seen_at.localeCompare(a.first_seen_at)).map((issue, j) => ({ issue_id: `CL-${10712 - j}`, incident_id: `INC-${4240 - j}`, ...issue }));
+  // Newest issues get the highest IDs, like a real sequence. Priority uses the same rules as the pipeline.
+  return issues.sort((a, b) => b.first_seen_at.localeCompare(a.first_seen_at)).map((issue, j) => {
+    const { score, reasons } = scorePriority(issue, now);
+    return { issue_id: `CL-${10712 - j}`, incident_id: `INC-${4240 - j}`, ...issue, priority_score: score, priority_reasons: reasons };
+  });
 }
 export const demoIssues = generateIssues(240);
 
@@ -208,20 +236,24 @@ async function evidenceByCategory() {
   } catch { return {}; }
 }
 
-// Written by `python -m analysis` (see analysis/README.md); the sample records are used until it has been run.
-async function analyzedIssues() {
+// Written by `python -m analysis` (see analysis/README.md). Missing files mean the pipeline hasn't been run.
+const analyzedFile = async name => {
   try {
-    const response = await fetch(new URL('../data/analyzed/issues.public.json', import.meta.url), { cache: 'no-store' });
-    if (!response.ok) return null;
-    const issues = await response.json();
-    return Array.isArray(issues) && issues.length ? issues : null;
+    const response = await fetch(new URL(`../data/analyzed/${name}`, import.meta.url), { cache: 'no-store' });
+    return response.ok ? await response.json() : null;
   } catch { return null; }
-}
+};
+let analyzedCache;
+const analyzedIssues = () => analyzedCache ||= analyzedFile('issues.public.json').then(issues => Array.isArray(issues) && issues.length ? issues : null);
 
 export const issueRepository = {
-  async list() {
-    const analyzed = await analyzedIssues();
-    if (analyzed) return analyzed;
+  /** Issue counts per dataset. The sample is always available; pipeline output only after `python -m analysis`. */
+  async sources() { return { sample: demoIssues.length, pipeline: (await analyzedIssues())?.length || 0 }; },
+  /** Pipeline run report (counts per stage) and per-area stats and summaries, or null when not available. */
+  pipelineReport: () => analyzedFile('report.json'),
+  areaSummaries: () => analyzedFile('areas.json'),
+  async list(source = 'sample') {
+    if (source === 'pipeline') { const analyzed = await analyzedIssues(); if (analyzed) return structuredClone(analyzed); }
     const photos = await evidenceByCategory(), issues = structuredClone(demoIssues);
     for (const [j, issue] of issues.entries()) {
       const options = photos[issue.issue_type];

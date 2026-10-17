@@ -26,6 +26,23 @@
 | D4 | Close the loop now? | Not decided; stays P1. |
 | D5 | Lanes | **Frontend:** you. **Scraping images online:** teammate 1. **Identifying where a photo was taken (geolocation):** teammate 2. Items marked AI below that aren't scraping or geolocation (Gemini triage, blurring, ward boundaries, digests) are done in the frontend lane, on branch `frontend-p0`. |
 
+### Progress on branch `frontend-p0`
+
+| Item | Status |
+|---|---|
+| P0-1 data switch | Done. Opens on the 240-issue sample; "Pipeline output" appears in the header once `python -m analysis` has run, with the real run funnel. |
+| P0-2 priority queue | Done. Priority column and sort (default for City Staff), score and reasons in issue details; sample data scored with the pipeline's rules (`src/priority.js`). |
+| P0-3 Gemini triage | Done, tested against a stand-in Gemini server. **Needs one real test once a key is in `.env`**, including confirming the model ID (`gemini-3.5-flash-lite` from `analysis/config.toml`). |
+| P0-4 blurring | Done: automatic face/plate pixelation from Gemini boxes, plus manual "Blur an area" that works without Gemini. Box quality from the real model still to be checked. |
+| P0-5 already reported nearby | Done; "This is the same issue" adds a sighting and re-scores priority. |
+| P0-6 official wards | Done in the frontend (ward assignment, outlines, click-to-filter). **Pipeline still uses its approximate ward per neighbourhood**; whoever owns `analysis/` should switch it to `src/ward-boundaries.js` geometry. |
+| P0-7 digests | Done: pipeline summary on pipeline data, "Write a summary with Gemini" on demand otherwise, template always shown. |
+| P0-8 readability | Done: no text under 10 px (map attribution 9 px), 38 text colours lifted to 4.5:1. |
+| P0-9 demo package | Not started (pitch lane). |
+| P0-10 methodology | Done. **Add a takedown contact address before launch.** |
+| Q1, Q3, Q4 | Done in the frontend. Q2 (`broken streetlight` mapping) is a one-line change in `analysis/config.toml`, left for the pipeline owner. |
+| Found while testing | Fixed: dragging the map from its offline-fallback text could start a native text drag and stop the map panning until the page was clicked again. Hardened: both dev servers now refuse hidden files such as `.env`. |
+
 ## 3. Review findings
 
 | ID | Finding | Impact | Addressed by |

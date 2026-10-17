@@ -1,22 +1,30 @@
 // Dialogs: upload, infrastructure & proximity, export, settings, help, street-level and issue details.
-import { categories, infrastructure, issueRepository, TORONTO_BOUNDS, TORONTO_CENTER } from './data.js';
+import { categories, infrastructure, issueRepository, TORONTO_BOUNDS, TORONTO_CENTER, distanceMetres } from './data.js';
 import { CivicMap } from './map.js';
 import { icon } from './icons.js';
-import { esc, badge, typeIcon, countBy } from './format.js';
-import { state, scopedRows, persist, remember } from './state.js';
+import { esc, badge, typeIcon, typeColor, countBy, age, plural } from './format.js';
+import { state, scopedRows, persist, remember, findIssue, addSighting } from './state.js';
 import { toast, showModal, closeModal, modalHeader, detailHtml } from './ui.js';
-import { render, nav, toggleSave } from './app.js';
+import { render, nav, toggleSave, setRole } from './app.js';
 import { getMap, openIssue, frameIssues } from './views/map-view.js';
+import { apiStatus, triagePhoto } from './api.js';
+import { blurPhoto } from './blur.js';
 
-const freshDraft = () => ({ photos: [], category: '', description: '', address: '', confirmed: false, coordinates: null });
-let uploadDraft = freshDraft(), picker = null;
+// photos: { file, url (original), blurredUrl, boxes (from Gemini), manualBoxes, status, result, error, showOriginal }
+const freshDraft = () => ({ photos: [], category: '', severity: '', description: '', address: '', confirmed: false, coordinates: null, ai: null, aiFilled: [] });
+let uploadDraft = freshDraft(), picker = null, gemini = null;
+const NEARBY_M = 150;
 const insideToronto = ([lng, lat]) => lng >= TORONTO_BOUNDS.west && lng <= TORONTO_BOUNDS.east && lat >= TORONTO_BOUNDS.south && lat <= TORONTO_BOUNDS.north;
 const coordinateText = ([lng, lat]) => `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 const steps = review => `<div class="step-indicator"><span class="${!review ? 'active' : ''}">1 <b>Issue details</b></span><i></i><span class="${review ? 'active' : ''}">2 <b>Review & submit</b></span></div>`;
+const shownUrl = p => (!p.showOriginal && p.blurredUrl) || p.url;
+const blurCount = p => p.boxes.length + p.manualBoxes.length;
+const blocked = () => uploadDraft.photos.find(p => p.result && (p.result.person_is_subject || !p.result.public_scene));
+const $ = selector => document.querySelector(selector);
 
 // The pin stays fixed in the middle of a small map; dragging the map underneath places it.
 function initPicker() {
-  picker = new CivicMap(document.querySelector('#picker-map'), { onSelect() {}, onEmpty() {}, onMove: updatePicker, icon: typeIcon, home: TORONTO_CENTER });
+  picker = new CivicMap($('#picker-map'), { onSelect() {}, onEmpty() {}, onMove: updatePicker, icon: typeIcon, home: TORONTO_CENTER });
   picker.center = uploadDraft.coordinates || getMap()?.center || state.center;
   picker.zoom = 15;
   picker.setData([]);
@@ -25,78 +33,218 @@ function initPicker() {
 function updatePicker() {
   if (!picker) return;
   uploadDraft.coordinates = picker.center.map(v => Number(v.toFixed(5)));
-  const readout = document.querySelector('#picker-readout'), inside = insideToronto(uploadDraft.coordinates);
+  const readout = $('#picker-readout'), inside = insideToronto(uploadDraft.coordinates);
   readout.textContent = inside ? `${coordinateText(uploadDraft.coordinates)} · approximate` : 'Outside Toronto. Move the pin.';
   readout.classList.toggle('outside', !inside);
+  renderNearby();
 }
 function destroyPicker() { picker?.destroy(); picker = null; }
 
-export function uploadModal(review = false) {
+// ---- "Already reported nearby": offer to add a sighting instead of filing a duplicate ----
+function nearbyIssues() {
+  if (!uploadDraft.coordinates) return [];
+  return state.issues
+    .filter(i => i.resolution_status !== 'Resolved' && age(i) <= 30 && (!uploadDraft.category || i.issue_type === uploadDraft.category))
+    .map(i => ({ issue: i, distance: Math.round(distanceMetres(uploadDraft.coordinates, i.geometry.coordinates)) }))
+    .filter(n => n.distance <= NEARBY_M).sort((a, b) => a.distance - b.distance).slice(0, 3);
+}
+function renderNearby() {
+  const el = $('#nearby-reports');
+  if (!el) return;
+  const near = nearbyIssues();
+  el.hidden = !near.length;
+  if (!near.length) return;
+  el.innerHTML = `<div class="nearby-head">${icon('search')}<div><strong>${plural(near.length, 'issue')} already reported nearby</strong><span>Is it one of these? Adding your sighting raises its priority instead of creating a duplicate.</span></div></div>${near.map(({ issue: i, distance }) => `<div class="nearby-row"><span class="type-square" style="color:${typeColor(i.issue_type)}">${typeIcon(i.issue_type)}</span><span class="issue-row-copy"><strong>${esc(i.issue_type)} · ${esc(i.address)}</strong><small>${distance} m away · ${plural(i.sightings_count, 'sighting')} · ${esc(i.resolution_status)}</small></span><button type="button" class="button small" data-join="${esc(i.issue_id)}">This is the same issue</button></div>`).join('')}`;
+  el.querySelectorAll('[data-join]').forEach(b => b.onclick = () => joinSighting(b.dataset.join));
+}
+function joinSighting(id) {
+  const issue = addSighting(id, { description: uploadDraft.description.trim(), coordinates: uploadDraft.coordinates.map(v => Number(v.toFixed(3))) });
+  if (!issue) return;
+  for (const p of uploadDraft.photos) { URL.revokeObjectURL(p.url); if (p.blurredUrl) URL.revokeObjectURL(p.blurredUrl); }
+  uploadDraft = freshDraft();
+  showModal(`${modalHeader('LOCAL DEMO RECEIPT', 'Sighting added')}<div class="submission-success">${icon('check')}<h3>Thanks. Your sighting was added to ${esc(issue.issue_id)}</h3><p>${esc(issue.issue_type)} at ${esc(issue.address)} now has ${plural(issue.sightings_count, 'sighting')}${issue.priority_score != null ? ` and a priority of ${issue.priority_score}` : ''}. It's listed under Saved → Your submissions.</p></div><div class="modal-footer"><button class="button" data-close>Back to workspace</button><button class="button primary" id="view-joined">${icon('map')} View it on the map</button></div>`, { label: 'Sighting added' });
+  $('#view-joined').onclick = () => { closeModal(); nav('map'); openIssue(id); frameIssues([issue]); };
+  render();
+}
+
+// ---- Gemini suggestions, privacy check and blurring ----
+async function reblur(photo) {
+  if (photo.blurredUrl) URL.revokeObjectURL(photo.blurredUrl);
+  const boxes = [...photo.boxes, ...photo.manualBoxes];
+  photo.blurredUrl = boxes.length ? await blurPhoto(photo.file, boxes) : null;
+}
+function applySuggestions(result) {
+  uploadDraft.ai = result;
+  const form = $('#upload-form');
+  if (!form || !result.is_civic_issue) return;
+  // Only fill fields that are empty or still hold an earlier suggestion; never overwrite what the person typed.
+  for (const [field, value] of [['category', result.category], ['severity', result.severity], ['description', result.description]]) {
+    if (value && (!uploadDraft[field] || uploadDraft.aiFilled.includes(field))) {
+      uploadDraft[field] = value; form[field].value = value;
+      if (!uploadDraft.aiFilled.includes(field)) uploadDraft.aiFilled.push(field);
+    }
+  }
+  markAiFields();
+}
+function markAiFields() {
+  document.querySelectorAll('[data-ai-field]').forEach(el => el.classList.toggle('ai-filled', uploadDraft.aiFilled.includes(el.dataset.aiField)));
+}
+async function analyzePhoto(photo) {
+  gemini = await apiStatus();
+  if (!gemini.gemini) return;
+  photo.status = 'analyzing'; renderPhotos(); renderAi();
+  try {
+    const result = await triagePhoto(photo.file);
+    if (!uploadDraft.photos.includes(photo)) return; // removed while waiting
+    Object.assign(photo, { result, boxes: [...result.faces, ...result.plates], status: 'done' });
+    if (photo.boxes.length) await reblur(photo);
+    if (photo === uploadDraft.photos[0] || !uploadDraft.ai) applySuggestions(result);
+  } catch (error) {
+    Object.assign(photo, { status: 'error', error: error.message });
+  }
+  renderPhotos(); renderAi(); renderNearby();
+}
+function renderAi() {
+  const el = $('#ai-triage');
+  if (!el || !gemini) return;
+  if (!gemini.gemini) {
+    el.innerHTML = `<div class="ai-note">${icon('sun')}<span>Automatic suggestions and face/plate blurring need the local server with a Gemini key: run <code>python scripts/serve.py</code> with <code>GEMINI_API_KEY</code> in <code>.env</code>. You can fill this in yourself and blur areas by hand.</span></div>`;
+    return;
+  }
+  const first = uploadDraft.photos[0];
+  if (!first) { el.innerHTML = `<div class="ai-note">${icon('sun')}<span>Add a photo and Gemini will suggest the category, severity and a description, and blur any faces or licence plates.</span></div>`; return; }
+  if (first.status === 'analyzing') { el.innerHTML = `<div class="ai-card loading"><span class="spinner"></span><span>Gemini is looking at your photo…</span></div>`; return; }
+  if (first.status === 'error') { el.innerHTML = `<div class="ai-card warn">${icon('warning')}<span>Couldn’t analyze the photo (${esc(first.error)}). Fill in the details yourself.</span></div>`; return; }
+  const r = first.result;
+  if (!r) { el.innerHTML = ''; return; }
+  const hidden = uploadDraft.photos.reduce((n, p) => n + (p.result ? p.result.faces.length + p.result.plates.length : 0), 0);
+  const faces = uploadDraft.photos.reduce((n, p) => n + (p.result?.faces.length || 0), 0), plates = hidden - faces;
+  const privacy = hidden ? `<span class="ai-privacy">${icon('shield')} Blurred ${[faces && plural(faces, 'face'), plates && plural(plates, 'licence plate')].filter(Boolean).join(' and ')}</span>` : '';
+  const stop = blocked();
+  if (stop) {
+    el.innerHTML = `<div class="ai-card stop">${icon('shield')}<span><strong>Please use a photo of the issue itself.</strong> This photo seems to ${stop.result.person_is_subject ? 'show a person as the main subject' : 'show a private space'}. CivicLens only accepts photos of public spaces.</span></div>`;
+    return;
+  }
+  el.innerHTML = r.is_civic_issue
+    ? `<div class="ai-card">${icon('sun')}<span><strong>Gemini suggests ${esc(r.category)} · ${esc(r.severity)} severity</strong> · ${Math.round(r.confidence * 100)}% confident. Filled in below; change anything.${r.reason ? `<small>${esc(r.reason)}</small>` : ''}</span>${privacy}</div>`
+    : `<div class="ai-card warn">${icon('warning')}<span><strong>Gemini didn’t find a clear civic issue in this photo</strong> (${Math.round(r.confidence * 100)}% confident). You can still submit it for review.</span>${privacy}</div>`;
+}
+function renderPhotos() {
+  const el = $('#photo-previews');
+  if (!el) return;
+  el.innerHTML = uploadDraft.photos.map((p, j) => `<div class="photo-card ${p.status === 'analyzing' ? 'analyzing' : ''}"><img src="${shownUrl(p)}" alt="Selected issue photo ${j + 1}${p.blurredUrl && !p.showOriginal ? ', blurred' : ''}"><button type="button" class="photo-remove" data-remove-photo="${j}" aria-label="Remove photo ${j + 1}">×</button>${blurCount(p) ? `<span class="photo-badge">${icon('shield')} ${blurCount(p)} blurred</span>` : ''}<div class="photo-actions"><button type="button" data-blur-photo="${j}">Blur an area</button>${p.blurredUrl ? `<button type="button" data-original="${j}" aria-pressed="${!!p.showOriginal}">${p.showOriginal ? 'Show blurred' : 'Show original'}</button>` : ''}</div></div>`).join('');
+  $('#photo-input').required = !uploadDraft.photos.length;
+  el.querySelectorAll('[data-remove-photo]').forEach(b => b.onclick = () => {
+    const [removed] = uploadDraft.photos.splice(Number(b.dataset.removePhoto), 1);
+    URL.revokeObjectURL(removed.url); if (removed.blurredUrl) URL.revokeObjectURL(removed.blurredUrl);
+    if (!uploadDraft.photos.length) uploadDraft.ai = null;
+    $('#photo-input').value = ''; $('#blur-editor').hidden = true; renderPhotos(); renderAi();
+  });
+  el.querySelectorAll('[data-original]').forEach(b => b.onclick = () => { const p = uploadDraft.photos[Number(b.dataset.original)]; p.showOriginal = !p.showOriginal; renderPhotos(); });
+  el.querySelectorAll('[data-blur-photo]').forEach(b => b.onclick = () => openBlurEditor(uploadDraft.photos[Number(b.dataset.blurPhoto)]));
+}
+// Drag rectangles over a photo to pixelate them; works with or without Gemini.
+function openBlurEditor(photo) {
+  const el = $('#blur-editor');
+  el.hidden = false;
+  el.innerHTML = `<p>Drag over a face, licence plate or anything private. It is pixelated in the photo you submit.</p><div class="blur-stage"><img src="${photo.blurredUrl || photo.url}" alt="Photo being edited" draggable="false"><span class="blur-rect" hidden></span></div><div class="blur-actions"><button type="button" class="button small" id="blur-undo" ${photo.manualBoxes.length ? '' : 'disabled'}>Undo last</button><button type="button" class="button small primary" id="blur-done">Done</button></div>`;
+  const stage = el.querySelector('.blur-stage'), img = stage.querySelector('img'), rect = stage.querySelector('.blur-rect');
+  let start = null;
+  const point = e => { const r = img.getBoundingClientRect(); return [Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))]; };
+  stage.onpointerdown = e => { e.preventDefault(); stage.setPointerCapture(e.pointerId); start = point(e); rect.hidden = false; };
+  stage.onpointermove = e => {
+    if (!start) return;
+    const [x, y] = point(e), r = img.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    Object.assign(rect.style, { left: `${Math.min(x, start[0]) * r.width + r.left - s.left}px`, top: `${Math.min(y, start[1]) * r.height + r.top - s.top}px`, width: `${Math.abs(x - start[0]) * r.width}px`, height: `${Math.abs(y - start[1]) * r.height}px` });
+  };
+  stage.onpointerup = async e => {
+    if (!start) return;
+    const [x, y] = point(e), box = [Math.min(y, start[1]), Math.min(x, start[0]), Math.max(y, start[1]), Math.max(x, start[0])].map(v => Math.round(v * 1000));
+    start = null; rect.hidden = true;
+    if (box[2] - box[0] < 8 || box[3] - box[1] < 8) return; // ignore clicks
+    photo.manualBoxes.push(box); photo.showOriginal = false;
+    await reblur(photo); openBlurEditor(photo); renderPhotos();
+  };
+  el.querySelector('#blur-undo').onclick = async () => { photo.manualBoxes.pop(); await reblur(photo); openBlurEditor(photo); renderPhotos(); };
+  el.querySelector('#blur-done').onclick = () => { el.hidden = true; };
+}
+
+export async function uploadModal(review = false) {
   if (review) { uploadReview(); return; }
   showModal(`${modalHeader('COMMUNITY SUBMISSION', 'Upload new issue')}${steps(false)}<form id="upload-form"><div class="modal-body">
-    <p class="modal-intro">Noticed something that needs attention? Give it a little context.</p>
+    <p class="modal-intro">Noticed something that needs attention? Add a photo and Gemini will help fill in the rest.</p>
     <label class="upload-zone">${icon('upload')}<strong>Choose photos of the issue</strong><span>JPEG, PNG, or WebP · up to 3 photos · 10 MB each</span><input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple ${uploadDraft.photos.length ? '' : 'required'}></label>
     <div id="photo-previews" class="photo-previews"></div>
+    <div id="blur-editor" class="blur-editor" hidden></div>
+    <div id="ai-triage" class="ai-triage" aria-live="polite"></div>
     <div id="upload-error" class="form-error" role="alert"></div>
-    <label class="form-label">Issue category <span>*</span><select name="category" required><option value="">Choose a category</option>${Object.keys(categories).map(t => `<option ${uploadDraft.category === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-    <label class="form-label">What did you notice? <span>*</span><textarea name="description" placeholder="Describe the issue and how it affects the public space…" minlength="10" maxlength="1000" required>${esc(uploadDraft.description)}</textarea></label>
+    <div class="form-row"><label class="form-label" data-ai-field="category">Issue category <span>*</span><select name="category" required><option value="">Choose a category</option>${Object.keys(categories).map(t => `<option ${uploadDraft.category === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label><label class="form-label" data-ai-field="severity">How serious is it?<select name="severity"><option value="">Not sure</option>${['High', 'Medium', 'Low'].map(s => `<option ${uploadDraft.severity === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label></div>
+    <label class="form-label" data-ai-field="description">What did you notice? <span>*</span><textarea name="description" placeholder="Describe the issue and how it affects the public space…" minlength="10" maxlength="1000" required>${esc(uploadDraft.description)}</textarea></label>
     <div class="picker-field"><span class="form-label">Location <span>*</span></span><div class="picker-map-wrap"><div id="picker-map" class="city-map" aria-label="Drag the map to place the issue pin"></div><span class="picker-pin">${icon('pin')}</span><span id="picker-readout" class="picker-readout"></span></div><small class="picker-hint">Drag the map so the pin sits on the issue. Approximate is fine.</small></div>
+    <div id="nearby-reports" class="nearby-reports" hidden></div>
     <label class="form-label">Nearest address or intersection <span>*</span><div class="input-with-icon">${icon('pin')}<input name="address" placeholder="e.g. King St W & Spadina Ave, Toronto" value="${esc(uploadDraft.address)}" minlength="5" maxlength="200" required></div><small>Helps reviewers find the spot. Address search connects here when geocoding is ready.</small></label>
     <label class="checkbox-label"><input name="confirmed" type="checkbox" ${uploadDraft.confirmed ? 'checked' : ''} required> I confirm this approximate location is in Toronto.</label>
-    <p class="fine-print">Your photos stay on this device in this demo. Please avoid faces, plates, and private interiors.</p>
-  </div><div class="modal-footer"><span class="subtle-label">* Required information</span><button class="button primary" type="submit">Review issue ${icon('arrow')}</button></div></form>`, { label: 'Upload new issue', onClose: destroyPicker });
-  const form = document.querySelector('#upload-form'), error = document.querySelector('#upload-error'), input = document.querySelector('#photo-input');
-  const saveDraft = () => { uploadDraft.category = form.category.value; uploadDraft.description = form.description.value; uploadDraft.address = form.address.value; uploadDraft.confirmed = form.confirmed.checked; };
-  form.oninput = saveDraft;
-  const previews = () => {
-    document.querySelector('#photo-previews').innerHTML = uploadDraft.photos.map((p, j) => `<div><img src="${p.url}" alt="Selected issue photo ${j + 1}"><button type="button" data-remove-photo="${j}" aria-label="Remove photo ${j + 1}">×</button></div>`).join('');
-    input.required = !uploadDraft.photos.length;
-    document.querySelectorAll('[data-remove-photo]').forEach(b => b.onclick = () => {
-      const [removed] = uploadDraft.photos.splice(Number(b.dataset.removePhoto), 1);
-      URL.revokeObjectURL(removed.url); input.value = ''; previews();
-    });
+    <p class="fine-print">Your photos stay on this device in this demo; only blurred versions would be submitted. Please avoid faces, plates, and private interiors.</p>
+  </div><div class="modal-footer"><span class="subtle-label">* Required information</span><button class="button primary" type="submit">Review issue ${icon('arrow')}</button></div></form>`, { label: 'Upload new issue', onClose: () => { destroyPicker(); } });
+  const form = $('#upload-form'), error = $('#upload-error'), input = $('#photo-input');
+  const saveDraft = () => { uploadDraft.category = form.category.value; uploadDraft.severity = form.severity.value; uploadDraft.description = form.description.value; uploadDraft.address = form.address.value; uploadDraft.confirmed = form.confirmed.checked; };
+  form.oninput = e => {
+    // Editing a suggested field makes it the person's own answer.
+    if (uploadDraft.aiFilled.includes(e.target.name)) { uploadDraft.aiFilled = uploadDraft.aiFilled.filter(f => f !== e.target.name); markAiFields(); }
+    saveDraft();
+    if (e.target.name === 'category') renderNearby();
   };
-  previews();
   input.onchange = e => {
     const files = [...e.target.files];
     const message = files.some(f => !['image/jpeg', 'image/png', 'image/webp'].includes(f.type) || f.size > 10 * 1024 * 1024) ? 'Use JPEG, PNG, or WebP files smaller than 10 MB.'
       : files.length + uploadDraft.photos.length > 3 ? 'Choose up to 3 photos. Remove a photo before adding another.' : '';
     error.textContent = message;
     if (message) { e.target.value = ''; return; }
-    uploadDraft.photos.push(...files.map(file => ({ file, url: URL.createObjectURL(file) })));
-    previews();
+    const added = files.map(file => ({ file, url: URL.createObjectURL(file), blurredUrl: null, boxes: [], manualBoxes: [], status: 'idle', result: null, showOriginal: false }));
+    uploadDraft.photos.push(...added);
+    renderPhotos(); renderAi();
+    added.forEach(analyzePhoto);
   };
   form.onsubmit = e => {
     e.preventDefault(); saveDraft();
     if (!uploadDraft.photos.length) { error.textContent = 'Add at least one photo.'; return; }
+    if (uploadDraft.photos.some(p => p.status === 'analyzing')) { error.textContent = 'Gemini is still checking your photos. One moment.'; return; }
+    if (blocked()) { error.textContent = 'Replace the photo that shows a person or a private space before continuing.'; error.scrollIntoView({ block: 'nearest' }); return; }
     if (!uploadDraft.coordinates || !insideToronto(uploadDraft.coordinates)) { error.textContent = 'Move the map so the pin is inside Toronto.'; error.scrollIntoView({ block: 'nearest' }); return; }
     uploadModal(true);
   };
-  initPicker();
+  renderPhotos(); markAiFields(); initPicker();
+  gemini = await apiStatus();
+  renderAi();
 }
 
 function uploadReview() {
-  showModal(`${modalHeader('COMMUNITY SUBMISSION', 'Review your issue')}${steps(true)}<div class="modal-body"><div class="review-photos">${uploadDraft.photos.map(p => `<img src="${p.url}" alt="Photo to submit">`).join('')}</div><h3>${esc(uploadDraft.category)}</h3><p>${esc(uploadDraft.description)}</p><div class="confidence-note">${icon('pin')}<div><strong>${esc(uploadDraft.address)}</strong><span>${coordinateText(uploadDraft.coordinates)} · approximate location · confirmed by you</span></div></div><div class="notice-banner">${icon('shield')} Avoid personal information and identifiable people. Submissions require privacy processing and verification before publication.</div><p class="fine-print">Prototype mode: only the issue details are stored in this browser, with the pin rounded to about 100 m. Photos are previewed locally and are not uploaded. This does not create a Toronto 311 request.</p></div><div class="modal-footer"><button class="button" id="upload-back">Back to details</button><button class="button primary" id="upload-submit">Submit local demo ${icon('arrow')}</button></div>`, { label: 'Review your issue' });
-  document.querySelector('#upload-back').onclick = () => uploadModal();
-  document.querySelector('#upload-submit').onclick = async e => {
+  const blurred = uploadDraft.photos.reduce((n, p) => n + blurCount(p), 0);
+  const ai = uploadDraft.ai?.is_civic_issue ? `<p class="fine-print">${icon('sun')} Category, severity and description were suggested by Gemini (${esc(uploadDraft.ai.model)}) and ${uploadDraft.aiFilled.length === 3 ? 'left as suggested' : 'edited by you'}.</p>` : '';
+  showModal(`${modalHeader('COMMUNITY SUBMISSION', 'Review your issue')}${steps(true)}<div class="modal-body"><div class="review-photos">${uploadDraft.photos.map(p => `<img src="${p.blurredUrl || p.url}" alt="Photo to submit${p.blurredUrl ? ', blurred' : ''}">`).join('')}</div>${blurred ? `<p class="review-blur">${icon('shield')} ${plural(blurred, 'area')} blurred. Only the blurred photos would be submitted.</p>` : ''}<h3>${esc(uploadDraft.category)}${uploadDraft.severity ? ` · ${esc(uploadDraft.severity)} severity` : ''}</h3><p>${esc(uploadDraft.description)}</p><div class="confidence-note">${icon('pin')}<div><strong>${esc(uploadDraft.address)}</strong><span>${coordinateText(uploadDraft.coordinates)} · approximate location · confirmed by you</span></div></div>${ai}<div class="notice-banner">${icon('shield')} Avoid personal information and identifiable people. Submissions require privacy processing and verification before publication.</div><p class="fine-print">Prototype mode: only the issue details are stored in this browser, with the pin rounded to about 100 m. Photos are previewed locally and are not uploaded. This does not create a Toronto 311 request.</p></div><div class="modal-footer"><button class="button" id="upload-back">Back to details</button><button class="button primary" id="upload-submit">Submit local demo ${icon('arrow')}</button></div>`, { label: 'Review your issue' });
+  $('#upload-back').onclick = () => uploadModal();
+  $('#upload-submit').onclick = async e => {
     e.currentTarget.disabled = true;
     try {
-      const result = await issueRepository.submit({ category: uploadDraft.category, description: uploadDraft.description, address: uploadDraft.address, coordinates: uploadDraft.coordinates.map(v => Number(v.toFixed(3))), created_at: new Date().toISOString() });
+      const ai = uploadDraft.ai ? { category: uploadDraft.ai.category, severity: uploadDraft.ai.severity, confidence: uploadDraft.ai.confidence, model: uploadDraft.ai.model, kept: [...uploadDraft.aiFilled] } : null;
+      const result = await issueRepository.submit({ category: uploadDraft.category, severity: uploadDraft.severity || null, description: uploadDraft.description, address: uploadDraft.address, coordinates: uploadDraft.coordinates.map(v => Number(v.toFixed(3))), blurred_areas: blurred, ai_suggestion: ai, created_at: new Date().toISOString() });
       state.pending.push(result); persist('pending', state.pending);
-      for (const p of uploadDraft.photos) URL.revokeObjectURL(p.url);
+      for (const p of uploadDraft.photos) { URL.revokeObjectURL(p.url); if (p.blurredUrl) URL.revokeObjectURL(p.blurredUrl); }
       uploadDraft = freshDraft();
       showModal(`${modalHeader('LOCAL DEMO RECEIPT', 'Thanks for looking out.')}<div class="submission-success">${icon('shield')}<h3>Your sample issue is pending review</h3><code>${result.issue_id}</code><p>Details were saved locally and appear under Saved → Your submissions. No photos were uploaded or published. Connect the submission API to send reports to your team.</p>${badge('Pending review')}</div><div class="modal-footer"><button class="button primary" data-close>Back to workspace</button></div>`, { label: 'Submission received' });
       render();
     } catch {
-      document.querySelector('#upload-submit').disabled = false;
+      $('#upload-submit').disabled = false;
       toast('Submission failed. Your details and photos are preserved; please retry.');
     }
   };
 }
 
 export function infrastructureModal() {
-  const types = ['TTC', 'Schools', 'Roads'], glyph = { TTC: 'train', Schools: 'school', Roads: 'road' }, counts = countBy(infrastructure, 'type');
-  showModal(`${modalHeader('MAP CONTEXT', 'Infrastructure & proximity')}<div class="modal-body"><p class="modal-intro">Show sample infrastructure on the map, or narrow issues by their distance to an asset.</p><div class="notice-banner">${icon('layers')} Asset positions are approximate samples. Replace them with TTC, school and Centreline open data.</div><h3>Visible layers</h3><div class="layer-options">${types.map(t => `<label><input type="checkbox" data-layer="${t}" ${state.layers.includes(t) ? 'checked' : ''}>${icon(glyph[t])}<span>${t}</span><small>${counts[t]} sample ${t === 'Roads' ? 'highways' : 'assets'}</small></label>`).join('')}</div><h3>Issues near infrastructure</h3><div class="form-row"><label class="form-label">Asset category<select id="infra-type"><option value="">Don’t filter by distance</option><option value="any" ${state.filters.infra === 'any' ? 'selected' : ''}>Any infrastructure</option>${types.map(t => `<option ${state.filters.infra === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label><label class="form-label">Distance<select id="infra-radius" ${state.filters.infra ? '' : 'disabled'}>${[250, 500, 1000, 2000].map(n => `<option value="${n}" ${String(n) === state.filters.radius ? 'selected' : ''}>Within ${n < 1000 ? `${n}m` : `${n / 1000}km`}</option>`).join('')}</select></label></div><p class="fine-print">Distance is measured to the nearest asset of the chosen category: stations and schools as points, highways as lines.</p></div><div class="modal-footer"><button class="button primary" id="apply-infrastructure">Apply to workspace</button></div>`, { label: 'Infrastructure and proximity' });
+  const types = ['TTC', 'Schools', 'Roads'], glyph = { TTC: 'train', Schools: 'school', Roads: 'road', Wards: 'ballot' }, counts = countBy(infrastructure, 'type');
+  const notes = { TTC: `${counts.TTC} subway and LRT stations · OpenStreetMap`, Schools: `${counts.Schools} schools · approximate sample`, Roads: `${counts.Roads} highways · OpenStreetMap`, Wards: '25 wards · City of Toronto' };
+  const layerOption = t => `<label><input type="checkbox" data-layer="${t}" ${state.layers.includes(t) ? 'checked' : ''}>${icon(glyph[t])}<span>${t === 'Wards' ? 'Ward boundaries' : t}</span><small>${notes[t]}</small></label>`;
+  showModal(`${modalHeader('MAP CONTEXT', 'Infrastructure & proximity')}<div class="modal-body"><p class="modal-intro">Show infrastructure and ward boundaries on the map, or narrow issues by their distance to an asset.</p><div class="notice-banner">${icon('layers')} TTC stations and highways come from OpenStreetMap and wards from City of Toronto open data. School positions are an approximate sample.</div><h3>Visible layers</h3><div class="layer-options">${['Wards', ...types].map(layerOption).join('')}</div><h3>Issues near infrastructure</h3><div class="form-row"><label class="form-label">Asset category<select id="infra-type"><option value="">Don’t filter by distance</option><option value="any" ${state.filters.infra === 'any' ? 'selected' : ''}>Any infrastructure</option>${types.map(t => `<option ${state.filters.infra === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label><label class="form-label">Distance<select id="infra-radius" ${state.filters.infra ? '' : 'disabled'}>${[250, 500, 1000, 2000].map(n => `<option value="${n}" ${String(n) === state.filters.radius ? 'selected' : ''}>Within ${n < 1000 ? `${n}m` : `${n / 1000}km`}</option>`).join('')}</select></label></div><p class="fine-print">Distance is measured to the nearest asset of the chosen category: stations and schools as points, highways as lines.</p></div><div class="modal-footer"><button class="button primary" id="apply-infrastructure">Apply to workspace</button></div>`, { label: 'Infrastructure and proximity' });
   const type = document.querySelector('#infra-type'), radius = document.querySelector('#infra-radius');
   type.onchange = () => { radius.disabled = !type.value; };
   document.querySelector('#apply-infrastructure').onclick = () => {
@@ -122,8 +270,8 @@ export function exportModal(preferredScope = 'filtered') {
 function exportData(rows, format) {
   let content, mime;
   if (format === 'csv') {
-    const headers = ['issue_id', 'issue_type', 'severity', 'resolution_status', 'verification_status', 'neighbourhood_id', 'neighbourhood_name', 'ward_id', 'ward_name', 'address', 'location_radius_m', 'geo_method', 'nearest_asset', 'nearest_asset_type', 'distance_to_asset_m', 'first_seen_at_iso', 'last_seen_at_iso', 'sightings_count', 'detection_confidence', 'source_category', 'is_demo', 'filters_applied'];
-    const values = rows.map(i => [i.issue_id, i.issue_type, i.severity, i.resolution_status, i.verification_status, i.neighbourhood_id, i.neighbourhood_name, i.ward_id, i.ward_name, i.address, i.location_radius_m, i.geo_method, i.asset_name, i.infrastructure_type, i.distance_m, i.first_seen_at, i.last_seen_at, i.sightings_count, i.detection_confidence, i.source_category, true, JSON.stringify(state.filters)]);
+    const headers = ['issue_id', 'issue_type', 'severity', 'resolution_status', 'verification_status', 'neighbourhood_id', 'neighbourhood_name', 'ward_id', 'ward_name', 'address', 'location_radius_m', 'geo_method', 'nearest_asset', 'nearest_asset_type', 'distance_to_asset_m', 'priority_score', 'first_seen_at_iso', 'last_seen_at_iso', 'sightings_count', 'detection_confidence', 'source_category', 'is_demo', 'filters_applied'];
+    const values = rows.map(i => [i.issue_id, i.issue_type, i.severity, i.resolution_status, i.verification_status, i.neighbourhood_id, i.neighbourhood_name, i.ward_id, i.ward_name, i.address, i.location_radius_m, i.geo_method, i.asset_name, i.infrastructure_type, i.distance_m, i.priority_score, i.first_seen_at, i.last_seen_at, i.sightings_count, i.detection_confidence, i.source_category, true, JSON.stringify(state.filters)]);
     // Prefix cells that a spreadsheet would treat as formulas.
     const cell = v => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replaceAll('"', '""') + '"'; };
     content = '﻿' + [headers, ...values].map(row => row.map(cell).join(',')).join('\r\n');
@@ -149,7 +297,7 @@ function exportData(rows, format) {
 export function settingsModal() {
   const roles = ['Public', 'Volunteer', 'City Staff'];
   showModal(`${modalHeader('YOUR WORKSPACE', 'Preferences')}<div class="modal-body"><label class="form-label">Demo account type<select id="settings-role">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></label><div class="setting-row"><div><h3>Local viewing history</h3><p>Remember recently opened issues on this browser.</p></div><input id="history-toggle" type="checkbox" role="switch" aria-label="Enable viewing history" ${state.historyEnabled ? 'checked' : ''}></div><div class="setting-row"><div><h3>Saved issues</h3><p>${state.saved.length} bookmarks stored locally.</p></div><button class="button small" id="clear-saves">Clear saved</button></div><div class="setting-row"><div><h3>Local submissions</h3><p>${state.pending.length} sample submissions. Photos are never stored.</p></div><button class="button small" id="clear-pending">Clear</button></div><p class="fine-print">The account selector previews roles. Authentication, permissions, and cross-device persistence are backend integration points.</p></div><div class="modal-footer"><button class="button primary" data-close>Done</button></div>`, { label: 'Preferences' });
-  document.querySelector('#settings-role').onchange = e => { state.role = e.target.value; if (state.view === 'verify' && state.role === 'Public') state.view = 'map'; render(); };
+  document.querySelector('#settings-role').onchange = e => setRole(e.target.value);
   document.querySelector('#history-toggle').onchange = e => { state.historyEnabled = e.target.checked; persist('historyEnabled', state.historyEnabled); };
   document.querySelector('#clear-saves').onclick = () => { state.saved = []; persist('saved', []); render(); settingsModal(); };
   document.querySelector('#clear-pending').onclick = () => { state.pending = []; persist('pending', []); render(); settingsModal(); };
