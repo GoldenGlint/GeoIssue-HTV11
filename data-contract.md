@@ -88,7 +88,7 @@ Anyone can suggest a fix to an issue from its detail panel. Nothing changes unti
 | `reason` | For `not_an_issue` only |
 | `note` | Optional, up to 500 characters |
 
-The server sets `status` (`Pending review`, `Accepted` or `Dismissed`). Accepting a location correction should move the issue, recompute its area, ward and nearby assets, set a small radius, and add a `geo_trace` step. The prototype does the move and the trace in the browser only.
+The server sets `status` (`Pending review`, `Accepted` or `Dismissed`). Accepting a location correction should move the issue, recompute its area, ward and nearby assets, set a small radius, and add a `geo_trace` step. The prototype does all of this in the browser, using the sample neighbourhoods and assets in `src/data.js`, and re-applies corrections accepted in that browser after a reload.
 
 ## Infrastructure
 

@@ -1,5 +1,5 @@
 // UI state shared by the map, table and dashboard, plus browser-local persistence.
-import { TORONTO_CENTER, neighbourhoods } from './data.js';
+import { TORONTO_CENTER, neighbourhoods, wards, nearbyAssets, nearestNeighbourhood } from './data.js';
 import { issueMatches } from './issues.js';
 import { wardLabel } from './format.js';
 import { distanceMetres } from './coordinates.js';
@@ -31,8 +31,13 @@ export function applyCorrection(c) {
     const moved = Math.round(distanceMetres(issue.geometry.coordinates, c.coordinates));
     issue.geometry = { type: 'Point', coordinates: c.coordinates };
     issue.location_radius_m = 25;
+    // Recompute what depends on the position: nearest assets, and the area when the point maps to one.
+    const nearby = nearbyAssets(c.coordinates), area = nearestNeighbourhood(c.coordinates);
+    Object.assign(issue, { nearby_assets: nearby, infrastructure_type: nearby[0].type, asset_id: nearby[0].asset_id, asset_name: nearby[0].name, distance_m: nearby[0].distance_m });
+    if (area) Object.assign(issue, { neighbourhood_id: area.id, neighbourhood_name: area.name, ward_id: area.ward, ward_name: wards[area.ward] });
     issue.geo_method = 'Corrected by a community member, confirmed by a reviewer';
     issue.geo_trace = [...(issue.geo_trace || []), { stage: 'Correction', result: `Pin moved ${moved.toLocaleString()} m after review`, status: 'match' }];
+    issue.explanation = issue.explanation?.replace(/approximate within [\d,]+ ?(m|metres)\b/, 'confirmed within 25 m after a reviewed correction');
     issue.verification_status = 'Verified';
   } else if (c.kind === 'issue_type') issue.issue_type = c.issue_type;
   else if (c.kind === 'resolved') issue.resolution_status = 'Resolved';

@@ -107,11 +107,22 @@ function distanceTo(point, asset) {
   }
   return best;
 }
-function nearbyAssets(point) {
+/** The closest asset of each type, nearest first. */
+export function nearbyAssets(point) {
   return ['TTC', 'Schools', 'Roads'].map(type => {
     const [asset, distance] = infrastructure.filter(a => a.type === type).map(a => [a, distanceTo(point, a)]).sort((a, b) => a[1] - b[1])[0];
     return { type, asset_id: asset.asset_id, name: asset.name, distance_m: Math.round(distance) };
   }).sort((a, b) => a.distance_m - b.distance_m);
+}
+
+/** The sample neighbourhood whose street corners are closest to a point (the same rule the analysis uses). */
+export function nearestNeighbourhood(point) {
+  let best = null, bestDistance = Infinity;
+  for (const n of neighbourhoods) for (const [, lng, lat] of n.places) {
+    const d = metres(point, [lng, lat]);
+    if (d < bestDistance) { best = n; bestDistance = d; }
+  }
+  return bestDistance <= 2500 ? best : null;
 }
 
 const typeWeights = [['Pothole', 26], ['Sidewalk damage', 19], ['Graffiti', 17], ['Litter', 18], ['Flooding', 9], ['Other', 11]];
