@@ -4,6 +4,7 @@ Status: Four core UX decisions approved on 2026-10-17; remaining questions ident
 A persistent left navigation sidebar is shared across both primary pages. On smaller screens, it collapses to icons or a drawer.
 Map Explorer: map-based issue discovery and geographic investigation.
 Data Explorer: SQL-like interactive issue table, bulk operations, and exports.
+Upload new issue: prominent sidebar button available from both explorers; opens a dedicated submission form.
 Saved: saved issues, saved searches/filters, bookmarked locations, drawn areas, and collections.
 Recents: recently visited issues, areas, and searches (user-controlled history).
 Verify: volunteer review queue (role-gated).
@@ -43,6 +44,12 @@ Browse available Mapillary street photos (not a promise of continuous 360° navi
 No-coverage handling: if no imagery exists near the drop point, show “No street-level imagery available here” with a suggestion to move to a covered segment.
 Feasibility boundary: The Mapillary photo browsing experience is the approved design, but implementation is feasibility-gated on viewer integration, coverage, availability, and provider terms. No full-city coverage, continuous 360° movement, or Google Street View equivalence is promised. Do not scrape or rehost Google Street View imagery as model-training or reference data.
 This viewer is distinct from the right issue-context panel and may use a dedicated overlay/modal or split-pane; dropping the person icon does not count as selecting an issue pin.
+2.6 Upload new issue
+The Upload new issue button opens a dedicated form/modal, separate from the selection-driven right panel, so users can report an issue from either Map Explorer or Data Explorer.
+Allow users to upload one or more photos, choose an issue category, add a short description, and set a Toronto location using address search or a draggable map pin. Suggest a location from photo metadata when available, but require the user to confirm it; allow approximate locations and display uncertainty honestly.
+Show photo previews with remove/replace controls, required-field guidance, supported file types and size limits, upload progress, and actionable validation or retry messages. Keep entered details when an upload fails.
+Before submission, show a review step and remind users to avoid personal information or identifiable people. Process uploaded evidence through the existing privacy and verification pipeline before publishing it.
+On successful submission, show a confirmation and issue reference with Pending review status. New submissions enter the volunteer verification queue; they appear in the shared map/table dataset once approved and subject to existing permissions and filters. Submission does not automatically create a Toronto 311 service request.
 3. Data Explorer — separate primary page
 A full-width, paginated/virtualized SQL-style issues table, not raw access to the underlying SQL server. It consumes the same issue API as the map. Approved default: open with all issues across Toronto that the current user is authorized to access, subject to the same global filters used in Map Explorer. It does not default to the current map viewport or selected pins. A user-invoked View as table action can explicitly scope the table to a selected cluster or set of pins; display an obvious scope chip and Clear scope to return to all accessible Toronto issues.
 Columns (user can reorder/show/hide later): issue ID, type, description, latitude/longitude only when permitted, area/ward, location confidence, nearby infrastructure category and asset name, severity, detected date, age, last seen, verification status, resolution status, sightings count, source category, cluster/incident ID, and AI confidence. Use separate identifiers for visual map cluster vs deduplicated incident; ephemeral zoom-dependent cluster IDs must not be exported as stable data.
@@ -78,7 +85,7 @@ User objects: saved_items, saved_queries, recent_activity, collections, annotati
 Map/UI state: viewport, zoom, layers, shared filter expression, selection IDs, selected visual cluster IDs, selection mode (pan | box), panel mode (closed | issue | cluster | multi), and data-table scope (all_accessible_toronto | selected_issue_ids). Keep issue ID-based selections stable across zoom changes; visual cluster membership may change with zoom.
 Spatial queries: PostGIS geometry for points/lines/polygons; indexed distance and containment checks; deduplication/incident grouping happens separately from visual marker clustering.
 8. MVP order for 3 people / 36 hours
-P0 — cohesive live demo: persistent left sidebar/account type; 2D MapLibre map with panning, marker clusters, and search; selection-driven right panel; cluster click → right-side issue list + optional Zoom in; multi-pin selection via Shift+click and explicit Box select mode; Data Explorer opening on all accessible Toronto issues with shared filters; sortable/filterable table; CSV export; a handful of real Toronto infrastructure layers with nearby-issue distance queries. Same filters/data for both views.
+P0 — cohesive live demo: persistent left sidebar/account type; Upload new issue button and photo/category/description/location submission form with confirmation and pending-review handling; 2D MapLibre map with panning, marker clusters, and search; selection-driven right panel; cluster click → right-side issue list + optional Zoom in; multi-pin selection via Shift+click and explicit Box select mode; Data Explorer opening on all accessible Toronto issues with shared filters; sortable/filterable table; CSV export; a handful of real Toronto infrastructure layers with nearby-issue distance queries. Same filters/data for both views.
 P1 — if core works: saved searches and issues; recents; labelled custom areas (rectangle/circle); cross-navigation between table and map; volunteer verification and corrected pin; GeoJSON export; AI area digest.
 P2 — stretch / feasibility-gated: approved Pegman-style draggable person for browsing available Mapillary street photos; polygon lasso; advanced grouping and bulk workflows; configurable columns; heatmap/timeline; shared collections and alerting. Street-level imagery should only be advertised as fully interactive after coverage and viewer feasibility are verified.
 Live demo flow
@@ -99,6 +106,12 @@ Filters: keep filters global across pages, but treat map-viewport and explicit s
 10. Acceptance criteria for approved interactions
 Scenario
 Expected result
+Click Upload new issue from either explorer
+Dedicated submission form opens without changing the issue-context panel.
+Submit a valid new issue with a photo and confirmed location
+Show confirmation and issue reference; queue as Pending review and publish only after privacy processing and verification.
+Upload fails or required fields are missing
+Show actionable feedback, preserve entered details, and allow correction or retry.
 Open Map Explorer
 Full-width map; right panel closed.
 Click one pin
