@@ -3,8 +3,9 @@ import { readFile } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = fileURLToPath(new URL('../', import.meta.url));
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.md': 'text/plain' };
+// resolve() drops the trailing separator so the `root + sep` containment check below matches real files.
+const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json', '.md': 'text/plain' };
 const port = Number(process.env.PORT || 5173);
 http.createServer(async (req, res) => {
   try {
