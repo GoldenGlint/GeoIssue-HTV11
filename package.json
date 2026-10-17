@@ -1,0 +1,13 @@
+{
+  "name": "civiclens-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CivicLens frontend prototype with replaceable demo data",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "start": "node scripts/serve.mjs",
+    "check": "node --check src/app.js && node --check src/data.js && node --check src/map.js"
+  },
+  "engines": { "node": ">=18" }
+}
