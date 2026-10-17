@@ -8,11 +8,11 @@
 
 **Solid**
 - Every map, table, dashboard, upload and verify flow in `features.md` works on desktop and phone with no console errors (checked in a real browser at 390–1672 px).
-- The analysis pipeline passes its 38 tests, and its output loads in the frontend without errors: every field in `data-contract.md` is present.
+- The analysis pipeline passes its tests, and its output loads in the frontend without errors: every field in `data-contract.md` is present.
 - Real OpenStreetMap geometry for TTC stations and highways; credited sample photos; ward digest; read-only SQL view.
 
 **Thin**
-- **Detection and geolocation are not live in the app.** The upload form doesn't call any AI, and the geolocation cascade from the original plan (MegaLoc, LightGlue and Gemini clues) isn't in this repo. The pipeline reads coordinates the photo analysis already supplies. The "how this location was estimated" traces are illustrative.
+- **Detection and geolocation are not live in the app.** Uploads use Gemini suggestions through `scripts/serve.py` (P0 below), but the geolocation cascade from the original plan (MegaLoc, LightGlue and Gemini clues) isn't in this repo. The pipeline reads coordinates the photo analysis already supplies. The "how this location was estimated" traces are illustrative.
 - **Nothing persists beyond one browser:** submissions, verifications and saves are all local.
 - **Ward assignment is approximate** (one ward per sample neighbourhood). That weakens the ward digest, which is the School of Cities angle.
 
@@ -26,7 +26,7 @@
 | D4 | Close the loop now? | Not decided; stays P1. |
 | D5 | Lanes | **Frontend:** you. **Scraping images online:** teammate 1. **Identifying where a photo was taken (geolocation):** teammate 2. Items marked AI below that aren't scraping or geolocation (Gemini triage, blurring, ward boundaries, digests) are done in the frontend lane, on branch `frontend-p0`. |
 
-### Progress on branch `frontend-p0`
+### Progress on P0 (branch `frontend-p0`, now merged into `main`)
 
 | Item | Status |
 |---|---|
@@ -37,7 +37,7 @@
 | P0-5 already reported nearby | Done; "This is the same issue" adds a sighting and re-scores priority. |
 | P0-6 official wards | Done in the frontend (ward assignment, outlines, click-to-filter). **Pipeline still uses its approximate ward per neighbourhood**; whoever owns `analysis/` should switch it to `src/ward-boundaries.js` geometry. |
 | P0-7 digests | Done: pipeline summary on pipeline data, "Write a summary with Gemini" on demand otherwise, template always shown. |
-| P0-8 readability | Done: no text under 10 px (map attribution 9 px), 38 text colours lifted to 4.5:1. |
+| P0-8 readability | Done: no text under 11 px (map attribution 10 px); secondary text and primary buttons meet 4.5:1. |
 | P0-9 demo package | Not started (pitch lane). |
 | P0-10 methodology | Done. **Add a takedown contact address before launch.** |
 | Q1, Q3, Q4 | Done in the frontend. Q2 (`broken streetlight` mapping) is a one-line change in `analysis/config.toml`, left for the pipeline owner. |

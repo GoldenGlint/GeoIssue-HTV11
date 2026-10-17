@@ -66,7 +66,7 @@ With Node.js 18 or newer, `npm run dev` serves the app without the Gemini API. N
 
 ### Limits and production integration
 
-The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSON exports approximate uncertainty areas with a minimum 250m radius. Authorization and coordinate precision must be enforced on a real backend, including exports, rather than trusted to this client. Sample ingestion funnel numbers, geolocation traces and explanations are illustrative. Gemini is used only through the local server and only when a key is in `.env`; photos are sent to Gemini for suggestions and blurring but never stored or published by this prototype. No scraping, 311 requests, geocoding, Mapillary imagery, correction-pin workflow, or saved query builder is connected.
+The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSON exports approximate uncertainty areas with a minimum 250m radius. Authorization and coordinate precision must be enforced on a real backend, including exports, rather than trusted to this client. Sample ingestion funnel numbers, geolocation traces and explanations are illustrative. Gemini is used only through the local server and only when a key is in `.env`; photos are sent to Gemini for suggestions and blurring but never stored or published by this prototype. Scraping runs separately (`scraping/`) and reaches the app through the analysis pipeline. No 311 requests, street-address geocoding, in-app Mapillary imagery or saved query builder is connected; corrections and reviews are stored in this browser only.
 
 ### Code layout
 
@@ -78,7 +78,8 @@ The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSO
 | `src/views/dashboard-view.js` | Dashboard, ward digest, pipeline funnel |
 | `src/views/workspace-view.js` | Saved, Recents, Verify |
 | `src/views/methodology-view.js` | Methodology page |
-| `src/modals.js` | Upload (Gemini suggestions, blurring, nearby reports), infrastructure, export, settings, help, share and issue dialogs |
+| `src/modals.js` | Upload (Gemini suggestions, blurring, nearby reports), correction, Street View, infrastructure, export, settings, help, share and issue dialogs |
+| `src/coordinates.js`, `src/search.js` | Reading Google Maps links and decimal / DMS coordinates; the search box and its suggestions |
 | `src/api.js`, `src/blur.js` | Calls to the local Gemini API; face/plate pixelation on a canvas |
 | `src/state.js` | Shared UI state, browser persistence, local sightings |
 | `src/issues.js`, `src/priority.js` | Filter, sort and search logic; priority score and reasons |
@@ -89,5 +90,8 @@ The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSO
 | `src/styles.css` | Responsive styles |
 | `scripts/serve.py` | Dev server with the Gemini API (recommended) |
 | `scripts/serve.mjs` | Static Node dev server |
+| `scripts/export-analysis-reference.mjs` | Exports the frontend's neighbourhoods, wards and infrastructure for the analysis |
+| `scripts/fetch-ward-boundaries.py`, `scripts/fetch-osm-infrastructure.py` | Regenerate the ward and OpenStreetMap geodata |
+| `tests/` | `npm test`: coordinate parsing (needs Node 21 or newer) |
 
 `npm run check` validates module syntax. Both dev servers bind to loopback only and refuse hidden files.

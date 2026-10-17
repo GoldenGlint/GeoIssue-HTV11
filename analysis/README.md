@@ -19,7 +19,7 @@ python -m analysis --offline                      # template summaries, no Gemin
 python -m unittest discover -s analysis/tests -t .  # the tests
 ```
 
-Then serve the repo (`npm run dev`, or `python -m http.server 5173`). The map, table and dashboard load `data/analyzed/issues.public.json`, whose records follow `data-contract.md`, and fall back to the demo records when that file is missing.
+Then serve the repo with `npm run dev` or `python scripts/serve.py`. (Not `python -m http.server`: it would also serve `.env` and its Gemini key.) The map, table and dashboard load `data/analyzed/issues.public.json`, whose records follow `data-contract.md`, and fall back to the demo records when that file is missing.
 
 ## When their output format changes
 

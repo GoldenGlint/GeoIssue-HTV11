@@ -54,6 +54,9 @@ A persistent left navigation sidebar is shared across both primary pages. On sma
 
 ### 2.5 Draggable street-level explorer (Pegman-like)
 
+> **Status:** the person icon now opens Google Street View in a new tab, at the map centre or wherever it is dropped, and issue details link to Street View too. The in-app Mapillary browser below is still future work.
+
+
 - **Approved interaction:** Provide a draggable person icon (Pegman-style) on the map. When dragging, highlight roads/locations with available Mapillary street-level photo coverage; dropping on a supported position opens Street-level Explorer anchored at the nearest available photo location.
 - Browse available Mapillary street photos (not a promise of continuous 360° navigation); show image date, photographer/provider attribution where required, camera heading when available, controls for adjacent photo locations when coverage permits, and Return to map. Optionally show nearby civic issue overlays or linked issue evidence.
 - **No-coverage handling:** if no imagery exists near the drop point, show “No street-level imagery available here” with a suggestion to move to a covered segment.
