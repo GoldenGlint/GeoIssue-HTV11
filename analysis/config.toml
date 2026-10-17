@@ -28,6 +28,7 @@ source_id            = ["id", "post_id", "uid", "uri"]
 issue_type           = ["issue.type", "issue.issue_type", "issue.screening.issue_type", "issue_type", "category", "type", "label", "analysis.issue_type", "analysis.category"]
 severity             = ["issue.severity", "severity", "analysis.severity"]
 detection_confidence = ["issue.certainty", "issue.confidence", "issue.issue_details.confidence", "issue.screening.issue_confidence", "detection_confidence", "confidence", "analysis.confidence"]
+title                = ["issue.issue_details.title", "issue.title", "title", "analysis.title"]
 description          = ["issue.evidence", "issue.description", "issue.issue_details.description", "issue.screening.issue_evidence", "description", "analysis.description", "summary"]
 geometry             = ["geometry", "location.geometry"]
 lat                  = ["lat", "latitude", "location.lat", "location.latitude", "gps.lat", "gps.latitude", "geo.lat"]
@@ -45,6 +46,8 @@ issue_supported      = ["issue.issue_details.issue_supported", "issue_supported"
 photo_needs_blur     = ["issue.screening.blur_before_public_display", "blur_before_public_display"]
 # Only used to find a place name when there are no coordinates. It is never written to the output.
 post_text            = ["text", "post_text", "caption", "body"]
+# Photos from one post count as one sighting. Only used while merging; it is never written to the output.
+source_post          = ["post_group_id", "post_id", "issue.post_group_id", "issue.post_id"]
 
 # Fields the analysis stages compute. When the input already has them, the input value is kept.
 address              = ["address", "location.address"]
@@ -126,15 +129,21 @@ text_geo_confidence = 0.5
 use_post_text = true                 # look for place names in the post text when there are no coordinates
 address_max_distance_m = 200         # the nearest named intersection within this distance becomes the address
 context_max_radius_m = 250           # nearest infrastructure and address are only attached to locations at least this precise
-places_file = "places.json"
+# Searched together; the most precise place named wins. osm-places.json comes from scripts/fetch-osm-places.py.
+places_files = ["places.json", "osm-places.json"]
 
 # Area layers fill the output fields named in `fields` from feature properties. When several layers set
 # the same field, the first one wins, so list official boundary files (match = "contains") first.
 [[stages.locate.areas]]
-file = "neighbourhoods.geojson"      # the frontend's sample street corners, each tagged with its neighbourhood and ward
-match = "nearest"                    # "contains" for polygon files such as the City's ward boundaries
+file = "wards.geojson"               # the City's ward boundaries, as the map draws them
+match = "contains"
+fields = { ward_id = "ward_id", ward_name = "ward_name" }
+
+[[stages.locate.areas]]
+file = "neighbourhoods.geojson"      # the frontend's sample street corners, each tagged with its neighbourhood
+match = "nearest"
 max_distance_m = 2500
-fields = { neighbourhood_id = "neighbourhood_id", neighbourhood_name = "neighbourhood_name", ward_id = "ward_id", ward_name = "ward_name" }
+fields = { neighbourhood_id = "neighbourhood_id", neighbourhood_name = "neighbourhood_name" }
 search_name = "neighbourhood_name"   # these names can be matched in post text
 
 [stages.locate.infrastructure]

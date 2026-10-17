@@ -9,8 +9,9 @@ FRONTEND_FIELDS = [
     "detection_confidence", "sightings_count", "first_seen_at", "last_seen_at", "source_category",
     "description", "explanation", "evidence_thumbnail", "evidence_credit", "is_demo",
 ]
-# Extra fields the analysis adds that are safe to publish.
-PUBLIC_EXTRA_FIELDS = ["priority_score", "priority_reasons", "sighting_ids", "reference_data", "evidence_withheld"]
+# Extra fields the analysis adds that are safe to publish. `title` is a short name from the photo analysis,
+# e.g. "Storm drain grate misaligned"; the frontend shows it in place of the issue type when present.
+PUBLIC_EXTRA_FIELDS = ["title", "priority_score", "priority_reasons", "sighting_ids", "reference_data", "evidence_withheld"]
 LIST_FIELDS = ("geo_trace", "geo_clues", "nearby_assets")
 
 

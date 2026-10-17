@@ -21,6 +21,7 @@ Fields follow `features.md` §7. Rows marked *display* are extras the UI uses th
 | `issue_id` | string | Stable public ID, e.g. `CL-10712`. |
 | `incident_id` | string \| null | Deduplicated incident; never a zoom-dependent map cluster ID. |
 | `issue_type` | `'Pothole' \| 'Sidewalk damage' \| 'Graffiti' \| 'Litter' \| 'Flooding' \| 'Other'` | Keys of `categories` in `src/data.js`. |
+| `title` | string \| null | *display* Optional short name from the photo analysis, e.g. `Storm Drain Grate Alignment`. Shown in place of the type, which then appears beside it. |
 | `severity` | `'High' \| 'Medium' \| 'Low'` | |
 | `resolution_status` | `'Open' \| 'In review' \| 'Resolved'` | |
 | `verification_status` | `'Needs review' \| 'Verified' \| 'Dismissed'` | |

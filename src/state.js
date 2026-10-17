@@ -16,7 +16,7 @@ export const state = {
   role: 'Public', sort: 'first_seen_at', direction: -1, page: 1, perPage: 10, dataTab: 'records',
   layers: [], mapMode: 'pan', heat: false, center: TORONTO_CENTER, zoom: 13,
   // 'sample' (240 generated issues) or 'pipeline' (data/analyzed from `python -m analysis`), with per-source counts.
-  dataSource: read('dataSource', 'sample'), sources: { sample: 0, pipeline: 0 }, pipeline: { report: null, areas: null },
+  dataSource: read('dataSource', null), sources: { sample: 0, pipeline: 0 }, pipeline: { report: null, areas: null },
 };
 
 export const filtered = (filters = state.filters) => state.issues.filter(i => issueMatches(i, filters));

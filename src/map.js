@@ -92,7 +92,7 @@ export class CivicMap {
     this.animateTo(unproject([p[0] - offset[0], p[1] - offset[1]], z), z, 360);
   }
   flyTo(coords, z = 14) { this.animateTo(coords, clampZoom(z), 600); }
-  fitTo(coords, { top = 155, right = 55, bottom = 115, left = 55 } = {}, maxZoom = 15) {
+  fitTo(coords, { top = 155, right = 55, bottom = 115, left = 55 } = {}, maxZoom = 15, duration = 600) {
     if (!coords.length) return;
     const points = coords.map(c => project(c, 0));
     const minX = Math.min(...points.map(p => p[0])), maxX = Math.max(...points.map(p => p[0]));
@@ -101,11 +101,11 @@ export class CivicMap {
     const height = Math.max(64, this.element.clientHeight - top - bottom);
     const z = Math.min(maxZoom, clampZoom(Math.floor(Math.log2(Math.min(width / Math.max(0.00001, maxX - minX), height / Math.max(0.00001, maxY - minY))))));
     const center = unproject([((minX + maxX) / 2) * 2 ** z - (left - right) / 2, ((minY + maxY) / 2) * 2 ** z - (top - bottom) / 2], z);
-    this.animateTo(center, z, 600);
+    this.animateTo(center, z, duration);
   }
   animateTo(coords, z, duration) {
     this.stopMotion();
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { this.center = coords; this.zoom = z; this.render(); this.onMove?.(); return; }
+    if (!duration || matchMedia('(prefers-reduced-motion: reduce)').matches) { this.center = coords; this.zoom = z; this.render(); this.onMove?.(); return; }
     // Rebase an interrupted camera at its current visual position.
     this.render();
     const startZoom = this.zoom, start = project(this.center, startZoom), end = project(coords, startZoom);
@@ -300,7 +300,7 @@ export class CivicMap {
       button.className = `map-pin ${multi ? 'cluster' : ''} ${high ? 'sev-high' : ''} ${group.items.some(i => this.selected.includes(i.issue_id)) ? 'selected' : ''}`;
       button.style.cssText = `left:${group.p[0]}px;top:${group.p[1]}px;--pin:${this.colorFor(first.issue_type)}`;
       button.innerHTML = multi ? `<span>${group.items.length}</span>` : this.icon(first.issue_type);
-      const label = multi ? `${group.items.length} issues${high ? `, ${high} high severity` : ''} · click to explore` : `${first.issue_type} · ${first.severity} severity · ${first.address}`;
+      const label = multi ? `${group.items.length} issues${high ? `, ${high} high severity` : ''} · click to explore` : `${first.title || first.issue_type} · ${first.severity} severity · ${first.address}`;
       button.removeAttribute('title');
       button.setAttribute('aria-label', label);
       button.onpointerenter = e => { if (e.pointerType === 'mouse' && !this.drag) this.preview(group, button); };
@@ -361,7 +361,7 @@ export class CivicMap {
   preview(group, button) {
     if (this.motionFrame !== null) return;
     const first = group.items[0], multi = group.items.length > 1;
-    const title = document.createElement('strong'); title.textContent = multi ? `${group.items.length} issues in this cluster` : first.issue_type;
+    const title = document.createElement('strong'); title.textContent = multi ? `${group.items.length} issues in this cluster` : first.title || first.issue_type;
     const location = document.createElement('span'); location.textContent = multi ? [...new Set(group.items.map(i => i.issue_type))].join(' · ') : first.address;
     const high = group.items.filter(i => i.severity === 'High').length;
     const meta = document.createElement('small'); meta.textContent = multi ? `${high ? `${high} high severity · ` : ''}Click to explore · Shift + click to select` : `${first.severity} priority · ${first.verification_status} · ~${first.location_radius_m}m`;

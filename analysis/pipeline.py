@@ -48,9 +48,10 @@ def run(input_path, config, out_dir=None, now=None, offline=False):
     for issue in issues:
         _finalise(issue, config, now, placeholder)
         _publish_photo(issue, out, config.get("output", {}), report)
-    for record in sightings:
-        record.pop("post_text", None)
-        record.get("provenance", {}).pop("post_text", None)
+    for record in sightings + issues:
+        for field in ("post_text", "source_post"):  # used to locate and merge, never written
+            record.pop(field, None)
+            record.get("provenance", {}).pop(field, None)
     issues.sort(key=lambda i: (-(i.get("priority_score") or 0), i["issue_id"]))
 
     areas = None
@@ -106,13 +107,12 @@ def _finalise(issue, config, now, placeholder):
     for field in FRONTEND_FIELDS:
         issue.setdefault(field, False if field == "is_demo" else [] if field in LIST_FIELDS else None)
     issue["reference_data"] = "placeholder" if placeholder else "configured"
-    issue.pop("post_text", None)
-    issue["provenance"].pop("post_text", None)
 
 
 def _explanation(issue, radius_m):
     confidence = issue.get("detection_confidence")
-    parts = [f"Photo analysis flagged {issue['issue_type'].lower()}"
+    flagged = f"“{issue['title']}” ({issue['issue_type'].lower()})" if issue.get("title") else issue["issue_type"].lower()
+    parts = [f"Photo analysis flagged {flagged}"
              + (f" with {confidence:.0%} confidence." if confidence is not None else ".")]
     parts.append(f"Location method: {issue.get('geo_method') or 'supplied in the input'}; approximate within {radius_m:g} m.")
     if issue["sightings_count"] > 1:

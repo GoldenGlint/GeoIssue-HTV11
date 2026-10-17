@@ -76,6 +76,20 @@ class PipelineTest(unittest.TestCase):
         self.assertNotIn("evidence_withheld", shown)
         self.assertEqual(withheld["neighbourhood_id"], "parkdale")  # placed from the location guess
 
+    def test_photos_from_one_post_are_one_titled_sighting(self):
+        from .test_adapter import handoff_group
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "post-groups.jsonl"
+            path.write_text(json.dumps(handoff_group("yes", "yes", "uncertain")) + "\n")
+            result = self.run_sample(input_path=path)
+        written = "".join(p.read_text(encoding="utf-8") for p in Path(self.tmp.name).glob("*.json"))
+        [issue] = result["public"]
+        self.assertEqual(issue["sightings_count"], 1)
+        self.assertEqual(issue["title"], "Blocked storm drain")
+        self.assertIn("“Blocked storm drain” (flooding)", issue["explanation"])
+        self.assertIn("3 photos from 1 post merged", issue["geo_trace"][-2]["result"])
+        self.assertNotIn("example.org", written)  # the post link only groups the photos
+
     def test_input_without_severity_is_scored_with_the_default(self):
         from .test_adapter import handoff_group
         with tempfile.TemporaryDirectory() as tmp:

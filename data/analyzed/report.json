@@ -1,0 +1,295 @@
+{
+ "generated_at": "2026-10-17T22:50:08Z",
+ "input": "scraping/shared/post-groups.jsonl",
+ "reference_data": "placeholder",
+ "stages": {
+  "locate": true,
+  "dedupe": true,
+  "priority": true,
+  "stats": true,
+  "summaries": true
+ },
+ "counts": {
+  "input_records": 26,
+  "records": 34,
+  "skipped_issue_supported=no": 24,
+  "located": 9,
+  "merged_away": 3,
+  "photos_withheld": 6,
+  "sightings": 9,
+  "issues": 6,
+  "dropped": 1
+ },
+ "dropped": [
+  {
+   "issue_id": "CL-070C3B47",
+   "issue_type": "Other",
+   "reason": "no coordinates and no recognised place name"
+  }
+ ],
+ "unrecognised_values": {},
+ "unused_input_fields": {
+  "passed_images[].platform": 34,
+  "passed_images[].collector": 34,
+  "passed_images[].post_id": 34,
+  "passed_images[].media_index": 34,
+  "passed_images[].media_url": 34,
+  "passed_images[].posted_at": 34,
+  "passed_images[].caption": 34,
+  "passed_images[].media_id": 34,
+  "passed_images[].found_by": 34,
+  "passed_images[].schema_version": 34,
+  "passed_images[].key": 34,
+  "passed_images[].fetched_at": 34,
+  "passed_images[].auto_status": 34,
+  "passed_images[].sha256": 34,
+  "passed_images[].freshness.status": 34,
+  "passed_images[].freshness.assessed_at": 34,
+  "passed_images[].freshness.window_start": 34,
+  "passed_images[].freshness.alert_eligible": 34,
+  "passed_images[].freshness.alert_block_reason": 34,
+  "passed_images[].width": 34,
+  "passed_images[].height": 34,
+  "passed_images[].post_url": 34,
+  "passed_images[].saved_width": 34,
+  "passed_images[].saved_height": 34,
+  "passed_images[].screening.passed": 34,
+  "passed_images[].screening.scene_type": 34,
+  "passed_images[].screening.sensitive": 34,
+  "passed_images[].screening.toronto_verdict": 34,
+  "passed_images[].screening.toronto_basis": 34,
+  "passed_images[].screening.issue_present": 34,
+  "passed_images[].screening.issue_confidence": 34,
+  "passed_images[].screening.issue_evidence": 34,
+  "passed_images[].screening.toronto_evidence": 34,
+  "passed_images[].screening.locatability": 34,
+  "passed_images[].screening.location_verified": 34,
+  "passed_images[].screening.appears_old": 34,
+  "passed_images[].screening.model": 34,
+  "passed_images[].screening.prompt_version": 34,
+  "passed_images[].screening.screened_at": 34,
+  "passed_images[].source_batch": 34,
+  "passed_images[].post_group_id": 34,
+  "passed_images[].issue_details.primary_image_key": 34,
+  "passed_images[].issue_details.affected_infrastructure": 34,
+  "passed_images[].issue_details.observations": 34,
+  "passed_images[].issue_details.uncertainties": 34,
+  "passed_images[].issue_details.caption_claims": 34,
+  "passed_images[].issue_details.model": 34,
+  "passed_images[].issue_details.prompt_version": 34,
+  "passed_images[].issue_details.described_at": 34,
+  "issue_details.issues[].primary_image_key": 34,
+  "issue_details.issues[].issue_supported": 34,
+  "issue_details.issues[].title": 34,
+  "issue_details.issues[].description": 34,
+  "issue_details.issues[].affected_infrastructure": 34,
+  "issue_details.issues[].observations": 34,
+  "issue_details.issues[].uncertainties": 34,
+  "issue_details.issues[].caption_claims": 34,
+  "issue_details.issues[].confidence": 34,
+  "passed_images[].alt_text": 32,
+  "passed_images[].screening.appears_old_reason": 31,
+  "group_id": 26,
+  "collector": 26,
+  "post_url": 26,
+  "detail_status": 26,
+  "issue_details.fingerprint": 26,
+  "issue_details.group_id": 26,
+  "issue_details.prompt_version": 26,
+  "issue_details.model": 26,
+  "issue_details.described_at": 26,
+  "supplemental_images[].platform": 10,
+  "supplemental_images[].collector": 10,
+  "supplemental_images[].post_id": 10,
+  "supplemental_images[].media_index": 10,
+  "supplemental_images[].media_url": 10,
+  "supplemental_images[].posted_at": 10,
+  "supplemental_images[].caption": 10,
+  "supplemental_images[].media_id": 10,
+  "supplemental_images[].found_by": 10,
+  "supplemental_images[].schema_version": 10,
+  "supplemental_images[].key": 10,
+  "supplemental_images[].fetched_at": 10,
+  "supplemental_images[].auto_status": 10,
+  "supplemental_images[].local_path": 10,
+  "supplemental_images[].sha256": 10,
+  "supplemental_images[].dhash": 10,
+  "supplemental_images[].freshness.status": 10,
+  "supplemental_images[].freshness.assessed_at": 10,
+  "supplemental_images[].freshness.window_start": 10,
+  "supplemental_images[].freshness.alert_eligible": 10,
+  "supplemental_images[].freshness.alert_block_reason": 10,
+  "supplemental_images[].width": 10,
+  "supplemental_images[].height": 10,
+  "supplemental_images[].post_url": 10,
+  "supplemental_images[].source_batch": 10,
+  "supplemental_images[].saved_width": 10,
+  "supplemental_images[].saved_height": 10,
+  "supplemental_images[].screening_status": 10,
+  "supplemental_images[].screening.assessment.scene_type": 10,
+  "supplemental_images[].screening.assessment.sensitive": 10,
+  "supplemental_images[].screening.assessment.toronto.verdict": 10,
+  "supplemental_images[].screening.assessment.toronto.basis": 10,
+  "supplemental_images[].screening.assessment.issue.present": 10,
+  "supplemental_images[].screening.assessment.issue.type": 10,
+  "supplemental_images[].screening.assessment.issue.evidence": 10,
+  "supplemental_images[].screening.assessment.issue.confidence": 10,
+  "supplemental_images[].screening.assessment.locatability.level": 10,
+  "supplemental_images[].screening.assessment.locatability.clues": 10,
+  "supplemental_images[].screening.assessment.locatability.location_guess": 10,
+  "supplemental_images[].screening.assessment.appears_old": 10,
+  "supplemental_images[].screening.assessment.appears_old_reason": 10,
+  "supplemental_images[].screening.decision": 10,
+  "supplemental_images[].screening.toronto_scene": 10,
+  "supplemental_images[].screening.issue_candidate": 10,
+  "supplemental_images[].screening.locatability": 10,
+  "supplemental_images[].screening.pool": 10,
+  "supplemental_images[].screening.passed": 10,
+  "supplemental_images[].screening.pass_blockers": 10,
+  "supplemental_images[].screening.blur_before_public_display": 10,
+  "supplemental_images[].screening.model": 10,
+  "supplemental_images[].screening.prompt_version": 10,
+  "supplemental_images[].screening.screened_at": 10,
+  "supplemental_images[].relation": 10,
+  "supplemental_images[].issue_verified": 10,
+  "supplemental_images[].blur_before_public_display": 10,
+  "excluded_supplemental[].key": 9,
+  "excluded_supplemental[].media_index": 9,
+  "excluded_supplemental[].reasons": 9,
+  "issue_details.unrelated_image_keys": 9,
+  "supplemental_images[].screening.assessment.toronto.evidence": 9,
+  "passed_images[].issue_details.supporting_image_keys": 9,
+  "issue_details.issues[].supporting_image_keys": 9,
+  "supplemental_images[].alt_text": 7,
+  "supplemental_images[].screening.reasons": 2,
+  "supplemental_images[].reasons": 1
+ },
+ "private_fields_dropped": [],
+ "field_sources": {
+  "address": {
+   "locate": 5,
+   "default": 1
+  },
+  "asset_id": {
+   "locate": 5
+  },
+  "asset_name": {
+   "locate": 5
+  },
+  "description": {
+   "input": 6
+  },
+  "detection_confidence": {
+   "input": 6
+  },
+  "distance_m": {
+   "locate": 5
+  },
+  "evidence_photos": {
+   "dedupe": 1,
+   "analysis": 5
+  },
+  "explanation": {
+   "default": 6
+  },
+  "first_seen_at": {
+   "dedupe": 1,
+   "input": 5
+  },
+  "geo_clues": {
+   "dedupe": 1
+  },
+  "geo_confidence": {
+   "locate": 6
+  },
+  "geo_trace": {
+   "dedupe": 1
+  },
+  "geometry": {
+   "locate": 6
+  },
+  "image_hash": {
+   "input": 6
+  },
+  "incident_id": {
+   "analysis": 6
+  },
+  "infrastructure_type": {
+   "locate": 5
+  },
+  "is_demo": {
+   "dedupe": 1
+  },
+  "issue_supported": {
+   "input": 6
+  },
+  "issue_type": {
+   "input": 6
+  },
+  "last_seen_at": {
+   "dedupe": 1,
+   "input": 5
+  },
+  "location_clues": {
+   "input": 6
+  },
+  "location_radius_m": {
+   "locate": 6
+  },
+  "location_text": {
+   "input": 6
+  },
+  "nearby_assets": {
+   "locate": 5
+  },
+  "neighbourhood_id": {
+   "locate": 6
+  },
+  "neighbourhood_name": {
+   "locate": 6
+  },
+  "photo_needs_blur": {
+   "dedupe": 1,
+   "input": 5
+  },
+  "photo_source": {
+   "input": 6
+  },
+  "priority_score": {
+   "priority": 6
+  },
+  "resolution_status": {
+   "dedupe": 1,
+   "default": 5
+  },
+  "severity": {
+   "dedupe": 1,
+   "default": 5
+  },
+  "sighting_ids": {
+   "dedupe": 1,
+   "analysis": 5
+  },
+  "sightings_count": {
+   "dedupe": 1,
+   "default": 5
+  },
+  "source_category": {
+   "input": 6
+  },
+  "title": {
+   "input": 6
+  },
+  "verification_status": {
+   "dedupe": 1,
+   "default": 5
+  },
+  "ward_id": {
+   "locate": 6
+  },
+  "ward_name": {
+   "locate": 6
+  }
+ },
+ "warnings": []
+}

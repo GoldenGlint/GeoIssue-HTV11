@@ -19,6 +19,18 @@ def normalise_text(text):
     return " " + re.sub(r"[^a-z0-9']+", " ", text).strip() + " "
 
 
+# Words allowed between two street names that form an intersection: "Queen Street West and Spadina",
+# "Queen/Spadina", "Yonge Street between Dundas and College".
+STREET_WORDS = ("st|street|ave|avenue|rd|road|blvd|boulevard|dr|drive|cres|crescent|crt|ct|court|pl|place|ln|lane|"
+                "way|trail|trl|pkwy|parkway|e|w|n|s|east|west|north|south")
+CONNECTORS = "and|at|by|near|between|off|x"
+
+
+def _intersection_pattern(a, b):
+    one = lambda x, y: rf" {re.escape(x)}(?: (?:{STREET_WORDS}))*(?: (?:{CONNECTORS}))?(?: the)? {re.escape(y)} "
+    return re.compile(f"{one(a, b)}|{one(b, a)}")
+
+
 @dataclass
 class AreaLayer:
     fields: dict      # output field -> feature property
@@ -38,11 +50,23 @@ class Place:
     radius_m: float
     aliases: list = field(default_factory=list)
     match_all: list = field(default_factory=list)
+    streets: list = field(default_factory=list)
 
-    def matches(self, normalised):
+    def __post_init__(self):
+        self.streets = [normalise_text(s).strip() for s in self.streets]
+        self._pattern = None  # compiled on first use: the OpenStreetMap gazetteer has thousands of intersections
+        self._aliases = [normalise_text(alias) for alias in self.aliases]
+
+    def find(self, normalised):
+        """Where in the normalised text this place is named, or None."""
+        if len(self.streets) == 2 and all(f" {s} " in normalised for s in self.streets):
+            self._pattern = self._pattern or _intersection_pattern(*self.streets)
+            found = self._pattern.search(normalised)
+            if found:
+                return found.start()
         if self.match_all and all(f" {token} " in normalised for token in self.match_all):
-            return True
-        return any(normalise_text(alias) in normalised for alias in self.aliases)
+            return min(normalised.index(f" {token} ") for token in self.match_all)
+        return min((normalised.index(a) for a in self._aliases if a in normalised), default=None)
 
 
 class Reference:
@@ -68,10 +92,12 @@ class Reference:
                 self.assets.append((props.get(infra.get("type_property", "type")), props.get(infra.get("id_property", "asset_id")),
                                     props.get(infra.get("name_property", "name")), f["geometry"]))
 
-        if settings.get("places_file"):
-            for p in self._load(folder / settings["places_file"]).get("places", []):
+        files = settings.get("places_files") or ([settings["places_file"]] if settings.get("places_file") else [])
+        for name in files:
+            for p in self._load(folder / name).get("places", []):
                 self.places.append(Place(p["name"], p.get("kind", "place"), [p["lng"], p["lat"]], p.get("radius_m", 100),
-                                         p.get("aliases", []), [normalise_text(t).strip() for t in p.get("match_all", [])]))
+                                         p.get("aliases", []), [normalise_text(t).strip() for t in p.get("match_all", [])],
+                                         p.get("streets", [])))
 
     def _load(self, path):
         data = json.loads(path.read_text(encoding="utf-8-sig"))
@@ -114,10 +140,10 @@ class Reference:
         return assets
 
     def match_place(self, text):
-        """The most precise place named in the text, or None."""
+        """The most precise place named in the text, or None. Between equally precise places, the first named wins."""
         normalised = normalise_text(text)
-        found = [p for p in self.places if p.matches(normalised)]
-        return min(found, key=lambda p: p.radius_m) if found else None
+        found = [(p.radius_m, at, p) for p in self.places if (at := p.find(normalised)) is not None]
+        return min(found, key=lambda f: f[:2])[2] if found else None
 
     def nearest_place(self, point, kinds, max_m):
         best, best_d = None, math.inf
