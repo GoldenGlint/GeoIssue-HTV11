@@ -14,8 +14,9 @@ It needs only Python 3.11 or newer. Nothing has to be installed.
 ```sh
 python -m analysis                                # the fictional sample in analysis/samples/
 python -m analysis --input path/to/their_output   # a .json or .jsonl file, or a folder of them
+python -m analysis --input scraping/data/handoff/post-groups.jsonl   # the scraping handoff, after `python -m scraping.share pull`
 python -m analysis --offline                      # template summaries, no Gemini calls
-python -m unittest                                # the tests
+python -m unittest discover -s analysis/tests -t .  # the tests
 ```
 
 Then serve the repo (`npm run dev`, or `python -m http.server 5173`). The map, table and dashboard load `data/analyzed/issues.public.json`, whose records follow `data-contract.md`, and fall back to the demo records when that file is missing.

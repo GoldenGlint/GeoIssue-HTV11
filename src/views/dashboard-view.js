@@ -122,7 +122,7 @@ function pipelineHtml() {
   if (report?.counts) {
     // The analysis run's own counts (data/analyzed/report.json), so every number is measured.
     const c = report.counts, found = (c.sightings || 0) + (c.dropped || 0);
-    stages = [['Photos analysed', c.input_records || 0, true], ['Civic issues found', found, true], ['Located in Toronto', c.sightings || 0, true], ['Unique issues', c.issues || 0, true], ['Verified', verified, true]];
+    stages = [['Photos analysed', c.records ?? c.input_records ?? 0, true], ['Civic issues found', found, true], ['Located in Toronto', c.sightings || 0, true], ['Unique issues', c.issues || 0, true], ['Verified', verified, true]];
     subtitle = `Last analysis run · ${date(report.generated_at)}`;
     firstNote = 'From the photo analysis';
     const reasons = Object.entries(countBy(report.dropped || [], 'reason')).map(([reason, n]) => `${n} ${reason}`).join(', ');

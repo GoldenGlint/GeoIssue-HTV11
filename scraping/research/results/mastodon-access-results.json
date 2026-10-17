@@ -1,0 +1,31 @@
+{
+  "evaluated_at": "2026-10-17T15:56:14.022533+00:00",
+  "posting_window_days": 7,
+  "scope": "Anonymous metadata-only access/volume probe; no images downloaded or visually/location verified; tags can overlap. No paid services.",
+  "results": [
+    {
+      "instance": "mastodon.social",
+      "tag": "Toronto",
+      "post_limit": 20,
+      "pages": 1,
+      "http_status": 200,
+      "posts_returned": 20,
+      "recent_public_original_posts": 20,
+      "recent_image_attachments": 25,
+      "recent_photo_posts": 18,
+      "oldest_returned_post_at": "2026-10-16T04:05:05.000Z"
+    },
+    {
+      "instance": "mastodon.social",
+      "tag": "BikeTO",
+      "post_limit": 20,
+      "pages": 1,
+      "http_status": 200,
+      "posts_returned": 20,
+      "recent_public_original_posts": 19,
+      "recent_image_attachments": 27,
+      "recent_photo_posts": 19,
+      "oldest_returned_post_at": "2026-10-10T15:42:04.480Z"
+    }
+  ]
+}

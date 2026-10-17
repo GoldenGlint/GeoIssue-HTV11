@@ -129,16 +129,27 @@ def _issue_id(source_id, raw, index):
     return "CL-" + hashlib.sha1(basis.encode()).hexdigest()[:8].upper()
 
 
-def _explode(raw, path):
-    issues = get_path(raw, path) if path else None
-    if not isinstance(issues, list) or not issues:
-        return [(raw, None)]
-    views = []
-    for index, issue in enumerate(issues):
-        view = copy.copy(raw)
-        view["issue"] = issue
-        views.append((view, index))
-    return views
+def _explode(raw, paths):
+    """([(view, index)], path used): one view per element of the first list found at any of the paths."""
+    for path in [paths] if isinstance(paths, str) else paths or []:
+        issues = get_path(raw, path)
+        if isinstance(issues, list) and issues:
+            views = []
+            for index, issue in enumerate(issues):
+                view = copy.copy(raw)
+                view["issue"] = issue
+                views.append((view, index))
+            return views, path
+    return [(raw, None)], None
+
+
+def _skip_reason(record, rules):
+    """The first [input] skip_when rule the record matches, as "field=value", or None."""
+    for field, values in rules.items():
+        value = record.get(field)
+        if value is not None and str(value).strip().lower() in {str(v).lower() for v in values}:
+            return f"{field}={value}"
+    return None
 
 
 def new_report():
@@ -163,7 +174,9 @@ def adapt(items, config, report):
     for raw, base_dir in items:
         report["counts"]["input_records"] += 1
         used = set()
-        for view, index in _explode(raw, settings.get("explode")):
+        views, explode_path = _explode(raw, settings.get("explode"))
+        for view, index in views:
+            report["counts"]["records"] += 1  # after splitting, e.g. one per photo
             record = {"provenance": {}}
             for field, candidates in fields.items():
                 for candidate in candidates:
@@ -171,7 +184,7 @@ def adapt(items, config, report):
                     if value not in (None, "", []):
                         record[field] = value
                         record["provenance"][field] = "input"
-                        used.add(_input_path(candidate, settings.get("explode") if index is not None else None))
+                        used.add(_input_path(candidate, explode_path))
                         break
             for field in passthrough:
                 value = get_path(raw, field)
@@ -184,12 +197,19 @@ def adapt(items, config, report):
             if record.get("issue_type") is None or normalise.is_skipped("issue_type", record["issue_type"]):
                 report["counts"]["skipped_not_an_issue"] += 1
                 continue
+            reason = _skip_reason(record, settings.get("skip_when", {}))
+            if reason:
+                report["counts"][f"skipped_{reason}"] += 1
+                continue
             for field in ("issue_type", "severity", "resolution_status", "verification_status", "source_category"):
                 if field in record:
                     record[field] = normalise(field, record[field])
 
             for field in ("detection_confidence", "geo_confidence"):
                 if field in record:
+                    # Words such as "high" go through [values.<field>] first, e.g. "0.85" = ["high"].
+                    if isinstance(record[field], str) and _number(record[field]) is None:
+                        record[field] = normalise(field, record[field])
                     record[field] = _fraction(record[field])
             confidence = record.get("detection_confidence")
             if confidence is not None and confidence < min_confidence:
@@ -211,8 +231,9 @@ def adapt(items, config, report):
             if observed:
                 record["first_seen_at"] = record["last_seen_at"] = observed
                 record["provenance"]["first_seen_at"] = record["provenance"]["last_seen_at"] = "input"
-            if "is_demo" in record:
-                record["is_demo"] = bool(record["is_demo"])
+            for flag in ("is_demo", "photo_needs_blur"):
+                if flag in record:
+                    record[flag] = bool(record[flag])
             if "photo" in record:
                 photo = str(record.pop("photo"))
                 record["provenance"]["photo_source"] = record["provenance"].pop("photo")
@@ -234,7 +255,8 @@ def adapt(items, config, report):
 
 
 def _input_path(candidate, explode):
-    """A [fields] path as it appears in the raw record, with list indexes written as []."""
+    """A [fields] path as it appears in the raw record, with list indexes written as [].
+    `explode` is the list path this record was split on, or None."""
     if explode and candidate.startswith("issue."):
         candidate = f"{explode}[]." + candidate[len("issue."):]
     return re.sub(r"\[\d+\]", "[]", candidate)

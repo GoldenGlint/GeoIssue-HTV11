@@ -782,6 +782,956 @@
    "lng": -79.1865,
    "lat": 43.7735,
    "radius_m": 75
+  },
+  {
+   "name": "Albion Station",
+   "kind": "landmark",
+   "aliases": [
+    "Albion Station"
+   ],
+   "lng": -79.58921,
+   "lat": 43.74114,
+   "radius_m": 150
+  },
+  {
+   "name": "Bathurst Station",
+   "kind": "landmark",
+   "aliases": [
+    "Bathurst Station"
+   ],
+   "lng": -79.41124,
+   "lat": 43.66593,
+   "radius_m": 150
+  },
+  {
+   "name": "Bay Station",
+   "kind": "landmark",
+   "aliases": [
+    "Bay Station"
+   ],
+   "lng": -79.39027,
+   "lat": 43.67019,
+   "radius_m": 150
+  },
+  {
+   "name": "Bayview Station",
+   "kind": "landmark",
+   "aliases": [
+    "Bayview Station"
+   ],
+   "lng": -79.38738,
+   "lat": 43.7668,
+   "radius_m": 150
+  },
+  {
+   "name": "Bessarion Station",
+   "kind": "landmark",
+   "aliases": [
+    "Bessarion Station"
+   ],
+   "lng": -79.37658,
+   "lat": 43.76913,
+   "radius_m": 150
+  },
+  {
+   "name": "Bloor-Yonge Station",
+   "kind": "landmark",
+   "aliases": [
+    "Bloor-Yonge Station"
+   ],
+   "lng": -79.38569,
+   "lat": 43.67079,
+   "radius_m": 150
+  },
+  {
+   "name": "Broadview Station",
+   "kind": "landmark",
+   "aliases": [
+    "Broadview Station"
+   ],
+   "lng": -79.35822,
+   "lat": 43.67699,
+   "radius_m": 150
+  },
+  {
+   "name": "Castle Frank Station",
+   "kind": "landmark",
+   "aliases": [
+    "Castle Frank Station"
+   ],
+   "lng": -79.36905,
+   "lat": 43.6735,
+   "radius_m": 150
+  },
+  {
+   "name": "Cedarvale Station",
+   "kind": "landmark",
+   "aliases": [
+    "Cedarvale Station"
+   ],
+   "lng": -79.43611,
+   "lat": 43.69924,
+   "radius_m": 150
+  },
+  {
+   "name": "Chaplin Station",
+   "kind": "landmark",
+   "aliases": [
+    "Chaplin Station"
+   ],
+   "lng": -79.41729,
+   "lat": 43.70279,
+   "radius_m": 150
+  },
+  {
+   "name": "Chester Station",
+   "kind": "landmark",
+   "aliases": [
+    "Chester Station"
+   ],
+   "lng": -79.35251,
+   "lat": 43.67823,
+   "radius_m": 150
+  },
+  {
+   "name": "Christie Station",
+   "kind": "landmark",
+   "aliases": [
+    "Christie Station"
+   ],
+   "lng": -79.4184,
+   "lat": 43.66411,
+   "radius_m": 150
+  },
+  {
+   "name": "College Station",
+   "kind": "landmark",
+   "aliases": [
+    "College Station"
+   ],
+   "lng": -79.3828,
+   "lat": 43.66066,
+   "radius_m": 150
+  },
+  {
+   "name": "Coxwell Station",
+   "kind": "landmark",
+   "aliases": [
+    "Coxwell Station"
+   ],
+   "lng": -79.32304,
+   "lat": 43.68415,
+   "radius_m": 150
+  },
+  {
+   "name": "Davisville Station",
+   "kind": "landmark",
+   "aliases": [
+    "Davisville Station"
+   ],
+   "lng": -79.39729,
+   "lat": 43.69794,
+   "radius_m": 150
+  },
+  {
+   "name": "Don Mills Station",
+   "kind": "landmark",
+   "aliases": [
+    "Don Mills Station"
+   ],
+   "lng": -79.34594,
+   "lat": 43.77535,
+   "radius_m": 150
+  },
+  {
+   "name": "Donlands Station",
+   "kind": "landmark",
+   "aliases": [
+    "Donlands Station"
+   ],
+   "lng": -79.33779,
+   "lat": 43.68103,
+   "radius_m": 150
+  },
+  {
+   "name": "Downsview Park Station",
+   "kind": "landmark",
+   "aliases": [
+    "Downsview Park Station"
+   ],
+   "lng": -79.47841,
+   "lat": 43.7536,
+   "radius_m": 150
+  },
+  {
+   "name": "Driftwood Station",
+   "kind": "landmark",
+   "aliases": [
+    "Driftwood Station"
+   ],
+   "lng": -79.51338,
+   "lat": 43.75806,
+   "radius_m": 150
+  },
+  {
+   "name": "Dufferin Station",
+   "kind": "landmark",
+   "aliases": [
+    "Dufferin Station"
+   ],
+   "lng": -79.43539,
+   "lat": 43.66026,
+   "radius_m": 150
+  },
+  {
+   "name": "Duncanwoods Station",
+   "kind": "landmark",
+   "aliases": [
+    "Duncanwoods Station"
+   ],
+   "lng": -79.55689,
+   "lat": 43.74897,
+   "radius_m": 150
+  },
+  {
+   "name": "Dundas West Station",
+   "kind": "landmark",
+   "aliases": [
+    "Dundas West Station"
+   ],
+   "lng": -79.45304,
+   "lat": 43.65694,
+   "radius_m": 150
+  },
+  {
+   "name": "Dupont Station",
+   "kind": "landmark",
+   "aliases": [
+    "Dupont Station"
+   ],
+   "lng": -79.40698,
+   "lat": 43.6747,
+   "radius_m": 150
+  },
+  {
+   "name": "Eglinton Station",
+   "kind": "landmark",
+   "aliases": [
+    "Eglinton Station"
+   ],
+   "lng": -79.39857,
+   "lat": 43.70676,
+   "radius_m": 150
+  },
+  {
+   "name": "Emery Station",
+   "kind": "landmark",
+   "aliases": [
+    "Emery Station"
+   ],
+   "lng": -79.54238,
+   "lat": 43.75204,
+   "radius_m": 150
+  },
+  {
+   "name": "Finch Station",
+   "kind": "landmark",
+   "aliases": [
+    "Finch Station"
+   ],
+   "lng": -79.4159,
+   "lat": 43.7813,
+   "radius_m": 150
+  },
+  {
+   "name": "Finch West Station",
+   "kind": "landmark",
+   "aliases": [
+    "Finch West Station"
+   ],
+   "lng": -79.49154,
+   "lat": 43.76397,
+   "radius_m": 150
+  },
+  {
+   "name": "Forest Hill Station",
+   "kind": "landmark",
+   "aliases": [
+    "Forest Hill Station"
+   ],
+   "lng": -79.42554,
+   "lat": 43.70105,
+   "radius_m": 150
+  },
+  {
+   "name": "Glencairn Station",
+   "kind": "landmark",
+   "aliases": [
+    "Glencairn Station"
+   ],
+   "lng": -79.44069,
+   "lat": 43.70865,
+   "radius_m": 150
+  },
+  {
+   "name": "Greenwood Station",
+   "kind": "landmark",
+   "aliases": [
+    "Greenwood Station"
+   ],
+   "lng": -79.33027,
+   "lat": 43.68256,
+   "radius_m": 150
+  },
+  {
+   "name": "High Park Station",
+   "kind": "landmark",
+   "aliases": [
+    "High Park Station"
+   ],
+   "lng": -79.46686,
+   "lat": 43.65387,
+   "radius_m": 150
+  },
+  {
+   "name": "Highway 407 Station",
+   "kind": "landmark",
+   "aliases": [
+    "Highway 407 Station"
+   ],
+   "lng": -79.52309,
+   "lat": 43.78331,
+   "radius_m": 150
+  },
+  {
+   "name": "Humber College Station",
+   "kind": "landmark",
+   "aliases": [
+    "Humber College Station"
+   ],
+   "lng": -79.60153,
+   "lat": 43.7299,
+   "radius_m": 150
+  },
+  {
+   "name": "Islington Station",
+   "kind": "landmark",
+   "aliases": [
+    "Islington Station"
+   ],
+   "lng": -79.52482,
+   "lat": 43.64534,
+   "radius_m": 150
+  },
+  {
+   "name": "Jane Station",
+   "kind": "landmark",
+   "aliases": [
+    "Jane Station"
+   ],
+   "lng": -79.48385,
+   "lat": 43.64992,
+   "radius_m": 150
+  },
+  {
+   "name": "Jane and Finch Station",
+   "kind": "landmark",
+   "aliases": [
+    "Jane and Finch Station"
+   ],
+   "lng": -79.51775,
+   "lat": 43.75725,
+   "radius_m": 150
+  },
+  {
+   "name": "Keele Station",
+   "kind": "landmark",
+   "aliases": [
+    "Keele Station"
+   ],
+   "lng": -79.45958,
+   "lat": 43.65557,
+   "radius_m": 150
+  },
+  {
+   "name": "Keelesdale Station",
+   "kind": "landmark",
+   "aliases": [
+    "Keelesdale Station"
+   ],
+   "lng": -79.47475,
+   "lat": 43.69047,
+   "radius_m": 150
+  },
+  {
+   "name": "Kennedy Station",
+   "kind": "landmark",
+   "aliases": [
+    "Kennedy Station"
+   ],
+   "lng": -79.26375,
+   "lat": 43.73243,
+   "radius_m": 150
+  },
+  {
+   "name": "King Station",
+   "kind": "landmark",
+   "aliases": [
+    "King Station"
+   ],
+   "lng": -79.37775,
+   "lat": 43.64895,
+   "radius_m": 150
+  },
+  {
+   "name": "Kipling Station",
+   "kind": "landmark",
+   "aliases": [
+    "Kipling Station"
+   ],
+   "lng": -79.53551,
+   "lat": 43.63762,
+   "radius_m": 150
+  },
+  {
+   "name": "Laird Station",
+   "kind": "landmark",
+   "aliases": [
+    "Laird Station"
+   ],
+   "lng": -79.36488,
+   "lat": 43.71359,
+   "radius_m": 150
+  },
+  {
+   "name": "Lansdowne Station",
+   "kind": "landmark",
+   "aliases": [
+    "Lansdowne Station"
+   ],
+   "lng": -79.44279,
+   "lat": 43.65911,
+   "radius_m": 150
+  },
+  {
+   "name": "Lawrence Station",
+   "kind": "landmark",
+   "aliases": [
+    "Lawrence Station"
+   ],
+   "lng": -79.40247,
+   "lat": 43.72635,
+   "radius_m": 150
+  },
+  {
+   "name": "Lawrence West Station",
+   "kind": "landmark",
+   "aliases": [
+    "Lawrence West Station"
+   ],
+   "lng": -79.44391,
+   "lat": 43.71522,
+   "radius_m": 150
+  },
+  {
+   "name": "Leaside Station",
+   "kind": "landmark",
+   "aliases": [
+    "Leaside Station"
+   ],
+   "lng": -79.37712,
+   "lat": 43.7111,
+   "radius_m": 150
+  },
+  {
+   "name": "Leslie Station",
+   "kind": "landmark",
+   "aliases": [
+    "Leslie Station"
+   ],
+   "lng": -79.36563,
+   "lat": 43.77107,
+   "radius_m": 150
+  },
+  {
+   "name": "Main Street Station",
+   "kind": "landmark",
+   "aliases": [
+    "Main Street Station"
+   ],
+   "lng": -79.3016,
+   "lat": 43.68905,
+   "radius_m": 150
+  },
+  {
+   "name": "Martin Grove Station",
+   "kind": "landmark",
+   "aliases": [
+    "Martin Grove Station"
+   ],
+   "lng": -79.59234,
+   "lat": 43.73663,
+   "radius_m": 150
+  },
+  {
+   "name": "Milvan Rumike Station",
+   "kind": "landmark",
+   "aliases": [
+    "Milvan Rumike Station"
+   ],
+   "lng": -79.55234,
+   "lat": 43.74996,
+   "radius_m": 150
+  },
+  {
+   "name": "Mount Dennis Station",
+   "kind": "landmark",
+   "aliases": [
+    "Mount Dennis Station"
+   ],
+   "lng": -79.48619,
+   "lat": 43.68793,
+   "radius_m": 150
+  },
+  {
+   "name": "Mount Olive Station",
+   "kind": "landmark",
+   "aliases": [
+    "Mount Olive Station"
+   ],
+   "lng": -79.58136,
+   "lat": 43.74337,
+   "radius_m": 150
+  },
+  {
+   "name": "Mount Pleasant Station",
+   "kind": "landmark",
+   "aliases": [
+    "Mount Pleasant Station"
+   ],
+   "lng": -79.39014,
+   "lat": 43.70846,
+   "radius_m": 150
+  },
+  {
+   "name": "Museum Station",
+   "kind": "landmark",
+   "aliases": [
+    "Museum Station"
+   ],
+   "lng": -79.39335,
+   "lat": 43.66685,
+   "radius_m": 150
+  },
+  {
+   "name": "Norfinch Oakdale Station",
+   "kind": "landmark",
+   "aliases": [
+    "Norfinch Oakdale Station"
+   ],
+   "lng": -79.52425,
+   "lat": 43.75593,
+   "radius_m": 150
+  },
+  {
+   "name": "North York Centre Station",
+   "kind": "landmark",
+   "aliases": [
+    "North York Centre Station"
+   ],
+   "lng": -79.41263,
+   "lat": 43.76868,
+   "radius_m": 150
+  },
+  {
+   "name": "O'Connor Station",
+   "kind": "landmark",
+   "aliases": [
+    "O'Connor Station"
+   ],
+   "lng": -79.30168,
+   "lat": 43.72483,
+   "radius_m": 150
+  },
+  {
+   "name": "Old Mill Station",
+   "kind": "landmark",
+   "aliases": [
+    "Old Mill Station"
+   ],
+   "lng": -79.49433,
+   "lat": 43.64983,
+   "radius_m": 150
+  },
+  {
+   "name": "Osgoode Station",
+   "kind": "landmark",
+   "aliases": [
+    "Osgoode Station"
+   ],
+   "lng": -79.38654,
+   "lat": 43.6508,
+   "radius_m": 150
+  },
+  {
+   "name": "Ossington Station",
+   "kind": "landmark",
+   "aliases": [
+    "Ossington Station"
+   ],
+   "lng": -79.42633,
+   "lat": 43.66238,
+   "radius_m": 150
+  },
+  {
+   "name": "Pape Station",
+   "kind": "landmark",
+   "aliases": [
+    "Pape Station"
+   ],
+   "lng": -79.3449,
+   "lat": 43.67992,
+   "radius_m": 150
+  },
+  {
+   "name": "Pearldale Station",
+   "kind": "landmark",
+   "aliases": [
+    "Pearldale Station"
+   ],
+   "lng": -79.56296,
+   "lat": 43.74769,
+   "radius_m": 150
+  },
+  {
+   "name": "Pioneer Village Station",
+   "kind": "landmark",
+   "aliases": [
+    "Pioneer Village Station"
+   ],
+   "lng": -79.50928,
+   "lat": 43.77686,
+   "radius_m": 150
+  },
+  {
+   "name": "Queen Station",
+   "kind": "landmark",
+   "aliases": [
+    "Queen Station"
+   ],
+   "lng": -79.37946,
+   "lat": 43.65291,
+   "radius_m": 150
+  },
+  {
+   "name": "Queen's Park Station",
+   "kind": "landmark",
+   "aliases": [
+    "Queen's Park Station"
+   ],
+   "lng": -79.39019,
+   "lat": 43.65968,
+   "radius_m": 150
+  },
+  {
+   "name": "Rosedale Station",
+   "kind": "landmark",
+   "aliases": [
+    "Rosedale Station"
+   ],
+   "lng": -79.38845,
+   "lat": 43.67645,
+   "radius_m": 150
+  },
+  {
+   "name": "Rowntree Mills Station",
+   "kind": "landmark",
+   "aliases": [
+    "Rowntree Mills Station"
+   ],
+   "lng": -79.56856,
+   "lat": 43.74622,
+   "radius_m": 150
+  },
+  {
+   "name": "Royal York Station",
+   "kind": "landmark",
+   "aliases": [
+    "Royal York Station"
+   ],
+   "lng": -79.5113,
+   "lat": 43.64818,
+   "radius_m": 150
+  },
+  {
+   "name": "Runnymede Station",
+   "kind": "landmark",
+   "aliases": [
+    "Runnymede Station"
+   ],
+   "lng": -79.476,
+   "lat": 43.6517,
+   "radius_m": 150
+  },
+  {
+   "name": "Sentinel Station",
+   "kind": "landmark",
+   "aliases": [
+    "Sentinel Station"
+   ],
+   "lng": -79.50001,
+   "lat": 43.76105,
+   "radius_m": 150
+  },
+  {
+   "name": "Sheppard West Station",
+   "kind": "landmark",
+   "aliases": [
+    "Sheppard West Station"
+   ],
+   "lng": -79.46225,
+   "lat": 43.7493,
+   "radius_m": 150
+  },
+  {
+   "name": "Sheppard-Yonge Station",
+   "kind": "landmark",
+   "aliases": [
+    "Sheppard-Yonge Station"
+   ],
+   "lng": -79.41091,
+   "lat": 43.76145,
+   "radius_m": 150
+  },
+  {
+   "name": "Sherbourne Station",
+   "kind": "landmark",
+   "aliases": [
+    "Sherbourne Station"
+   ],
+   "lng": -79.37639,
+   "lat": 43.67228,
+   "radius_m": 150
+  },
+  {
+   "name": "Signet Arrow Station",
+   "kind": "landmark",
+   "aliases": [
+    "Signet Arrow Station"
+   ],
+   "lng": -79.53619,
+   "lat": 43.7533,
+   "radius_m": 150
+  },
+  {
+   "name": "Spadina Station",
+   "kind": "landmark",
+   "aliases": [
+    "Spadina Station"
+   ],
+   "lng": -79.4047,
+   "lat": 43.66854,
+   "radius_m": 150
+  },
+  {
+   "name": "St. Andrew Station",
+   "kind": "landmark",
+   "aliases": [
+    "St. Andrew Station"
+   ],
+   "lng": -79.38487,
+   "lat": 43.64779,
+   "radius_m": 150
+  },
+  {
+   "name": "St. Clair Station",
+   "kind": "landmark",
+   "aliases": [
+    "St. Clair Station"
+   ],
+   "lng": -79.39369,
+   "lat": 43.68795,
+   "radius_m": 150
+  },
+  {
+   "name": "St. Clair West Station",
+   "kind": "landmark",
+   "aliases": [
+    "St. Clair West Station"
+   ],
+   "lng": -79.41531,
+   "lat": 43.685,
+   "radius_m": 150
+  },
+  {
+   "name": "St. George Station",
+   "kind": "landmark",
+   "aliases": [
+    "St. George Station"
+   ],
+   "lng": -79.39884,
+   "lat": 43.66844,
+   "radius_m": 150
+  },
+  {
+   "name": "St. Patrick Station",
+   "kind": "landmark",
+   "aliases": [
+    "St. Patrick Station"
+   ],
+   "lng": -79.38827,
+   "lat": 43.65482,
+   "radius_m": 150
+  },
+  {
+   "name": "Stevenson Station",
+   "kind": "landmark",
+   "aliases": [
+    "Stevenson Station"
+   ],
+   "lng": -79.58657,
+   "lat": 43.74326,
+   "radius_m": 150
+  },
+  {
+   "name": "Summerhill Station",
+   "kind": "landmark",
+   "aliases": [
+    "Summerhill Station"
+   ],
+   "lng": -79.3905,
+   "lat": 43.68168,
+   "radius_m": 150
+  },
+  {
+   "name": "TMU Station",
+   "kind": "landmark",
+   "aliases": [
+    "TMU Station"
+   ],
+   "lng": -79.38102,
+   "lat": 43.65654,
+   "radius_m": 150
+  },
+  {
+   "name": "Tobermory Station",
+   "kind": "landmark",
+   "aliases": [
+    "Tobermory Station"
+   ],
+   "lng": -79.50791,
+   "lat": 43.75928,
+   "radius_m": 150
+  },
+  {
+   "name": "Union Station",
+   "kind": "landmark",
+   "aliases": [
+    "Union Station"
+   ],
+   "lng": -79.38021,
+   "lat": 43.64564,
+   "radius_m": 150
+  },
+  {
+   "name": "Vaughan Metropolitan Centre Station",
+   "kind": "landmark",
+   "aliases": [
+    "Vaughan Metropolitan Centre Station"
+   ],
+   "lng": -79.52746,
+   "lat": 43.79424,
+   "radius_m": 150
+  },
+  {
+   "name": "Victoria Park Station",
+   "kind": "landmark",
+   "aliases": [
+    "Victoria Park Station"
+   ],
+   "lng": -79.2888,
+   "lat": 43.69488,
+   "radius_m": 150
+  },
+  {
+   "name": "Warden Station",
+   "kind": "landmark",
+   "aliases": [
+    "Warden Station"
+   ],
+   "lng": -79.27904,
+   "lat": 43.71112,
+   "radius_m": 150
+  },
+  {
+   "name": "Wellesley Station",
+   "kind": "landmark",
+   "aliases": [
+    "Wellesley Station"
+   ],
+   "lng": -79.3838,
+   "lat": 43.66552,
+   "radius_m": 150
+  },
+  {
+   "name": "Westmore Station",
+   "kind": "landmark",
+   "aliases": [
+    "Westmore Station"
+   ],
+   "lng": -79.60037,
+   "lat": 43.73481,
+   "radius_m": 150
+  },
+  {
+   "name": "Wilson Station",
+   "kind": "landmark",
+   "aliases": [
+    "Wilson Station"
+   ],
+   "lng": -79.45006,
+   "lat": 43.73448,
+   "radius_m": 150
+  },
+  {
+   "name": "Woodbine Station",
+   "kind": "landmark",
+   "aliases": [
+    "Woodbine Station"
+   ],
+   "lng": -79.31262,
+   "lat": 43.68641,
+   "radius_m": 150
+  },
+  {
+   "name": "York Mills Station",
+   "kind": "landmark",
+   "aliases": [
+    "York Mills Station"
+   ],
+   "lng": -79.40607,
+   "lat": 43.74404,
+   "radius_m": 150
+  },
+  {
+   "name": "York University Station",
+   "kind": "landmark",
+   "aliases": [
+    "York University Station"
+   ],
+   "lng": -79.49963,
+   "lat": 43.77412,
+   "radius_m": 150
+  },
+  {
+   "name": "Yorkdale Station",
+   "kind": "landmark",
+   "aliases": [
+    "Yorkdale Station"
+   ],
+   "lng": -79.4475,
+   "lat": 43.72464,
+   "radius_m": 150
   }
  ]
 }

@@ -1,0 +1,398 @@
+{
+  "bluesky": {
+    "probed_at": "2026-10-17T19:08:21.302880+00:00",
+    "days": 7,
+    "results": [
+      {
+        "source": "Bloor bike lanes",
+        "posts": 100,
+        "errors": [],
+        "photo_posts": 18,
+        "images": 24,
+        "issue_word_images": 24,
+        "issue_word_posts": 18
+      },
+      {
+        "source": "Toronto fire",
+        "posts": 73,
+        "errors": [],
+        "photo_posts": 18,
+        "images": 23,
+        "issue_word_images": 23,
+        "issue_word_posts": 18
+      },
+      {
+        "source": "Toronto construction",
+        "posts": 54,
+        "errors": [],
+        "photo_posts": 15,
+        "images": 23,
+        "issue_word_images": 22,
+        "issue_word_posts": 15
+      },
+      {
+        "source": "Toronto \"bike lanes\"",
+        "posts": 97,
+        "errors": [],
+        "photo_posts": 14,
+        "images": 19,
+        "issue_word_images": 19,
+        "issue_word_posts": 14
+      },
+      {
+        "source": "Toronto \"bike lane\"",
+        "posts": 100,
+        "errors": [],
+        "photo_posts": 14,
+        "images": 18,
+        "issue_word_images": 18,
+        "issue_word_posts": 14
+      },
+      {
+        "source": "#BikeTO",
+        "posts": 99,
+        "errors": [],
+        "photo_posts": 27,
+        "images": 40,
+        "issue_word_images": 17,
+        "issue_word_posts": 15
+      },
+      {
+        "source": "Bloor \"bike lane\"",
+        "posts": 100,
+        "errors": [],
+        "photo_posts": 14,
+        "images": 17,
+        "issue_word_images": 17,
+        "issue_word_posts": 14
+      },
+      {
+        "source": "Toronto sidewalk",
+        "posts": 16,
+        "errors": [],
+        "photo_posts": 10,
+        "images": 14,
+        "issue_word_images": 14,
+        "issue_word_posts": 10
+      },
+      {
+        "source": "#Toronto",
+        "posts": 98,
+        "errors": [],
+        "photo_posts": 47,
+        "images": 58,
+        "issue_word_images": 8,
+        "issue_word_posts": 7
+      },
+      {
+        "source": "Toronto graffiti",
+        "posts": 9,
+        "errors": [],
+        "photo_posts": 7,
+        "images": 11,
+        "issue_word_images": 8,
+        "issue_word_posts": 7
+      },
+      {
+        "source": "Toronto crosswalk",
+        "posts": 7,
+        "errors": [],
+        "photo_posts": 4,
+        "images": 7,
+        "issue_word_images": 6,
+        "issue_word_posts": 3
+      },
+      {
+        "source": "#TOpoli",
+        "posts": 99,
+        "errors": [],
+        "photo_posts": 30,
+        "images": 37,
+        "issue_word_images": 5,
+        "issue_word_posts": 4
+      },
+      {
+        "source": "\"Queen\" \"Spadina\"",
+        "posts": 27,
+        "errors": [],
+        "photo_posts": 4,
+        "images": 7,
+        "issue_word_images": 4,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "Toronto streetphotography",
+        "posts": 14,
+        "errors": [],
+        "photo_posts": 14,
+        "images": 17,
+        "issue_word_images": 3,
+        "issue_word_posts": 3
+      },
+      {
+        "source": "Junction Toronto",
+        "posts": 16,
+        "errors": [],
+        "photo_posts": 13,
+        "images": 13,
+        "issue_word_images": 3,
+        "issue_word_posts": 3
+      },
+      {
+        "source": "Toronto flooding",
+        "posts": 7,
+        "errors": [],
+        "photo_posts": 3,
+        "images": 6,
+        "issue_word_images": 3,
+        "issue_word_posts": 3
+      },
+      {
+        "source": "Toronto garbage",
+        "posts": 11,
+        "errors": [],
+        "photo_posts": 2,
+        "images": 3,
+        "issue_word_images": 3,
+        "issue_word_posts": 2
+      },
+      {
+        "source": "Toronto waterfront",
+        "posts": 50,
+        "errors": [],
+        "photo_posts": 14,
+        "images": 19,
+        "issue_word_images": 2,
+        "issue_word_posts": 2
+      },
+      {
+        "source": "#TTC",
+        "posts": 100,
+        "errors": [],
+        "photo_posts": 9,
+        "images": 9,
+        "issue_word_images": 2,
+        "issue_word_posts": 2
+      },
+      {
+        "source": "High Park Toronto",
+        "posts": 19,
+        "errors": [],
+        "photo_posts": 6,
+        "images": 6,
+        "issue_word_images": 2,
+        "issue_word_posts": 2
+      },
+      {
+        "source": "Toronto flood",
+        "posts": 8,
+        "errors": [],
+        "photo_posts": 2,
+        "images": 2,
+        "issue_word_images": 2,
+        "issue_word_posts": 2
+      },
+      {
+        "source": "Union Station Toronto",
+        "posts": 14,
+        "errors": [],
+        "photo_posts": 8,
+        "images": 14,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "311 Toronto",
+        "posts": 4,
+        "errors": [],
+        "photo_posts": 1,
+        "images": 4,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "Toronto crash",
+        "posts": 19,
+        "errors": [],
+        "photo_posts": 1,
+        "images": 2,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "Toronto encampment",
+        "posts": 3,
+        "errors": [],
+        "photo_posts": 1,
+        "images": 2,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "Queen Street West Toronto",
+        "posts": 2,
+        "errors": [],
+        "photo_posts": 2,
+        "images": 2,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "TTC streetcar",
+        "posts": 11,
+        "errors": [],
+        "photo_posts": 2,
+        "images": 2,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "Yonge \"bike lane\"",
+        "posts": 6,
+        "errors": [],
+        "photo_posts": 1,
+        "images": 1,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "Toronto \"road closed\"",
+        "posts": 2,
+        "errors": [],
+        "photo_posts": 1,
+        "images": 1,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "Finch LRT",
+        "posts": 1,
+        "errors": [],
+        "photo_posts": 1,
+        "images": 1,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "Etobicoke sidewalk",
+        "posts": 2,
+        "errors": [],
+        "photo_posts": 1,
+        "images": 1,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "The Annex Toronto",
+        "posts": 7,
+        "errors": [],
+        "photo_posts": 1,
+        "images": 1,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      }
+    ]
+  },
+  "reddit": {
+    "probed_at": "2026-10-17T19:09:29.415928+00:00",
+    "days": 7,
+    "results": [
+      {
+        "source": "r/toronto",
+        "posts": 499,
+        "errors": [],
+        "photo_posts": 106,
+        "images": 203,
+        "issue_word_images": 50,
+        "issue_word_posts": 22
+      },
+      {
+        "source": "r/TTC",
+        "posts": 55,
+        "errors": [],
+        "photo_posts": 22,
+        "images": 41,
+        "issue_word_images": 3,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "r/scarborough",
+        "posts": 21,
+        "errors": [],
+        "photo_posts": 5,
+        "images": 10,
+        "issue_word_images": 1,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "r/etobicoke",
+        "posts": 60,
+        "errors": [],
+        "photo_posts": 4,
+        "images": 7,
+        "issue_word_images": 0,
+        "issue_word_posts": 0
+      }
+    ]
+  },
+  "mastodon": {
+    "probed_at": "2026-10-17T19:08:26.131979+00:00",
+    "days": 7,
+    "results": [
+      {
+        "source": "#Toronto",
+        "posts": 199,
+        "errors": [],
+        "photo_posts": 100,
+        "images": 140,
+        "issue_word_images": 32,
+        "issue_word_posts": 22
+      },
+      {
+        "source": "#BikeTO",
+        "posts": 200,
+        "errors": [],
+        "photo_posts": 18,
+        "images": 26,
+        "issue_word_images": 22,
+        "issue_word_posts": 14
+      },
+      {
+        "source": "#TOpoli",
+        "posts": 200,
+        "errors": [],
+        "photo_posts": 20,
+        "images": 33,
+        "issue_word_images": 16,
+        "issue_word_posts": 8
+      },
+      {
+        "source": "#onpoli",
+        "posts": 200,
+        "errors": [],
+        "photo_posts": 17,
+        "images": 24,
+        "issue_word_images": 16,
+        "issue_word_posts": 10
+      },
+      {
+        "source": "#BikeLanes",
+        "posts": 200,
+        "errors": [],
+        "photo_posts": 1,
+        "images": 3,
+        "issue_word_images": 3,
+        "issue_word_posts": 1
+      },
+      {
+        "source": "#TTC",
+        "posts": 199,
+        "errors": [],
+        "photo_posts": 7,
+        "images": 8,
+        "issue_word_images": 2,
+        "issue_word_posts": 2
+      }
+    ]
+  }
+}

@@ -48,7 +48,7 @@ export function filtersHtml() {
 }
 export function secondaryFilters() {
   const infra = state.filters.infra ? `<span class="scope-chip">${state.filters.infra === 'any' ? 'Any infrastructure' : esc(state.filters.infra)} · within ${state.filters.radius}m <button data-action="clear-infra" aria-label="Clear infrastructure filter">×</button></span>` : '';
-  return `<div class="filter-context"><div class="filter-status">${filterChips()}</div><div class="context-actions">${infra}<button class="text-button" data-action="proximity">${icon('layers')} Infrastructure & proximity</button><span class="context-divider"></span><span><strong>${filtered().length}</strong> sample issues</span></div></div>`;
+  return `<div class="filter-context"><div class="filter-status">${filterChips()}</div><div class="context-actions">${infra}<button class="text-button" data-action="proximity">${icon('layers')} Infrastructure & proximity</button><span class="context-divider"></span><span><strong>${filtered().length}</strong> ${state.issues.some(i => i.is_demo) ? 'sample issues' : 'issues'}</span></div></div>`;
 }
 export function updateFilteredView() {
   state.page = 1; state.selected = [];

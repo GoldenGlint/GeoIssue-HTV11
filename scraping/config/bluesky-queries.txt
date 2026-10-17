@@ -1,0 +1,50 @@
+# One full search per line. Edit this file, then pass --query-file to the collector.
+# Blank lines and lines starting with '# ' are ignored. Hashtag searches skip Bluesky's date
+# filter (it returns HTTP 400 for them); posts are still filtered by date after fetching.
+# At most 50 queries plus author feeds per run; duplicates are combined.
+# Ranked with `python -m scraping.probe_queries bluesky` on Oct 17, 2026 (7-day window):
+# searches below found recent photos whose captions mention a problem.
+
+# Most problem photos per search
+Bloor bike lanes
+Toronto fire
+Toronto construction
+Toronto "bike lanes"
+Toronto "bike lane"
+#BikeTO
+Bloor "bike lane"
+Toronto sidewalk
+#Toronto
+Toronto graffiti
+Toronto crosswalk
+#TOpoli
+"Queen" "Spadina"
+Toronto garbage
+Toronto flooding
+Toronto flood
+Toronto streetphotography
+Junction Toronto
+#TTC
+Toronto waterfront
+High Park Toronto
+311 Toronto
+Toronto crash
+Toronto encampment
+Yonge "bike lane"
+Toronto "road closed"
+Finch LRT
+Union Station Toronto
+Queen Street West Toronto
+TTC streetcar
+Etobicoke sidewalk
+The Annex Toronto
+
+# Returned no recent photos on Oct 17. Re-test with the probe after a storm or news event:
+# Toronto pothole
+# Toronto "storm drain"
+# Toronto "water main"
+# Toronto "fallen tree"
+# Toronto "power outage"
+# Toronto "illegal dumping"
+# TTC shelter
+# Gardiner closure

@@ -1,0 +1,38 @@
+{
+  "evaluated_on": "2026-10-17",
+  "scope": "Small anonymous API/download smoke test; images remain unreviewed. Not a citywide volume or usefulness benchmark.",
+  "access": {
+    "public_search_host_http_status": 403,
+    "appview_search_host_http_status": 200,
+    "public_author_feed_http_status": 200,
+    "account_or_api_key_used": false
+  },
+  "initial_sample": {
+    "queries": [
+      "toronto",
+      "TTC"
+    ],
+    "unique_posts_returned": 50,
+    "photo_posts": 7,
+    "images_downloaded": 8,
+    "image_download_failures": 0
+  },
+  "repeat_sample": {
+    "queries": [
+      "toronto",
+      "TTC Toronto"
+    ],
+    "unique_posts_returned": 48,
+    "retained_posts_rechecked": 7,
+    "media_reused": 8,
+    "new_images_downloaded": 1,
+    "image_download_failures": 0,
+    "stored_images": 9
+  },
+  "output_checks": {
+    "source_independent_schema": true,
+    "author_profile_fields_omitted": true,
+    "saved_derivatives_have_no_exif": true
+  },
+  "paid_services_used": false
+}

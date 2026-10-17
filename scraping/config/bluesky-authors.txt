@@ -1,0 +1,7 @@
+# Public Bluesky handles or DIDs. One per line. '# ' comments are ignored.
+# Seed from posters that previously supplied useful Toronto infrastructure scenes.
+# Handles are discovery inputs only; they are not written into reports.
+# Add more after Gemini accepts posts from additional accounts.
+
+# Leave empty until you paste inspected handles below. Example:
+# useful.bsky.social

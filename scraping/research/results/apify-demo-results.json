@@ -1,0 +1,16 @@
+{
+  "evaluated_on": "2026-10-17",
+  "collector": "apify/instagram-scraper",
+  "plan_verified": "FREE",
+  "total_demo_allowance_usd": 0.05,
+  "observed_free_credit_used_usd_approx": 0.0324,
+  "out_of_pocket_usd": 0,
+  "returned_items_including_source_errors": 12,
+  "photo_posts": 9,
+  "image_records": 24,
+  "downloaded_images": 24,
+  "video_posts_skipped": 2,
+  "source_errors": 1,
+  "automatic_visual_classifier": false,
+  "note": "Small real Instagram sample. Location and capture age are unverified; useful-scene and civic-issue decisions require review. Raw images, captions, credentials, and run IDs are excluded from this summary."
+}
