@@ -42,7 +42,7 @@ export function attachSearch(input, { getItems, onChoose, icon }) {
     popup.replaceChildren();
     const heading = document.createElement('div');
     heading.className = 'search-suggestion-heading';
-    heading.textContent = items.length ? 'JUMP TO A PLACE OR ISSUE' : 'NO SAMPLE MATCHES';
+    heading.textContent = items.length ? 'Jump to a place or issue' : 'No matching sample issues';
     popup.append(heading);
     for (const [index, item] of items.entries()) {
       const row = document.createElement('div');

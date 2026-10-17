@@ -5,14 +5,14 @@ import { state, filtered, findIssue, persist, applyCorrection } from '../state.j
 import { emptyHtml, issueRow, toast, correctionSummary } from '../ui.js';
 import { render } from '../app.js';
 
-const pendingCard = i => `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · LOCAL SUBMISSION${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>${esc(i.category)}</h3><p>${esc(i.description)}</p><p>${esc(i.address)}${i.coordinates ? ` · ${i.coordinates[1].toFixed(3)}, ${i.coordinates[0].toFixed(3)}` : ''}</p></div>${badge('Pending review')}<span class="subtle-label">Privacy processing not connected</span></div>`;
+const pendingCard = i => `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · Local submission${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>${esc(i.category)}</h3><p>${esc(i.description)}</p><p>${esc(i.address)}${i.coordinates ? ` · ${i.coordinates[1].toFixed(3)}, ${i.coordinates[0].toFixed(3)}` : ''}</p></div>${badge('Pending review')}<span class="subtle-label">Privacy processing not connected</span></div>`;
 
 /** A suggested correction; reviewers get Accept and Dismiss. */
 const correctionCard = (c, review = false) => {
   const issue = findIssue(c.issue_id);
   if (!issue) return '';
   const actions = review ? `<div class="review-actions"><button class="button small" data-correction="${c.correction_id}" data-decision="accept">${icon('check')} Accept</button><button class="button small" data-correction="${c.correction_id}" data-decision="dismiss">Dismiss</button></div>` : badge(c.status);
-  return `<div class="card pending-card correction-card"><div><span class="eyebrow">${esc(c.issue_id)} · CORRECTION · ${date(c.created_at)}</span><h3><button class="text-button" data-issue="${esc(c.issue_id)}">${esc(issue.issue_type)} · ${esc(issue.address)}</button></h3><p>${esc(correctionSummary(c, issue))}${c.reason ? `: ${esc(c.reason)}` : ''}.</p>${c.note ? `<p class="correction-quote">“${esc(c.note)}”</p>` : ''}</div>${actions}</div>`;
+  return `<div class="card pending-card correction-card"><div><span class="eyebrow">${esc(c.issue_id)} · Correction · ${date(c.created_at)}</span><h3><button class="text-button" data-issue="${esc(c.issue_id)}">${esc(issue.issue_type)} · ${esc(issue.address)}</button></h3><p>${esc(correctionSummary(c, issue))}${c.reason ? `: ${esc(c.reason)}` : ''}.</p>${c.note ? `<p class="correction-quote">“${esc(c.note)}”</p>` : ''}</div>${actions}</div>`;
 };
 
 const savedCard = i => `<article class="card saved-card"><div class="saved-card-top">${badge(i.severity)}<button class="icon-button" data-save="${i.issue_id}" aria-label="Toggle saved issue">${icon('bookmark', state.saved.includes(i.issue_id) ? 'saved-icon' : '')}</button></div><button class="saved-card-main" data-issue="${i.issue_id}"><span class="type-orb" style="--type-color:${typeColor(i.issue_type)}">${typeIcon(i.issue_type)}</span><h3>${esc(i.issue_type)}</h3><p>${esc(i.address)}</p><span>${esc(i.neighbourhood_name)} · ${date(i.first_seen_at)}</span></button><div class="saved-card-footer">${badge(i.resolution_status)}<span>${i.issue_id}</span></div></article>`;
