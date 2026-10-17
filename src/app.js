@@ -154,7 +154,8 @@ export function setRole(role) {
 }
 async function loadIssues() {
   state.sources = await issueRepository.sources();
-  if (state.dataSource === 'pipeline' && !state.sources.pipeline) state.dataSource = 'sample';
+  // Analysed posts are shown when there are any, unless this browser picked a dataset in the header.
+  if (!state.dataSource || (state.dataSource === 'pipeline' && !state.sources.pipeline)) state.dataSource = state.sources.pipeline ? 'pipeline' : 'sample';
   state.issues = await issueRepository.list(state.dataSource);
   const pipeline = state.dataSource === 'pipeline';
   [state.pipeline.report, state.pipeline.areas] = pipeline ? await Promise.all([issueRepository.pipelineReport(), issueRepository.areaSummaries()]) : [null, null];
@@ -170,6 +171,12 @@ async function switchDataSource(source) {
   await loadIssues();
   toast(source === 'pipeline' ? `Showing pipeline output: ${state.issues.length} issues` : `Showing sample data: ${state.issues.length} issues`);
   render();
+  frameAnalysed();
+}
+// The analysed posts are few and spread across the city, so the map starts with all of them in view. It jumps
+// there: the new map's first resize callback would stop an animation.
+function frameAnalysed() {
+  if (state.dataSource === 'pipeline' && state.view === 'map' && !state.panel && filtered().length) requestAnimationFrame(() => frameIssues(filtered(), 15, 0));
 }
 function bindIssueLinks(root) {
   root.querySelectorAll('[data-issue]').forEach(b => b.onclick = () => {
@@ -255,10 +262,23 @@ async function dismissSplash() {
   setTimeout(() => splash.remove(), 400);
 }
 
+// A shared link opens its issue even when that is in the other dataset. The switch isn't remembered.
+async function loadSharedIssueDataset() {
+  const shared = new URLSearchParams(location.hash.split('?')[1] || '').get('issue');
+  const other = state.dataSource === 'pipeline' ? 'sample' : 'pipeline';
+  if (!shared || findIssue(shared) || !state.sources[other]) return;
+  const previous = state.dataSource;
+  state.dataSource = other;
+  await loadIssues();
+  if (!findIssue(shared)) { state.dataSource = previous; await loadIssues(); }
+}
+
 async function start() {
   try {
     await loadIssues();
+    await loadSharedIssueDataset();
     route();
+    frameAnalysed();
   } catch (error) {
     app.innerHTML = '<div class="load-error"><h1>Couldn’t load the workspace</h1><p>Check your issue repository connection and reload.</p><button onclick="location.reload()">Retry</button></div>';
     console.error(error);

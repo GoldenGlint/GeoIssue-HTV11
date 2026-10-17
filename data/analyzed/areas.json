@@ -1,0 +1,385 @@
+{
+ "generated_at": "2026-10-17T22:50:08Z",
+ "trend_days": 7,
+ "city": {
+  "name": "Toronto",
+  "total": 6,
+  "open": 6,
+  "verified": 0,
+  "sightings": 6,
+  "by_type": {
+   "Other": 5,
+   "Flooding": 1
+  },
+  "by_severity": {
+   "Medium": 6
+  },
+  "by_status": {
+   "Open": 6
+  },
+  "new_recent": 6,
+  "new_previous": 0,
+  "median_open_age_days": 1.5,
+  "top_priority": [
+   {
+    "issue_id": "CL-6AB8C79B",
+    "issue_type": "Other",
+    "address": "Dundas St & Yonge St",
+    "priority_score": 38
+   },
+   {
+    "issue_id": "CL-EEF1EA17",
+    "issue_type": "Other",
+    "address": "Bloor St W & Islington Ave",
+    "priority_score": 38
+   },
+   {
+    "issue_id": "CL-B48D629A",
+    "issue_type": "Flooding",
+    "address": "Queen St W & Spadina Ave",
+    "priority_score": 27
+   }
+  ]
+ },
+ "by_area": {
+  "neighbourhood_id": [
+   {
+    "name": "church-wellesley",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Other": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 3,
+    "top_priority": [
+     {
+      "issue_id": "CL-6AB8C79B",
+      "issue_type": "Other",
+      "address": "Dundas St & Yonge St",
+      "priority_score": 38
+     }
+    ],
+    "label": "Church–Wellesley"
+   },
+   {
+    "name": "downtown",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Flooding": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 4,
+    "top_priority": [
+     {
+      "issue_id": "CL-B48D629A",
+      "issue_type": "Flooding",
+      "address": "Queen St W & Spadina Ave",
+      "priority_score": 27
+     }
+    ],
+    "label": "Downtown"
+   },
+   {
+    "name": "etobicoke",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Other": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 3,
+    "top_priority": [
+     {
+      "issue_id": "CL-EEF1EA17",
+      "issue_type": "Other",
+      "address": "Bloor St W & Islington Ave",
+      "priority_score": 38
+     }
+    ],
+    "label": "Etobicoke"
+   },
+   {
+    "name": "high-park",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Other": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 0,
+    "top_priority": [
+     {
+      "issue_id": "CL-5390414C",
+      "issue_type": "Other",
+      "address": "High Park (approximate)",
+      "priority_score": 25
+     }
+    ],
+    "label": "High Park"
+   },
+   {
+    "name": "scarborough-centre",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Other": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 0,
+    "top_priority": [
+     {
+      "issue_id": "CL-CF7A8FBD",
+      "issue_type": "Other",
+      "address": "Ellesmere Station (closed)",
+      "priority_score": 25
+     }
+    ],
+    "label": "Scarborough Centre"
+   },
+   {
+    "name": "scarborough-southwest",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Other": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 0,
+    "top_priority": [
+     {
+      "issue_id": "CL-1912DF82",
+      "issue_type": "Other",
+      "address": "Lawrence East Station (closed)",
+      "priority_score": 18
+     }
+    ],
+    "label": "Scarborough Southwest"
+   }
+  ],
+  "ward_id": [
+   {
+    "name": "21",
+    "total": 2,
+    "open": 2,
+    "verified": 0,
+    "sightings": 2,
+    "by_type": {
+     "Other": 2
+    },
+    "by_severity": {
+     "Medium": 2
+    },
+    "by_status": {
+     "Open": 2
+    },
+    "new_recent": 2,
+    "new_previous": 0,
+    "median_open_age_days": 0.0,
+    "top_priority": [
+     {
+      "issue_id": "CL-CF7A8FBD",
+      "issue_type": "Other",
+      "address": "Ellesmere Station (closed)",
+      "priority_score": 25
+     },
+     {
+      "issue_id": "CL-1912DF82",
+      "issue_type": "Other",
+      "address": "Lawrence East Station (closed)",
+      "priority_score": 18
+     }
+    ],
+    "label": "Scarborough Centre",
+    "summary": {
+     "text": "Ward 21 (Scarborough Centre) has 2 issues in CivicLens data, 2 still open. By type: other (2). 2 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at Ellesmere Station (closed). Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "method": "template"
+    }
+   },
+   {
+    "name": "3",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Other": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 3,
+    "top_priority": [
+     {
+      "issue_id": "CL-EEF1EA17",
+      "issue_type": "Other",
+      "address": "Bloor St W & Islington Ave",
+      "priority_score": 38
+     }
+    ],
+    "label": "Etobicoke—Lakeshore",
+    "summary": {
+     "text": "Ward 3 (Etobicoke—Lakeshore) has 1 issue in CivicLens data, 1 still open. By type: other (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at Bloor St W & Islington Ave. Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "method": "template"
+    }
+   },
+   {
+    "name": "4",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Other": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 0,
+    "top_priority": [
+     {
+      "issue_id": "CL-5390414C",
+      "issue_type": "Other",
+      "address": "High Park (approximate)",
+      "priority_score": 25
+     }
+    ],
+    "label": "Parkdale—High Park",
+    "summary": {
+     "text": "Ward 4 (Parkdale—High Park) has 1 issue in CivicLens data, 1 still open. By type: other (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at High Park (approximate). Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "method": "template"
+    }
+   },
+   {
+    "name": "10",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Flooding": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 4,
+    "top_priority": [
+     {
+      "issue_id": "CL-B48D629A",
+      "issue_type": "Flooding",
+      "address": "Queen St W & Spadina Ave",
+      "priority_score": 27
+     }
+    ],
+    "label": "Spadina—Fort York",
+    "summary": {
+     "text": "Ward 10 (Spadina—Fort York) has 1 issue in CivicLens data, 1 still open. By type: flooding (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: flooding at Queen St W & Spadina Ave. Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "method": "template"
+    }
+   },
+   {
+    "name": "13",
+    "total": 1,
+    "open": 1,
+    "verified": 0,
+    "sightings": 1,
+    "by_type": {
+     "Other": 1
+    },
+    "by_severity": {
+     "Medium": 1
+    },
+    "by_status": {
+     "Open": 1
+    },
+    "new_recent": 1,
+    "new_previous": 0,
+    "median_open_age_days": 3,
+    "top_priority": [
+     {
+      "issue_id": "CL-6AB8C79B",
+      "issue_type": "Other",
+      "address": "Dundas St & Yonge St",
+      "priority_score": 38
+     }
+    ],
+    "label": "Toronto Centre",
+    "summary": {
+     "text": "Ward 13 (Toronto Centre) has 1 issue in CivicLens data, 1 still open. By type: other (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at Dundas St & Yonge St. Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "method": "template"
+    }
+   }
+  ]
+ },
+ "reference_data": "placeholder"
+}

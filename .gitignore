@@ -15,6 +15,12 @@ playwright-report/
 # Claude Code worktrees and session files
 .claude/
 
-# Local data: real posts and photos stay on this machine (the repository is public)
-data/
+# Local data: photos and full-precision analysis stay on this machine (the repository is public).
+# Only the public view the app reads is shared: no photos, no handles or post links, positions on a 250 m grid.
+data/*
+!data/analyzed/
+data/analyzed/*
+!data/analyzed/issues.public.json
+!data/analyzed/report.json
+!data/analyzed/areas.json
 scraping/data/

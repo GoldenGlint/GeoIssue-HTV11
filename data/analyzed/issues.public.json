@@ -1,0 +1,620 @@
+[
+ {
+  "issue_id": "CL-6AB8C79B",
+  "incident_id": "INC-6AB8C79B",
+  "issue_type": "Other",
+  "severity": "Medium",
+  "resolution_status": "Open",
+  "verification_status": "Needs review",
+  "geometry": {
+   "type": "Point",
+   "coordinates": [
+    -79.37957,
+    43.6568
+   ]
+  },
+  "location_radius_m": 252,
+  "geo_confidence": 0.5,
+  "geo_method": "Place name in location text",
+  "geo_trace": [
+   {
+    "stage": "Coordinates",
+    "result": "None supplied with the photo or post",
+    "status": "skip"
+   },
+   {
+    "stage": "Place name",
+    "result": "“Dundas St & Yonge St” found in the location text",
+    "status": "match"
+   },
+   {
+    "stage": "Area",
+    "result": "Inside Toronto Centre",
+    "status": "info"
+   },
+   {
+    "stage": "Area",
+    "result": "Nearest mapped place is in Church–Wellesley (630 m)",
+    "status": "info"
+   },
+   {
+    "stage": "Nearby infrastructure",
+    "result": "TMU Station (TTC) 24 m away",
+    "status": "info"
+   },
+   {
+    "stage": "Duplicate merge",
+    "result": "4 photos from 1 post merged; the most precise location is kept",
+    "status": "info"
+   },
+   {
+    "stage": "Privacy rounding",
+    "result": "Published position snapped to a 250 m grid until verified",
+    "status": "info"
+   }
+  ],
+  "geo_clues": [
+   "storefront architecture",
+   "caption referring to Yonge and Dundas",
+   "TTC pole sign",
+   "Distinctive downtown Toronto buildings and streetscape",
+   "Caption mentions Yonge and Dundas to Yonge College area",
+   "Visible Metro and Winners store reflections",
+   "Mention of Yonge and Dundas to Yonge College area"
+  ],
+  "neighbourhood_id": "church-wellesley",
+  "neighbourhood_name": "Church–Wellesley",
+  "ward_id": "13",
+  "ward_name": "Toronto Centre",
+  "address": "Dundas St & Yonge St",
+  "infrastructure_type": "TTC",
+  "asset_id": "TTC-083",
+  "asset_name": "TMU Station",
+  "distance_m": 24,
+  "nearby_assets": [
+   {
+    "type": "TTC",
+    "asset_id": "TTC-083",
+    "name": "TMU Station",
+    "distance_m": 24
+   },
+   {
+    "type": "Schools",
+    "asset_id": "SCH-101",
+    "name": "Toronto Metropolitan University",
+    "distance_m": 227
+   },
+   {
+    "type": "Roads",
+    "asset_id": "ROA-099",
+    "name": "Lake Shore Boulevard",
+    "distance_m": 1378
+   }
+  ],
+  "detection_confidence": 0.85,
+  "sightings_count": 1,
+  "first_seen_at": "2026-10-14T02:03:42Z",
+  "last_seen_at": "2026-10-14T02:03:42Z",
+  "source_category": "Public social post",
+  "description": "A large display window pane is entirely shattered with a web of dense cracks across its surface, set within a metallic storefront frame. Yellow police caution tape is wrapped diagonally across the damaged glass and secured to the frame. The surrounding red and metal facade panels appear intact.",
+  "explanation": "Photo analysis flagged “Shattered Display Window with Caution Tape” (other) with 85% confidence. Location method: Place name in location text; approximate within 252 m. A reviewer should confirm the issue and location before any action.",
+  "evidence_thumbnail": null,
+  "evidence_credit": null,
+  "is_demo": false,
+  "title": "Shattered Display Window with Caution Tape",
+  "priority_score": 38,
+  "priority_reasons": [
+   "Medium severity (+25)",
+   "Open 3 days (+1.5)",
+   "24 m from TMU Station (+12)"
+  ],
+  "sighting_ids": [
+   "CL-6AB8C79B",
+   "CL-92C5B1E5",
+   "CL-EE61274F",
+   "CL-EFC3C696"
+  ],
+  "reference_data": "placeholder",
+  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+ },
+ {
+  "issue_id": "CL-EEF1EA17",
+  "incident_id": "INC-EEF1EA17",
+  "issue_type": "Other",
+  "severity": "Medium",
+  "resolution_status": "Open",
+  "verification_status": "Needs review",
+  "geometry": {
+   "type": "Point",
+   "coordinates": [
+    -79.52301,
+    43.64557
+   ]
+  },
+  "location_radius_m": 252,
+  "geo_confidence": 0.5,
+  "geo_method": "Place name in location text",
+  "geo_trace": [
+   {
+    "stage": "Coordinates",
+    "result": "None supplied with the photo or post",
+    "status": "skip"
+   },
+   {
+    "stage": "Place name",
+    "result": "“Bloor St W & Islington Ave” found in the location text",
+    "status": "match"
+   },
+   {
+    "stage": "Area",
+    "result": "Inside Etobicoke—Lakeshore",
+    "status": "info"
+   },
+   {
+    "stage": "Area",
+    "result": "Nearest mapped place is in Etobicoke (0 m)",
+    "status": "info"
+   },
+   {
+    "stage": "Nearby infrastructure",
+    "result": "Islington Station (TTC) 31 m away",
+    "status": "info"
+   },
+   {
+    "stage": "Privacy rounding",
+    "result": "Published position snapped to a 250 m grid until verified",
+    "status": "info"
+   }
+  ],
+  "geo_clues": [
+   "Pizza Pizza storefront",
+   "Street intersection layout matching Bloor and Islington area"
+  ],
+  "neighbourhood_id": "etobicoke",
+  "neighbourhood_name": "Etobicoke",
+  "ward_id": "3",
+  "ward_name": "Etobicoke—Lakeshore",
+  "address": "Bloor St W & Islington Ave",
+  "infrastructure_type": "TTC",
+  "asset_id": "TTC-034",
+  "asset_name": "Islington Station",
+  "distance_m": 31,
+  "nearby_assets": [
+   {
+    "type": "TTC",
+    "asset_id": "TTC-034",
+    "name": "Islington Station",
+    "distance_m": 31
+   },
+   {
+    "type": "Schools",
+    "asset_id": "SCH-115",
+    "name": "Etobicoke School of the Arts",
+    "distance_m": 2024
+   },
+   {
+    "type": "Roads",
+    "asset_id": "ROA-097",
+    "name": "Gardiner Expressway",
+    "distance_m": 2899
+   }
+  ],
+  "detection_confidence": 0.85,
+  "sightings_count": 1,
+  "first_seen_at": "2026-10-14T19:30:22Z",
+  "last_seen_at": "2026-10-14T19:30:22Z",
+  "source_category": "Public social post",
+  "description": "Numerous police cruisers are parked along the roadway and across marked bicycle lanes on a multi-lane street. The vehicles occupy significant portions of both the travel lanes and the adjacent bike lanes, creating a physical barrier to normal traffic flow. This blockage extends across multiple city blocks visible from an overhead perspective. Officers and individuals are present surrounding the vehicles near the curb and street markings.",
+  "explanation": "Photo analysis flagged “Police Vehicles Blocking Roadway and Bike Lanes” (other) with 85% confidence. Location method: Place name in location text; approximate within 252 m. A reviewer should confirm the issue and location before any action.",
+  "evidence_thumbnail": null,
+  "evidence_credit": null,
+  "is_demo": false,
+  "title": "Police Vehicles Blocking Roadway and Bike Lanes",
+  "priority_score": 38,
+  "priority_reasons": [
+   "Medium severity (+25)",
+   "Open 3 days (+1.5)",
+   "31 m from Islington Station (+12)"
+  ],
+  "sighting_ids": [
+   "CL-EEF1EA17"
+  ],
+  "reference_data": "placeholder",
+  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+ },
+ {
+  "issue_id": "CL-B48D629A",
+  "incident_id": "INC-B48D629A",
+  "issue_type": "Flooding",
+  "severity": "Medium",
+  "resolution_status": "Open",
+  "verification_status": "Needs review",
+  "geometry": {
+   "type": "Point",
+   "coordinates": [
+    -79.39563,
+    43.64782
+   ]
+  },
+  "location_radius_m": 252,
+  "geo_confidence": 0.5,
+  "geo_method": "Place name in location text",
+  "geo_trace": [
+   {
+    "stage": "Coordinates",
+    "result": "None supplied with the photo or post",
+    "status": "skip"
+   },
+   {
+    "stage": "Place name",
+    "result": "“Queen St W & Spadina Ave” found in the location text",
+    "status": "match"
+   },
+   {
+    "stage": "Area",
+    "result": "Inside Spadina—Fort York",
+    "status": "info"
+   },
+   {
+    "stage": "Area",
+    "result": "Nearest mapped place is in Downtown (329 m)",
+    "status": "info"
+   },
+   {
+    "stage": "Nearby infrastructure",
+    "result": "OCAD University (Schools) 614 m away",
+    "status": "info"
+   },
+   {
+    "stage": "Privacy rounding",
+    "result": "Published position snapped to a 250 m grid until verified",
+    "status": "info"
+   }
+  ],
+  "geo_clues": [
+   "Readable street sign for Queen St",
+   "Construction hoarding text reading Welcome to Queen and Spadina",
+   "Distinctive streetcar intersection geometry"
+  ],
+  "neighbourhood_id": "downtown",
+  "neighbourhood_name": "Downtown",
+  "ward_id": "10",
+  "ward_name": "Spadina—Fort York",
+  "address": "Queen St W & Spadina Ave",
+  "infrastructure_type": "Schools",
+  "asset_id": "SCH-102",
+  "asset_name": "OCAD University",
+  "distance_m": 614,
+  "nearby_assets": [
+   {
+    "type": "Schools",
+    "asset_id": "SCH-102",
+    "name": "OCAD University",
+    "distance_m": 614
+   },
+   {
+    "type": "TTC",
+    "asset_id": "TTC-059",
+    "name": "Osgoode Station",
+    "distance_m": 823
+   },
+   {
+    "type": "Roads",
+    "asset_id": "ROA-099",
+    "name": "Lake Shore Boulevard",
+    "distance_m": 1125
+   }
+  ],
+  "detection_confidence": 0.85,
+  "sightings_count": 1,
+  "first_seen_at": "2026-10-13T03:10:17Z",
+  "last_seen_at": "2026-10-13T03:10:17Z",
+  "source_category": "Public social post",
+  "description": "A storm drain cover with sloped louvers is embedded in the pavement near a crosswalk. The louver pattern features a central spine with diagonal bars extending outward. The image shows the infrastructure in context at an intersection.",
+  "explanation": "Photo analysis flagged “Storm Drain Grate Alignment” (flooding) with 85% confidence. Location method: Place name in location text; approximate within 252 m. A reviewer should confirm the issue and location before any action.",
+  "evidence_thumbnail": null,
+  "evidence_credit": null,
+  "is_demo": false,
+  "title": "Storm Drain Grate Alignment",
+  "priority_score": 27,
+  "priority_reasons": [
+   "Medium severity (+25)",
+   "Open 4 days (+2)"
+  ],
+  "sighting_ids": [
+   "CL-B48D629A"
+  ],
+  "reference_data": "placeholder",
+  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+ },
+ {
+  "issue_id": "CL-5390414C",
+  "incident_id": "INC-5390414C",
+  "issue_type": "Other",
+  "severity": "Medium",
+  "resolution_status": "Open",
+  "verification_status": "Needs review",
+  "geometry": {
+   "type": "Point",
+   "coordinates": [
+    -79.4542,
+    43.65455
+   ]
+  },
+  "location_radius_m": 1098,
+  "geo_confidence": 0.5,
+  "geo_method": "Place name in location text",
+  "geo_trace": [
+   {
+    "stage": "Coordinates",
+    "result": "None supplied with the photo or post",
+    "status": "skip"
+   },
+   {
+    "stage": "Place name",
+    "result": "“High Park” found in the location text",
+    "status": "match"
+   },
+   {
+    "stage": "Area",
+    "result": "Inside Parkdale—High Park",
+    "status": "info"
+   },
+   {
+    "stage": "Area",
+    "result": "Nearest mapped place is in High Park (167 m)",
+    "status": "info"
+   },
+   {
+    "stage": "Nearby infrastructure",
+    "result": "Location too coarse to measure distances",
+    "status": "skip"
+   },
+   {
+    "stage": "Privacy rounding",
+    "result": "Published position snapped to a 250 m grid until verified",
+    "status": "info"
+   }
+  ],
+  "geo_clues": [
+   "Green painted bike lane",
+   "Park entrance layout matching High Park design"
+  ],
+  "neighbourhood_id": "high-park",
+  "neighbourhood_name": "High Park",
+  "ward_id": "4",
+  "ward_name": "Parkdale—High Park",
+  "address": "High Park (approximate)",
+  "infrastructure_type": null,
+  "asset_id": null,
+  "asset_name": null,
+  "distance_m": null,
+  "nearby_assets": [],
+  "detection_confidence": 0.85,
+  "sightings_count": 1,
+  "first_seen_at": "2026-10-17T02:54:38.218000Z",
+  "last_seen_at": "2026-10-17T02:54:38.218000Z",
+  "source_category": "Public social post",
+  "description": "A roadway features a vertical metal sign bearing a 'Road Closed' text and a no-entry symbol, positioned centrally within the lane. Several orange tubular channelizing posts and a traffic cone are arranged near the base of the sign and across the pavement. The infrastructure affected includes the roadway surface and traffic control devices. The setup visibly restricts traffic flow in that particular lane.",
+  "explanation": "Photo analysis flagged “Road Closed Sign and Channelizing Posts” (other) with 85% confidence. Location method: Place name in location text; approximate within 1098 m. A reviewer should confirm the issue and location before any action.",
+  "evidence_thumbnail": null,
+  "evidence_credit": null,
+  "is_demo": false,
+  "title": "Road Closed Sign and Channelizing Posts",
+  "priority_score": 25,
+  "priority_reasons": [
+   "Medium severity (+25)"
+  ],
+  "sighting_ids": [
+   "CL-5390414C"
+  ],
+  "reference_data": "placeholder",
+  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+ },
+ {
+  "issue_id": "CL-CF7A8FBD",
+  "incident_id": "INC-CF7A8FBD",
+  "issue_type": "Other",
+  "severity": "Medium",
+  "resolution_status": "Open",
+  "verification_status": "Needs review",
+  "geometry": {
+   "type": "Point",
+   "coordinates": [
+    -79.27667,
+    43.76684
+   ]
+  },
+  "location_radius_m": 328,
+  "geo_confidence": 0.5,
+  "geo_method": "Place name in location text",
+  "geo_trace": [
+   {
+    "stage": "Coordinates",
+    "result": "None supplied with the photo or post",
+    "status": "skip"
+   },
+   {
+    "stage": "Place name",
+    "result": "“Ellesmere Station (closed)” found in the location text",
+    "status": "match"
+   },
+   {
+    "stage": "Area",
+    "result": "Inside Scarborough Centre",
+    "status": "info"
+   },
+   {
+    "stage": "Area",
+    "result": "Nearest mapped place is in Scarborough Centre (1505 m)",
+    "status": "info"
+   },
+   {
+    "stage": "Nearby infrastructure",
+    "result": "Highway 401 (Roads) 1038 m away",
+    "status": "info"
+   },
+   {
+    "stage": "Privacy rounding",
+    "result": "Published position snapped to a 250 m grid until verified",
+    "status": "info"
+   }
+  ],
+  "geo_clues": [
+   "Station signage and platform layout",
+   "Unique architecture of the Scarborough RT line"
+  ],
+  "neighbourhood_id": "scarborough-centre",
+  "neighbourhood_name": "Scarborough Centre",
+  "ward_id": "21",
+  "ward_name": "Scarborough Centre",
+  "address": "Ellesmere Station (closed)",
+  "infrastructure_type": "Roads",
+  "asset_id": "ROA-098",
+  "asset_name": "Highway 401",
+  "distance_m": 1038,
+  "nearby_assets": [
+   {
+    "type": "Roads",
+    "asset_id": "ROA-098",
+    "name": "Highway 401",
+    "distance_m": 1038
+   },
+   {
+    "type": "TTC",
+    "asset_id": "TTC-039",
+    "name": "Kennedy Station",
+    "distance_m": 3953
+   },
+   {
+    "type": "Schools",
+    "asset_id": "SCH-104",
+    "name": "University of Toronto Scarborough",
+    "distance_m": 7403
+   }
+  ],
+  "detection_confidence": 0.85,
+  "sightings_count": 1,
+  "first_seen_at": "2026-10-17T11:10:47.170000Z",
+  "last_seen_at": "2026-10-17T11:10:47.170000Z",
+  "source_category": "Public social post",
+  "description": "An elevated rapid transit platform and track area is visible, featuring dual tracks, enclosed structural framing, and concrete platforms. The tracks appear vacant without any trains present. The platform and surrounding structural elements show standard features of a transit station viewed from a central vantage point looking down the tracks.",
+  "explanation": "Photo analysis flagged “Unoccupied Transit Station Infrastructure” (other) with 85% confidence. Location method: Place name in location text; approximate within 328 m. A reviewer should confirm the issue and location before any action.",
+  "evidence_thumbnail": null,
+  "evidence_credit": null,
+  "is_demo": false,
+  "title": "Unoccupied Transit Station Infrastructure",
+  "priority_score": 25,
+  "priority_reasons": [
+   "Medium severity (+25)"
+  ],
+  "sighting_ids": [
+   "CL-CF7A8FBD"
+  ],
+  "reference_data": "placeholder",
+  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+ },
+ {
+  "issue_id": "CL-1912DF82",
+  "incident_id": "INC-1912DF82",
+  "issue_type": "Other",
+  "severity": "Medium",
+  "resolution_status": "Open",
+  "verification_status": "Needs review",
+  "geometry": {
+   "type": "Point",
+   "coordinates": [
+    -79.27139,
+    43.75112
+   ]
+  },
+  "location_radius_m": 328,
+  "geo_confidence": 0.5,
+  "geo_method": "Place name in location text",
+  "geo_trace": [
+   {
+    "stage": "Coordinates",
+    "result": "None supplied with the photo or post",
+    "status": "skip"
+   },
+   {
+    "stage": "Place name",
+    "result": "“Lawrence East Station (closed)” found in the location text",
+    "status": "match"
+   },
+   {
+    "stage": "Area",
+    "result": "Inside Scarborough Centre",
+    "status": "info"
+   },
+   {
+    "stage": "Area",
+    "result": "Nearest mapped place is in Scarborough Southwest (2070 m)",
+    "status": "info"
+   },
+   {
+    "stage": "Nearby infrastructure",
+    "result": "Kennedy Station (TTC) 2075 m away",
+    "status": "info"
+   },
+   {
+    "stage": "Privacy rounding",
+    "result": "Published position snapped to a 250 m grid until verified",
+    "status": "info"
+   }
+  ],
+  "geo_clues": [
+   "TTC style signage for Southbound and Northbound trains"
+  ],
+  "neighbourhood_id": "scarborough-southwest",
+  "neighbourhood_name": "Scarborough Southwest",
+  "ward_id": "21",
+  "ward_name": "Scarborough Centre",
+  "address": "Lawrence East Station (closed)",
+  "infrastructure_type": "TTC",
+  "asset_id": "TTC-039",
+  "asset_name": "Kennedy Station",
+  "distance_m": 2075,
+  "nearby_assets": [
+   {
+    "type": "TTC",
+    "asset_id": "TTC-039",
+    "name": "Kennedy Station",
+    "distance_m": 2075
+   },
+   {
+    "type": "Roads",
+    "asset_id": "ROA-098",
+    "name": "Highway 401",
+    "distance_m": 2917
+   },
+   {
+    "type": "Schools",
+    "asset_id": "SCH-104",
+    "name": "University of Toronto Scarborough",
+    "distance_m": 7648
+   }
+  ],
+  "detection_confidence": 0.35,
+  "sightings_count": 1,
+  "first_seen_at": "2026-10-16T23:54:59.538000Z",
+  "last_seen_at": "2026-10-16T23:54:59.538000Z",
+  "source_category": "Public social post",
+  "description": "The image displays the interior of a transit station featuring directional overhead signs reading Southbound and Northbound. The ceiling lights are off in several sections, casting the foreground and surrounding areas into deep shadow. Benches and double doors are visible in the dim interior, but the functional state of the facility is unclear from the visual evidence alone.",
+  "explanation": "Photo analysis flagged “Dark and Unlit Transit Station Interior” (other) with 35% confidence. Location method: Place name in location text; approximate within 328 m. A reviewer should confirm the issue and location before any action.",
+  "evidence_thumbnail": null,
+  "evidence_credit": null,
+  "is_demo": false,
+  "title": "Dark and Unlit Transit Station Interior",
+  "priority_score": 18,
+  "priority_reasons": [
+   "Medium severity (+25)",
+   "Low detection confidence 35% (x0.7)"
+  ],
+  "sighting_ids": [
+   "CL-1912DF82"
+  ],
+  "reference_data": "placeholder",
+  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+ }
+]

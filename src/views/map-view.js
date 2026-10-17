@@ -31,9 +31,9 @@ export function mapPadding() {
     left: 45,
   };
 }
-export function frameIssues(issues, maxZoom = 15) {
+export function frameIssues(issues, maxZoom = 15, duration) {
   if (!issues.length) { toast('No matching issues to frame.'); return; }
-  map?.fitTo(issues.map(i => i.geometry.coordinates), mapPadding(), maxZoom);
+  map?.fitTo(issues.map(i => i.geometry.coordinates), mapPadding(), maxZoom, duration);
 }
 const inView = issue => { const [x, y] = map.position(issue.geometry.coordinates); return x >= 0 && y >= 0 && x <= map.element.clientWidth && y <= map.element.clientHeight; };
 export const visibleIssues = () => filtered().filter(inView);
@@ -186,7 +186,7 @@ export function renderPanel() {
     const severityRank = ['High', 'Medium', 'Low'];
     const updateList = () => {
       const query = el.querySelector('#panel-search').value.toLowerCase(), sort = el.querySelector('#panel-sort').value;
-      const rows = issues.filter(i => `${i.address} ${i.issue_type}`.toLowerCase().includes(query)).sort((a, b) => sort === 'severity' ? severityRank.indexOf(a.severity) - severityRank.indexOf(b.severity) : sort === 'type' ? a.issue_type.localeCompare(b.issue_type) : b.first_seen_at.localeCompare(a.first_seen_at));
+      const rows = issues.filter(i => `${i.address} ${i.issue_type} ${i.title || ''}`.toLowerCase().includes(query)).sort((a, b) => sort === 'severity' ? severityRank.indexOf(a.severity) - severityRank.indexOf(b.severity) : sort === 'type' ? a.issue_type.localeCompare(b.issue_type) : b.first_seen_at.localeCompare(a.first_seen_at));
       el.querySelector('#panel-results').innerHTML = rows.length ? rows.map(issueRow).join('') : emptyHtml('No matching issues', 'Try a different search.');
       el.querySelectorAll('[data-issue]').forEach(b => b.onclick = () => openIssue(b.dataset.issue, p));
     };

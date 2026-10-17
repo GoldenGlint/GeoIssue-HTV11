@@ -14,7 +14,7 @@ export function compareIssues(a, b, key, direction = 1) {
   return comparison * direction || a.issue_id.localeCompare(b.issue_id);
 }
 
-const searchText = i => [i.issue_id, i.address, i.neighbourhood_name, i.ward_name, i.issue_type, i.asset_name, i.description].join(' ').toLowerCase();
+const searchText = i => [i.issue_id, i.title, i.address, i.neighbourhood_name, i.ward_name, i.issue_type, i.asset_name, i.description].join(' ').toLowerCase();
 const areaMatches = (i, area) => !area || (area.startsWith('ward:') ? i.ward_id === area.slice(5) : i.neighbourhood_id === area);
 function nearInfrastructure(i, infra, radius) {
   if (!infra) return true;
@@ -43,6 +43,6 @@ export function searchSuggestions(issues, query) {
   const wardItems = Object.entries(wards).filter(([id, name]) => `ward ${id} ${name}`.toLowerCase().includes(q)).map(([id, name]) => ({ kind: 'area', area: `ward:${id}`, label: `Ward ${id} · ${name}`, description: `${issues.filter(i => i.ward_id === id).length} matching ${sampleWord()}issues · Explore ward` }));
   const hoods = new Map(matching.filter(i => i.neighbourhood_name.toLowerCase().includes(q)).map(i => [i.neighbourhood_id, i.neighbourhood_name]));
   const areas = [...hoods].map(([id, name]) => ({ kind: 'area', area: id, label: name, description: `${matching.filter(i => i.neighbourhood_id === id).length} matching ${sampleWord()}issues · Explore neighbourhood` }));
-  const records = matching.map(i => ({ kind: 'issue', id: i.issue_id, label: `${i.issue_type} · ${i.address}`, description: `${i.issue_id} · ${i.neighbourhood_name}` }));
+  const records = matching.map(i => ({ kind: 'issue', id: i.issue_id, label: `${i.title || i.issue_type} · ${i.address}`, description: `${i.issue_id} · ${i.neighbourhood_name}` }));
   return [...wardItems, ...areas, ...records].slice(0, 6);
 }

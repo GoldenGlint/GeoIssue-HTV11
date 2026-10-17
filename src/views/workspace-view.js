@@ -1,6 +1,6 @@
 // Personal workspace pages: Saved, Recents, and the volunteer Verify queue.
 import { icon } from '../icons.js';
-import { esc, badge, date, typeIcon, typeColor } from '../format.js';
+import { esc, badge, date, typeIcon, typeColor, issueName } from '../format.js';
 import { state, filtered, findIssue, isSighting, reviewQueue, persist, applyCorrection, isSampleData, sampleWord } from '../state.js';
 import { emptyHtml, issueRow, toast, correctionSummary } from '../ui.js';
 import { render } from '../app.js';
@@ -15,10 +15,10 @@ const correctionCard = (c, review = false) => {
   const issue = findIssue(c.issue_id);
   if (!issue) return '';
   const actions = review ? `<div class="review-actions"><button class="button small" data-correction="${c.correction_id}" data-decision="accept">${icon('check')} Accept</button><button class="button small" data-correction="${c.correction_id}" data-decision="dismiss">Dismiss</button></div>` : badge(c.status);
-  return `<div class="card pending-card correction-card"><div><span class="eyebrow">${esc(c.issue_id)} · Correction · ${date(c.created_at)}</span><h3><button class="text-button" data-issue="${esc(c.issue_id)}">${esc(issue.issue_type)} · ${esc(issue.address)}</button></h3><p>${esc(correctionSummary(c, issue))}${c.reason ? `: ${esc(c.reason)}` : ''}.</p>${c.note ? `<p class="correction-quote">“${esc(c.note)}”</p>` : ''}</div>${actions}</div>`;
+  return `<div class="card pending-card correction-card"><div><span class="eyebrow">${esc(c.issue_id)} · Correction · ${date(c.created_at)}</span><h3><button class="text-button" data-issue="${esc(c.issue_id)}">${esc(issueName(issue))} · ${esc(issue.address)}</button></h3><p>${esc(correctionSummary(c, issue))}${c.reason ? `: ${esc(c.reason)}` : ''}.</p>${c.note ? `<p class="correction-quote">“${esc(c.note)}”</p>` : ''}</div>${actions}</div>`;
 };
 
-const savedCard = i => `<article class="card saved-card"><div class="saved-card-top">${badge(i.severity)}<button class="icon-button" data-save="${i.issue_id}" aria-label="Toggle saved issue">${icon('bookmark', state.saved.includes(i.issue_id) ? 'saved-icon' : '')}</button></div><button class="saved-card-main" data-issue="${i.issue_id}"><span class="type-orb" style="--type-color:${typeColor(i.issue_type)}">${typeIcon(i.issue_type)}</span><h3>${esc(i.issue_type)}</h3><p>${esc(i.address)}</p><span>${esc(i.neighbourhood_name)} · ${date(i.first_seen_at)}</span></button><div class="saved-card-footer">${badge(i.resolution_status)}<span>${i.issue_id}</span></div></article>`;
+const savedCard = i => `<article class="card saved-card"><div class="saved-card-top">${badge(i.severity)}<button class="icon-button" data-save="${i.issue_id}" aria-label="Toggle saved issue">${icon('bookmark', state.saved.includes(i.issue_id) ? 'saved-icon' : '')}</button></div><button class="saved-card-main" data-issue="${i.issue_id}"><span class="type-orb" style="--type-color:${typeColor(i.issue_type)}">${typeIcon(i.issue_type)}</span><h3>${esc(issueName(i))}</h3><p>${esc(i.address)}</p><span>${esc(i.neighbourhood_name)} · ${date(i.first_seen_at)}</span></button><div class="saved-card-footer">${badge(i.resolution_status)}<span>${i.issue_id}</span></div></article>`;
 
 export function collectionHtml() {
   const saved = state.view === 'saved', ids = saved ? state.saved : state.recent;
