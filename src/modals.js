@@ -4,7 +4,7 @@ import { parseLocation, formatDms, formatDecimal, distanceMetres, googleStreetVi
 import { CivicMap } from './map.js';
 import { icon } from './icons.js';
 import { esc, badge, typeIcon, typeColor, countBy, age, plural } from './format.js';
-import { state, scopedRows, persist, remember, findIssue, addSighting } from './state.js';
+import { state, scopedRows, persist, remember, addSighting, isSampleData, sampleWord } from './state.js';
 import { toast, showModal, closeModal, modalHeader, detailHtml } from './ui.js';
 import { render, nav, toggleSave, setRole } from './app.js';
 import { getMap, openIssue, frameIssues, renderPanel } from './views/map-view.js';
@@ -359,7 +359,7 @@ export function correctionModal(issue) {
 
 export function exportModal(preferredScope = 'filtered') {
   const rows = scopedRows(), selected = rows.filter(i => state.selected.includes(i.issue_id));
-  showModal(`${modalHeader('', 'Export issue data')}<div class="modal-body"><p>Export the current filtered dataset. Public exports omit coordinates and include the location uncertainty in metres.</p><label class="form-label">Scope<select id="export-scope"><option value="filtered">Filtered results (${rows.length})</option><option value="selected" ${preferredScope === 'selected' ? 'selected' : ''} ${!selected.length ? 'disabled' : ''}>Selected rows (${selected.length})</option></select></label><label class="form-label">Format<select id="export-format"><option value="csv">CSV · spreadsheet</option><option value="geojson">GeoJSON · approximate areas</option></select></label><div class="notice-banner">${icon('shield')} Exports contain fictional records, source labels, ISO timestamps, uncertainty, and the active filters.</div></div><div class="modal-footer"><button class="button primary" id="download-export">${icon('download')} Download</button></div>`, { label: 'Export issue data' });
+  showModal(`${modalHeader('', 'Export issue data')}<div class="modal-body"><p>Export the current filtered dataset. Public exports omit coordinates and include the location uncertainty in metres.</p><label class="form-label">Scope<select id="export-scope"><option value="filtered">Filtered results (${rows.length})</option><option value="selected" ${preferredScope === 'selected' ? 'selected' : ''} ${!selected.length ? 'disabled' : ''}>Selected rows (${selected.length})</option></select></label><label class="form-label">Format<select id="export-format"><option value="csv">CSV · spreadsheet</option><option value="geojson">GeoJSON · approximate areas</option></select></label><div class="notice-banner">${icon('shield')} Exports contain ${isSampleData() ? 'fictional sample records' : 'issue records'}, source labels, ISO timestamps, uncertainty, and the active filters.</div></div><div class="modal-footer"><button class="button primary" id="download-export">${icon('download')} Download</button></div>`, { label: 'Export issue data' });
   document.querySelector('#download-export').onclick = () => {
     exportData(document.querySelector('#export-scope').value === 'selected' ? selected : rows, document.querySelector('#export-format').value);
     closeModal();
@@ -369,27 +369,27 @@ function exportData(rows, format) {
   let content, mime;
   if (format === 'csv') {
     const headers = ['issue_id', 'issue_type', 'severity', 'resolution_status', 'verification_status', 'neighbourhood_id', 'neighbourhood_name', 'ward_id', 'ward_name', 'address', 'location_radius_m', 'geo_method', 'nearest_asset', 'nearest_asset_type', 'distance_to_asset_m', 'priority_score', 'first_seen_at_iso', 'last_seen_at_iso', 'sightings_count', 'detection_confidence', 'source_category', 'is_demo', 'filters_applied'];
-    const values = rows.map(i => [i.issue_id, i.issue_type, i.severity, i.resolution_status, i.verification_status, i.neighbourhood_id, i.neighbourhood_name, i.ward_id, i.ward_name, i.address, i.location_radius_m, i.geo_method, i.asset_name, i.infrastructure_type, i.distance_m, i.priority_score, i.first_seen_at, i.last_seen_at, i.sightings_count, i.detection_confidence, i.source_category, true, JSON.stringify(state.filters)]);
+    const values = rows.map(i => [i.issue_id, i.issue_type, i.severity, i.resolution_status, i.verification_status, i.neighbourhood_id, i.neighbourhood_name, i.ward_id, i.ward_name, i.address, i.location_radius_m, i.geo_method, i.asset_name, i.infrastructure_type, i.distance_m, i.priority_score, i.first_seen_at, i.last_seen_at, i.sightings_count, i.detection_confidence, i.source_category, !!i.is_demo, JSON.stringify(state.filters)]);
     // Prefix cells that a spreadsheet would treat as formulas.
     const cell = v => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replaceAll('"', '""') + '"'; };
     content = '﻿' + [headers, ...values].map(row => row.map(cell).join(',')).join('\r\n');
     mime = 'text/csv;charset=utf-8';
   } else {
     content = JSON.stringify({
-      type: 'FeatureCollection', is_demo: true, filters_applied: state.filters,
+      type: 'FeatureCollection', is_demo: isSampleData(), filters_applied: state.filters,
       coordinate_policy: 'Approximate uncertainty areas, public demo; not exact issue positions.',
       features: rows.map(i => {
         const [lng, lat] = i.geometry.coordinates, r = Math.max(i.location_radius_m, 250), dy = r / 111320, dx = dy / Math.cos(lat * Math.PI / 180);
         const ring = Array.from({ length: 33 }, (_, j) => { const a = j / 32 * Math.PI * 2; return [Number((lng + dx * Math.cos(a)).toFixed(4)), Number((lat + dy * Math.sin(a)).toFixed(4))]; });
-        return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: { issue_id: i.issue_id, issue_type: i.issue_type, severity: i.severity, neighbourhood_id: i.neighbourhood_id, ward_id: i.ward_id, location_radius_m: r, first_seen_at: i.first_seen_at, last_seen_at: i.last_seen_at, source_category: i.source_category, is_demo: true } };
+        return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: { issue_id: i.issue_id, issue_type: i.issue_type, severity: i.severity, neighbourhood_id: i.neighbourhood_id, ward_id: i.ward_id, location_radius_m: r, first_seen_at: i.first_seen_at, last_seen_at: i.last_seen_at, source_category: i.source_category, is_demo: !!i.is_demo } };
       }),
     }, null, 2);
     mime = 'application/geo+json';
   }
   const url = URL.createObjectURL(new Blob([content], { type: mime })), a = document.createElement('a');
-  a.href = url; a.download = `civiclens-sample-issues.${format}`; a.click();
+  a.href = url; a.download = `civiclens-${sampleWord().replace(' ', '-')}issues.${format}`; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  toast(`Exported ${rows.length} sample issues`);
+  toast(`Exported ${rows.length} ${sampleWord()}issues`);
 }
 
 export function settingsModal() {
@@ -403,13 +403,13 @@ export function settingsModal() {
 
 export function helpModal() {
   const steps = [['1', 'Discover', 'Explore issues on the map, or filter and export the same records in Data Explorer.'], ['2', 'Understand', 'Open a pin to inspect evidence, approximate location, how it was located, and nearby infrastructure.'], ['3', 'Verify', 'A volunteer reviews findings before they become reliable public records.']];
-  showModal(`${modalHeader('', 'How CivicLens works')}<div class="modal-body help-content"><p>CivicLens brings civic issues from public imagery and community reports into a shared Toronto workspace.</p>${steps.map(([n, t, d]) => `<div class="help-step"><span>${n}</span><div><h3>${t}</h3><p>${d}</p></div></div>`).join('')}<h3>Map controls</h3><p>Drag to pan; scroll, pinch or double-click to zoom; Shift + click to select multiple pins. Focus the map and use arrow keys to pan, + / - to zoom, or Home to return to Toronto. Search suggestions support arrow keys and Enter, and include wards. Fit all matching issues brings filtered results into view. Box select (the dashed square) enables a selection rectangle. A cluster opens a list; choose Zoom in to change the viewport. Pins with a “!” badge are high severity. Escape clears selection.</p><div class="notice-banner">${icon('code')} This is a frontend prototype. Every issue, account, confidence score, geolocation trace and infrastructure relationship is a placeholder. Evidence photos are credited samples that illustrate each category. Map tiles are provided by OpenStreetMap.</div><p class="fine-print">Photos, geolocation, Mapillary, AI analysis, Toronto datasets, 311 context, authentication, and durable submissions require backend integrations.</p></div><div class="modal-footer"><button class="button primary" data-close>Got it</button></div>`, { label: 'How CivicLens works' });
+  showModal(`${modalHeader('', 'How CivicLens works')}<div class="modal-body help-content"><p>CivicLens brings civic issues from public imagery and community reports into a shared Toronto workspace.</p>${steps.map(([n, t, d]) => `<div class="help-step"><span>${n}</span><div><h3>${t}</h3><p>${d}</p></div></div>`).join('')}<h3>Map controls</h3><p>Drag to pan; scroll, pinch or double-click to zoom; Shift + click to select multiple pins. Focus the map and use arrow keys to pan, + / - to zoom, or Home to return to Toronto. Search suggestions support arrow keys and Enter, and include wards. Fit all matching issues brings filtered results into view. Box select (the dashed square) enables a selection rectangle. A cluster opens a list; choose Zoom in to change the viewport. Pins with a “!” badge are high severity. Escape clears selection.</p><div class="notice-banner">${icon('code')} This is a prototype. Sample data is fictional; pipeline output comes from public posts analysed by the photo pipeline. TTC stations, highways and ward boundaries are real open data, and Street View opens Google Maps. Map tiles are provided by OpenStreetMap.</div><p class="fine-print">Accounts, durable submissions and corrections, 311 context and a shared database still need a backend. Gemini suggestions need <code>python scripts/serve.py</code> with a key in <code>.env</code>.</p></div><div class="modal-footer"><button class="button primary" data-close>Got it</button></div>`, { label: 'How CivicLens works' });
 }
 
 export async function shareIssue(i) {
   const url = new URL(location.href);
   url.hash = `map?issue=${i.issue_id}`;
-  try { await navigator.clipboard.writeText(url.href); toast('Sample issue link copied'); }
+  try { await navigator.clipboard.writeText(url.href); toast(`${isSampleData() ? 'Sample issue' : 'Issue'} link copied`); }
   catch {
     showModal(`${modalHeader('', 'Copy this link')}<div class="modal-body"><input class="share-input" aria-label="Share link" readonly value="${esc(url.href)}"></div>`, { label: 'Share issue' });
     document.querySelector('.share-input').select();

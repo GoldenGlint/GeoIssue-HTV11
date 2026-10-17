@@ -5,7 +5,7 @@ import { categories, infrastructure, wardBoundaries, TORONTO_CENTER } from '../d
 import { icon } from '../icons.js';
 import { typeIcon, typeColor } from '../format.js';
 import { searchSuggestions } from '../issues.js';
-import { state, filtered, findIssue, remember } from '../state.js';
+import { state, filtered, findIssue, remember, sampleWord } from '../state.js';
 import { toast, detailHtml, issueRow, emptyHtml } from '../ui.js';
 import { action, filtersHtml, secondaryFilters, bindFilterChips, updateFilteredView, scopedTable, toggleSave } from '../app.js';
 import { shareIssue, streetModal, correctionModal } from '../modals.js';
@@ -47,7 +47,7 @@ export function updateMapMeta() {
   if (empty) {
     const button = empty.querySelector('button');
     empty.hidden = visible.length > 0 || !!state.panel;
-    empty.querySelector('h3').textContent = rows.length ? 'Your matches are outside this view' : 'No matching sample issues';
+    empty.querySelector('h3').textContent = rows.length ? 'Your matches are outside this view' : `No matching ${sampleWord()}issues`;
     empty.querySelector('p').textContent = rows.length ? `${rows.length} issues match your filters. Bring them into view.` : 'Try a different search or remove a filter.';
     button.dataset.action = rows.length ? 'fit-results' : 'reset';
     button.textContent = rows.length ? 'Show matching issues' : 'Reset filters';
@@ -94,11 +94,11 @@ export function mapHtml() {
     <div id="city-map" class="city-map" role="region" aria-label="Interactive Toronto issue map"></div>
     <div class="map-top-left"><div class="map-segment"><button class="${!state.heat ? 'active' : ''}" data-action="pins">${icon('pin')} Pins</button><button class="${state.heat ? 'active' : ''}" data-action="heat">${icon('density')} Density</button></div></div>
     <div class="map-top-right"><button class="map-control ${state.mapMode === 'pan' ? 'active' : ''}" data-action="pan" title="Pan map" aria-label="Pan map">${icon('hand')}</button><button class="map-control ${state.mapMode === 'box' ? 'active' : ''}" data-action="box" title="Box select" aria-label="Box select">${icon('select')}</button><button class="map-control ${state.layers.length ? 'active' : ''}" data-action="layers" title="Infrastructure layers" aria-label="Infrastructure layers">${icon('layers')}</button></div>
-    <div class="map-bottom-left"><div class="map-summary"><span class="live-dot"></span><strong class="map-visible-count">Toronto, Ontario</strong> <span class="muted">· ${filtered().length} sample issues</span><button data-action="search-area" class="text-button">View area issues</button></div><div class="map-legend">${legend}<span class="legend-severity"><i>!</i>High severity</span></div><div class="density-legend"><span>Fewer reports</span><i></i><span>More</span><small>Click a hot spot to list its issues</small></div></div>
+    <div class="map-bottom-left"><div class="map-summary"><span class="live-dot"></span><strong class="map-visible-count">Toronto, Ontario</strong> <span class="muted">· ${filtered().length} ${sampleWord()}issues</span><button data-action="search-area" class="text-button">View area issues</button></div><div class="map-legend">${legend}<span class="legend-severity"><i>!</i>High severity</span></div><div class="density-legend"><span>Fewer reports</span><i></i><span>More</span><small>Click a hot spot to list its issues</small></div></div>
     <div class="map-bottom-right"><button class="map-control street-person" draggable="true" data-action="street" aria-label="Street View at the map centre" title="Street View: click for the map centre, or drag onto the map">${icon('person')}</button><div class="zoom-controls"><button class="map-control" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="map-control" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button></div><button class="map-control" data-action="fit-results" title="Fit all matching issues" aria-label="Fit all matching issues">${icon('fit')}</button><button class="map-control" data-action="center" title="Reset Toronto view" aria-label="Reset Toronto view">${icon('home')}</button></div>
     <div class="map-hint">${icon(state.mapMode === 'box' ? 'select' : 'hand')} ${hint}</div>
     <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
-    <div class="map-empty" hidden>${icon('search')}<h3>No matching sample issues</h3><p>Try a different search or remove a filter.</p><button class="button small" data-action="reset">Reset filters</button></div>
+    <div class="map-empty" hidden>${icon('search')}<h3>No matching ${sampleWord()}issues</h3><p>Try a different search or remove a filter.</p><button class="button small" data-action="reset">Reset filters</button></div>
     <aside id="issue-panel" class="issue-panel" aria-label="Selected issues" hidden></aside>
   </div>`;
 }
@@ -142,7 +142,7 @@ export function refreshMapFilters() {
   document.querySelector('#global-search').value = state.filters.query;
   document.querySelector('.map-floating-filters .filter-context').outerHTML = secondaryFilters();
   document.querySelectorAll('.map-floating-filters .filter-context [data-action]').forEach(b => b.onclick = () => action(b.dataset.action));
-  document.querySelector('.map-summary .muted').textContent = `· ${rows.length} sample issues`;
+  document.querySelector('.map-summary .muted').textContent = `· ${rows.length} ${sampleWord()}issues`;
   document.querySelectorAll('[data-legend]').forEach(b => b.classList.toggle('legend-active', b.dataset.legend === state.filters.type));
   bindFilterChips(); updateMapMeta();
 }

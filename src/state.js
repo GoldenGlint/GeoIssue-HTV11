@@ -1,5 +1,5 @@
 // UI state shared by the map, table and dashboard, plus browser-local persistence.
-import { TORONTO_CENTER, REFERENCE_DATE, neighbourhoods, wards, nearbyAssets, nearestNeighbourhood, wardAt } from './data.js';
+import { TORONTO_CENTER, REFERENCE_DATE, neighbourhoods, wards, nearbyAssets, nearestNeighbourhood, nearestCorner, wardAt } from './data.js';
 import { issueMatches } from './issues.js';
 import { scorePriority } from './priority.js';
 import { wardLabel } from './format.js';
@@ -24,6 +24,9 @@ export const filtered = (filters = state.filters) => state.issues.filter(i => is
 export const previousPeriod = (filters = state.filters) => filters.days ? state.issues.filter(i => issueMatches(i, filters, Number(filters.days))) : null;
 export const scopedRows = () => filtered().filter(i => !state.scope || state.scope.includes(i.issue_id));
 export const findIssue = id => state.issues.find(i => i.issue_id === id);
+/** True when the loaded issues are fictional sample records; labels say "sample" only then. */
+export const isSampleData = () => state.issues.some(i => i.is_demo);
+export const sampleWord = () => (isSampleData() ? 'sample ' : '');
 /** This browser's newest correction for an issue that is still waiting for review. */
 export const pendingCorrection = id => state.corrections.findLast(c => c.issue_id === id && c.status === 'Pending review');
 /** Applies an accepted correction to its issue in memory. With an API, the server does this and returns the updated issue. */
@@ -37,6 +40,7 @@ export function applyCorrection(c) {
     // Recompute what depends on the position: nearest assets, and the area when the point maps to one.
     const nearby = nearbyAssets(c.coordinates), area = nearestNeighbourhood(c.coordinates);
     Object.assign(issue, { nearby_assets: nearby, infrastructure_type: nearby[0].type, asset_id: nearby[0].asset_id, asset_name: nearby[0].name, distance_m: nearby[0].distance_m });
+    issue.address = nearestCorner(c.coordinates) || `Near ${nearby[0].name}`;
     if (area) Object.assign(issue, { neighbourhood_id: area.id, neighbourhood_name: area.name });
     // Official ward boundaries decide the ward; the sample neighbourhood's ward is the fallback.
     const ward = wardAt(c.coordinates) || area?.ward;

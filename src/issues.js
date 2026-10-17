@@ -1,5 +1,6 @@
 // Shared issue logic: filtering, sorting and search. Keep UI sorting separate from API ordering.
 import { REFERENCE_DATE, wards } from './data.js';
+import { sampleWord } from './state.js';
 
 const DAY = 86400000;
 const severityOrder = { High: 3, Medium: 2, Low: 1 };
@@ -39,9 +40,9 @@ export function searchSuggestions(issues, query) {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
   const matching = issues.filter(i => searchText(i).includes(q));
-  const wardItems = Object.entries(wards).filter(([id, name]) => `ward ${id} ${name}`.toLowerCase().includes(q)).map(([id, name]) => ({ kind: 'area', area: `ward:${id}`, label: `Ward ${id} · ${name}`, description: `${issues.filter(i => i.ward_id === id).length} matching sample issues · Explore ward` }));
+  const wardItems = Object.entries(wards).filter(([id, name]) => `ward ${id} ${name}`.toLowerCase().includes(q)).map(([id, name]) => ({ kind: 'area', area: `ward:${id}`, label: `Ward ${id} · ${name}`, description: `${issues.filter(i => i.ward_id === id).length} matching ${sampleWord()}issues · Explore ward` }));
   const hoods = new Map(matching.filter(i => i.neighbourhood_name.toLowerCase().includes(q)).map(i => [i.neighbourhood_id, i.neighbourhood_name]));
-  const areas = [...hoods].map(([id, name]) => ({ kind: 'area', area: id, label: name, description: `${matching.filter(i => i.neighbourhood_id === id).length} matching sample issues · Explore neighbourhood` }));
+  const areas = [...hoods].map(([id, name]) => ({ kind: 'area', area: id, label: name, description: `${matching.filter(i => i.neighbourhood_id === id).length} matching ${sampleWord()}issues · Explore neighbourhood` }));
   const records = matching.map(i => ({ kind: 'issue', id: i.issue_id, label: `${i.issue_type} · ${i.address}`, description: `${i.issue_id} · ${i.neighbourhood_name}` }));
   return [...wardItems, ...areas, ...records].slice(0, 6);
 }

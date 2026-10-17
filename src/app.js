@@ -37,7 +37,7 @@ function areaSelectHtml() {
   return `<label class="filter-select">${icon('pin')}<select data-filter="area" aria-label="Area"><option value="">All areas</option><optgroup label="Wards">${Object.entries(wards).map(([id, name]) => option(`ward:${id}`, `Ward ${id} · ${name}`)).join('')}</optgroup><optgroup label="Neighbourhoods">${neighbourhoods.filter(n => used.has(n.id)).map(n => option(n.id, n.name)).join('')}</optgroup></select></label>`;
 }
 export function filtersHtml() {
-  const search = `<label class="search-field">${icon('search')}<input id="global-search" placeholder="Search issues, places, wards or IDs&hellip;" value="${esc(state.filters.query)}" aria-label="Search issues, places, wards or IDs"><kbd>/</kbd></label>`;
+  const search = `<label class="search-field">${icon('search')}<input id="global-search" placeholder="Search issues, places or IDs&hellip;" value="${esc(state.filters.query)}" aria-label="Search issues, places, wards or IDs"><kbd>/</kbd></label>`;
   const filters = selectHtml('type', 'All issue types', Object.keys(categories), 'filter')
     + selectHtml('severity', 'All severities', ['High', 'Medium', 'Low'], 'warning')
     + selectHtml('status', 'All statuses', ['Open', 'In review', 'Resolved'], 'check')
@@ -235,10 +235,25 @@ function route() {
     if (!filtered().includes(record)) state.filters.days = '';
   }
   render();
-  if (record) { openIssue(record.issue_id); frameIssues([record]); }
+  // Frame after the panel or bottom sheet has laid out, so the pin lands in the visible part of the map.
+  if (record) { openIssue(record.issue_id); requestAnimationFrame(() => frameIssues([record])); }
 }
 // Pasted links and manual URL edits; nav() uses replaceState, which doesn't fire this.
 window.addEventListener('hashchange', () => { if (state.issues.length) route(); });
+
+// The loading screen in index.html plays once, then fades out when the first view is ready. It waits for its
+// own animations rather than a fixed time: they only exist once the page is first painted, which waits for the
+// stylesheet and its fonts, and the data can be ready before that.
+async function dismissSplash() {
+  const splash = document.querySelector('#splash');
+  if (!splash) return;
+  const firstPaint = new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  await Promise.race([firstPaint, new Promise(resolve => setTimeout(resolve, 3000))]);
+  const played = Promise.all(splash.getAnimations({ subtree: true }).map(a => a.finished));
+  await Promise.race([played, new Promise(resolve => setTimeout(resolve, 3000))]).catch(() => {});
+  splash.classList.add('done');
+  setTimeout(() => splash.remove(), 400);
+}
 
 async function start() {
   try {
@@ -248,5 +263,6 @@ async function start() {
     app.innerHTML = '<div class="load-error"><h1>Couldn’t load the workspace</h1><p>Check your issue repository connection and reload.</p><button onclick="location.reload()">Retry</button></div>';
     console.error(error);
   }
+  dismissSplash();
 }
 start();

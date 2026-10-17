@@ -12,6 +12,9 @@ playwright-report/
 .env.*
 !.env.example
 
+# Claude Code worktrees and session files
+.claude/
+
 # Local data: real posts and photos stay on this machine (the repository is public)
 data/
 scraping/data/
