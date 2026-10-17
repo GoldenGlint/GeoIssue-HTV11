@@ -223,7 +223,7 @@ export class CivicMap {
       const issue = this.issues.find(i => i.issue_id === this.selected[0]);
       if (issue) {
         const [x, y] = this.position(issue.geometry.coordinates);
-        const radius = Math.max(14, issue.location_radius_m / (156543.03392 * Math.cos(issue.geometry.coordinates[1] * Math.PI / 180) / 2 ** this.zoom));
+        const radius = Math.max(2, issue.location_radius_m / (156543.03392 * Math.cos(issue.geometry.coordinates[1] * Math.PI / 180) / 2 ** this.zoom));
         const area = document.createElement('div'); area.className = 'uncertainty-area';
         area.style.cssText = `left:${x}px;top:${y}px;width:${radius * 2}px;height:${radius * 2}px`;
         area.setAttribute('aria-label', `Approximate location within ${issue.location_radius_m} metres`);

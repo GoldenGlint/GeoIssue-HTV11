@@ -86,7 +86,11 @@ export function attachSearch(input, { getItems, onChoose, icon }) {
     if (popup.hidden || !items.length) return;
     event.preventDefault();
     if (event.key === 'Enter') choose(active < 0 ? 0 : active);
-    else { active = (active + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length; highlight(); }
+    else {
+      const down = event.key === 'ArrowDown';
+      active = active < 0 ? (down ? 0 : items.length - 1) : (active + (down ? 1 : -1) + items.length) % items.length;
+      highlight();
+    }
   });
   return { close };
 }
