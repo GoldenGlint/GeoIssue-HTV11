@@ -1,0 +1,9 @@
+{
+  "api": "https://arctic-shift.photon-reddit.com/api",
+  "subreddits": ["toronto", "TTC", "scarborough", "etobicoke"],
+  "days": 7,
+  "max_posts_per_subreddit": 600,
+  "max_images_per_post": 6,
+  "max_images": 300,
+  "pool": "live"
+}

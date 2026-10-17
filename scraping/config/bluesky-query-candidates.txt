@@ -1,0 +1,61 @@
+# Candidate Bluesky searches to rank with:
+#   python -m scraping.probe_queries bluesky --query-file scraping/config/bluesky-query-candidates.txt
+# Promote the ones with the most recent problem-word images into bluesky-queries.txt.
+
+# Hashtags (sent without date filters; dates are checked after fetching)
+#BikeTO
+#TTC
+#Toronto
+#TOpoli
+#VisionZeroTO
+#bikelanes
+
+# Bike lanes and roads
+Bloor "bike lane"
+Bloor bike lanes
+Yonge "bike lane"
+University Avenue "bike lane"
+Toronto "bike lanes"
+Toronto "blocked bike lane"
+Toronto "road closure"
+Toronto "road closed"
+Gardiner closure
+DVP closure
+Toronto potholes
+Toronto pothole road
+Toronto crash
+Toronto collision
+Toronto "traffic light"
+Toronto streetlight
+
+# Water, storms, trees
+Toronto "water main"
+Toronto "watermain break"
+Toronto flood
+Toronto "fallen tree"
+Toronto "tree down"
+Toronto "storm damage"
+Toronto "power outage"
+
+# Transit
+TTC shelter
+TTC "out of service"
+TTC delay
+TTC diversion
+TTC elevator
+TTC escalator
+Eglinton Crosstown
+Finch LRT
+"Ontario Line" construction
+
+# Sidewalks, waste, public space
+Toronto construction
+Toronto "sidewalk closed"
+Toronto accessibility
+Toronto garbage
+Toronto litter
+Toronto "illegal dumping"
+Toronto graffiti
+Toronto encampment
+Toronto fire
+311 Toronto

@@ -1,0 +1,19 @@
+{
+  "areas": [
+    {
+      "name": "queen-spadina",
+      "bbox": [-79.4055, 43.6435, -79.3855, 43.6555]
+    },
+    {
+      "name": "scarborough-centre",
+      "bbox": [-79.2800, 43.7600, -79.2400, 43.7900]
+    }
+  ],
+  "terms": ["", "sidewalk", "drain", "dumping"],
+  "per_request": 25,
+  "max_images": 50,
+  "days": 7,
+  "pool": "live",
+  "require_geo": true,
+  "outdoor_context": true
+}
