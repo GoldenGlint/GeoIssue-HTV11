@@ -58,6 +58,23 @@ class LocateTest(unittest.TestCase):
         self.assertEqual(r["location_radius_m"], 75)
         self.assertIn("post text", r["geo_method"])
 
+    def test_intersections_need_both_street_names_together(self):
+        [r] = located(raw(lat=None, location_text="Queen Street West and Spadina Avenue intersection, Toronto"))
+        self.assertEqual(r["address"], "Queen St W & Spadina Ave")  # from the OpenStreetMap gazetteer
+        [slash] = located(raw(lat=None, text="misaligned storm drain cover at Queen/Spadina"))
+        self.assertEqual(slash["address"], "Queen St W & Spadina Ave")
+        [apart] = located(raw(lat=None, text="walked along queen for a while, then up to spadina"))
+        self.assertNotIn("geometry", apart)
+
+    def test_the_first_of_equally_precise_places_wins(self):
+        [r] = located(raw(lat=None, text="broken windows from yonge and dundas up to yonge and college"))
+        self.assertEqual(r["address"], "Dundas St & Yonge St")
+
+    def test_stations_match_with_their_line_named_even_when_closed(self):
+        [r] = located(raw(lat=None, location_text="Ellesmere RT Station, Toronto"))
+        self.assertEqual(r["address"], "Ellesmere Station (closed)")
+        self.assertEqual(r["ward_id"], "21")  # Scarborough Centre, from the ward boundaries
+
     def test_neighbourhood_level_text_gets_no_asset_or_street_address(self):
         [r] = located(raw(lat=None, text="garbage all over kensington market"))
         self.assertEqual(r["neighbourhood_id"], "kensington-market")
@@ -70,7 +87,8 @@ class LocateTest(unittest.TestCase):
         [kept] = located(raw(neighbourhood_id="their-area", neighbourhood="Their area", address="123 Their St"))
         self.assertEqual((kept["neighbourhood_id"], kept["neighbourhood_name"], kept["address"]), ("their-area", "Their area", "123 Their St"))
         self.assertEqual(kept["provenance"]["neighbourhood_id"], "input")
-        self.assertNotIn("ward_id", kept)  # area fields are never mixed from two sources
+        # An ID and its name always come from one source. The ward is its own layer, so it is still filled.
+        self.assertEqual((kept["ward_id"], kept["provenance"]["ward_id"]), ("10", "locate"))
         [replaced] = located(raw(neighbourhood_id="their-area"), overwrite=True)
         self.assertEqual(replaced["neighbourhood_id"], "downtown")
 

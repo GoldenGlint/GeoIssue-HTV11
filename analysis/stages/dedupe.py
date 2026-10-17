@@ -15,7 +15,7 @@ SEVERITY_RANK = {"Low": 1, "Medium": 2, "High": 3}
 LOCATION_FIELDS = ("geometry", "location_radius_m", "geo_confidence", "geo_method", "geo_trace", "neighbourhood_id",
                    "neighbourhood_name", "ward_id", "ward_name", "infrastructure_type", "asset_id", "asset_name",
                    "distance_m", "nearby_assets", "address")
-EVIDENCE_FIELDS = ("description", "explanation", "detection_confidence", "photo_source", "evidence_credit", "source_category")
+EVIDENCE_FIELDS = ("title", "description", "explanation", "detection_confidence", "photo_source", "evidence_credit", "source_category")
 
 
 def run(records, settings, report):
@@ -105,6 +105,8 @@ def _merge(members, incident_id=None):
             else:
                 issue.pop(field, None)
 
+    # Several photos from one post are one sighting, so a photo set doesn't raise the priority on its own.
+    posts = len({r.get("source_post") or r["issue_id"] for r in members})
     seen = [r["first_seen_at"] for r in members if r.get("first_seen_at")]
     last = [r.get("last_seen_at") or r.get("first_seen_at") for r in members if r.get("first_seen_at")]
     latest = max(members, key=lambda r: r.get("last_seen_at") or "")
@@ -112,7 +114,7 @@ def _merge(members, incident_id=None):
         "first_seen_at": min(seen) if seen else None,
         "last_seen_at": max(last) if last else None,
         "severity": max((r.get("severity") for r in members), key=lambda s: SEVERITY_RANK.get(s, 0)),
-        "sightings_count": sum(r.get("sightings_count") or 1 for r in members),
+        "sightings_count": sum(r.get("sightings_count") or 1 for r in members) - (len(members) - posts),
         "resolution_status": latest.get("resolution_status") or issue.get("resolution_status"),
         "verification_status": "Verified" if any(r.get("verification_status") == "Verified" for r in members)
                                else issue.get("verification_status"),
@@ -122,7 +124,9 @@ def _merge(members, incident_id=None):
         "photo_needs_blur": any(r.get("photo_needs_blur") for r in members) or None,
         "geo_clues": list(dict.fromkeys(c for r in members for c in r.get("geo_clues") or [])) or None,
         "geo_trace": list(located.get("geo_trace") or []) + [
-            {"stage": "Duplicate merge", "result": f"{len(members)} sightings merged; the most precise location is kept", "status": "info"}],
+            {"stage": "Duplicate merge", "result": (f"{len(members)} sightings merged" if posts == len(members) else
+                                                    f"{len(members)} photos from {posts} post{'s' if posts > 1 else ''} merged")
+                                                   + "; the most precise location is kept", "status": "info"}],
     }
     for field, value in merged.items():
         if value is not None:

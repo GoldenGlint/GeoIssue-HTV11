@@ -87,7 +87,7 @@ def handoff_group(*supported):
             "key": f"reddit:post1:{n}", "local_path": f"images/{n}.jpg", "dhash": "d9583c3e73729043",
             "screening": {"issue_type": "drain", "issue_confidence": "high", "location_guess": "Queen Street West and Dufferin Street, Toronto",
                           "clues": ["Toronto street sign"], "blur_before_public_display": True},
-            "issue_details": {"issue_supported": verdict, "confidence": "medium", "description": f"Blocked drain {n}."},
+            "issue_details": {"issue_supported": verdict, "confidence": "medium", "title": "Blocked storm drain", "description": f"Blocked drain {n}."},
         } for n, verdict in enumerate(supported)],
     }
 
