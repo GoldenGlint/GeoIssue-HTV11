@@ -1,8 +1,8 @@
 // App shell: sidebar, page header, shared filters, routing, actions and keyboard shortcuts.
 // Each page lives in src/views/; dialogs live in src/modals.js.
-import { categories, issueRepository, wards, neighbourhoods, TORONTO_CENTER } from './data.js';
+import { categories, issueRepository, wards, neighbourhoods, TORONTO_CENTER, REFERENCE_DATE, setReferenceDate } from './data.js';
 import { icon } from './icons.js';
-import { esc } from './format.js';
+import { esc, date } from './format.js';
 import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel, applyCorrection } from './state.js';
 import { toast, closeModal } from './ui.js';
 import { mapHtml, initMap, destroyMap, getMap, renderPanel, clearSelection, selectMap, openIssue, frameIssues, refreshMapFilters, setMapMode, setHeat, visibleIssues } from './views/map-view.js';
@@ -82,7 +82,7 @@ export function render() {
   app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1>${source}</div><div class="header-right"><button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="About this demo">${icon('help')}</button></div></header>
   ${onMap ? '' : `<div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}`}
   <div class="workspace-content" id="workspace-content">${pageHtml()}</div>
-  ${onMap ? '' : '<footer class="page-footer"><span>CivicLens · Built for a more responsive city</span><span>Fictional sample data · Snapshot: Oct 17, 2026</span></footer>'}</main>`;
+  ${onMap ? '' : `<footer class="page-footer"><span>CivicLens · Built for a more responsive city</span><span>${sample ? 'Fictional sample data' : 'Analysis data'} · As of ${date(REFERENCE_DATE, { year: 'numeric' })}</span></footer>`}</main>`;
   bindShell();
   if (onMap) initMap();
   if (state.view === 'data') bindData();
@@ -206,6 +206,8 @@ async function start() {
     state.issues = await issueRepository.list();
     // The run's report only describes the records when they came from that run.
     state.pipeline = issueRepository.source === 'analysis' ? await issueRepository.pipeline() : null;
+    // Ages and "last N days" count back from when the analysis ran, so newly scraped posts are never in the future.
+    if (issueRepository.source === 'analysis') setReferenceDate(state.pipeline?.generated_at || new Date().toISOString());
     // Corrections accepted in this browser stay applied across reloads (an API would return updated issues).
     state.corrections.filter(c => c.status === 'Accepted').forEach(applyCorrection);
     route();

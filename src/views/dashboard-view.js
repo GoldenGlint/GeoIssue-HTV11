@@ -1,5 +1,5 @@
 // Dashboard: a city overview built from the same filtered records as the map and table.
-import { categories, demoPipeline, wards, ELECTION_DATE, DEMO_DATE } from '../data.js';
+import { categories, demoPipeline, wards, ELECTION_DATE, REFERENCE_DATE } from '../data.js';
 import { icon } from '../icons.js';
 import { DAY, esc, date, age, typeIcon, percent, countBy, wardLabel, plural } from '../format.js';
 import { state, filtered, previousPeriod } from '../state.js';
@@ -46,11 +46,11 @@ function timelineHtml(rows) {
   const { counts, size } = buckets(rows), n = counts.length;
   const max = Math.max(2, Math.ceil(Math.max(...counts) / 2) * 2); // even, so the middle label is a whole number
   const x = j => n === 1 ? 260 : j * 520 / (n - 1), y = v => 150 - v / max * 120;
-  const start = j => new Date(Date.parse(DEMO_DATE) - ((n - 1 - j) * size + size - 1) * DAY);
+  const start = j => new Date(Date.parse(REFERENCE_DATE) - ((n - 1 - j) * size + size - 1) * DAY);
   const points = counts.map((v, j) => `${x(j).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   const labels = [...new Set([0, Math.round((n - 1) / 3), Math.round(2 * (n - 1) / 3), n - 1])];
   const unit = size === 1 ? 'day' : 'week';
-  return `<section class="card trend-card"><div class="card-header"><h2>${icon('chart')} Detection timeline</h2><span class="subtle-label">${date(start(0))} – ${date(DEMO_DATE)} · per ${unit}</span></div><div class="trend-chart"><div class="chart-y"><span>${max}</span><span>${max / 2}</span><span>0</span></div><svg viewBox="0 0 520 170" preserveAspectRatio="none" role="img" aria-label="Sample issue detections per ${unit}"><defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#23adfa" stop-opacity=".32"/><stop offset="100%" stop-color="#23adfa" stop-opacity="0"/></linearGradient></defs>${[30, 90, 150].map(v => `<path d="M0 ${v}H520" stroke="#203346" stroke-dasharray="3 4"/>`).join('')}<polygon points="0,170 ${points} 520,170" fill="url(#chart-fill)"/><polyline points="${points}" fill="none" stroke="#3dbbff" stroke-width="3" vector-effect="non-scaling-stroke"/>${counts.map((v, j) => `<circle cx="${x(j).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${n > 20 ? 2.5 : 3.5}" fill="#b4e7ff" stroke="#1a90da"><title>${size === 1 ? date(start(j)) : `Week of ${date(start(j))}`}: ${v} sample issues</title></circle>`).join('')}</svg></div><div class="chart-x">${labels.map(j => `<span>${date(start(j))}</span>`).join('')}</div><p class="chart-caption">Observed sample detections, not a forecast.</p></section>`;
+  return `<section class="card trend-card"><div class="card-header"><h2>${icon('chart')} Detection timeline</h2><span class="subtle-label">${date(start(0))} – ${date(REFERENCE_DATE)} · per ${unit}</span></div><div class="trend-chart"><div class="chart-y"><span>${max}</span><span>${max / 2}</span><span>0</span></div><svg viewBox="0 0 520 170" preserveAspectRatio="none" role="img" aria-label="Sample issue detections per ${unit}"><defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#23adfa" stop-opacity=".32"/><stop offset="100%" stop-color="#23adfa" stop-opacity="0"/></linearGradient></defs>${[30, 90, 150].map(v => `<path d="M0 ${v}H520" stroke="#203346" stroke-dasharray="3 4"/>`).join('')}<polygon points="0,170 ${points} 520,170" fill="url(#chart-fill)"/><polyline points="${points}" fill="none" stroke="#3dbbff" stroke-width="3" vector-effect="non-scaling-stroke"/>${counts.map((v, j) => `<circle cx="${x(j).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${n > 20 ? 2.5 : 3.5}" fill="#b4e7ff" stroke="#1a90da"><title>${size === 1 ? date(start(j)) : `Week of ${date(start(j))}`}: ${v} sample issues</title></circle>`).join('')}</svg></div><div class="chart-x">${labels.map(j => `<span>${date(start(j))}</span>`).join('')}</div><p class="chart-caption">Observed sample detections, not a forecast.</p></section>`;
 }
 
 function breakdownHtml(rows) {
@@ -67,7 +67,7 @@ function resolutionHtml(rows) {
 
 function wardDigestHtml(rows, previous) {
   const ward = state.filters.area.startsWith('ward:') ? state.filters.area.slice(5) : '';
-  const daysLeft = Math.ceil((Date.parse(ELECTION_DATE) - Date.parse(DEMO_DATE)) / DAY);
+  const daysLeft = Math.ceil((Date.parse(ELECTION_DATE) - Date.parse(REFERENCE_DATE)) / DAY);
   const picker = `<select class="ward-select" id="ward-pick" aria-label="Choose a ward"><option value="">Choose a ward…</option>${Object.entries(wards).map(([id, name]) => `<option value="${id}" ${id === ward ? 'selected' : ''}>Ward ${id} · ${esc(name)}</option>`).join('')}</select>`;
   const election = `<span class="election-chip">${icon('ballot')} Municipal election · ${date(ELECTION_DATE)} · ${daysLeft} days away</span>`;
   let body;

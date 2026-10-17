@@ -1,5 +1,5 @@
 // Shared issue logic: filtering, sorting and search. Keep UI sorting separate from API ordering.
-import { DEMO_DATE, wards } from './data.js';
+import { REFERENCE_DATE, wards } from './data.js';
 
 const DAY = 86400000;
 const severityOrder = { High: 3, Medium: 2, Low: 1 };
@@ -25,7 +25,7 @@ function nearInfrastructure(i, infra, radius) {
  * days, so offset = days gives the previous period of the same length (used for honest comparisons). */
 export function issueMatches(i, f, offset = 0) {
   const query = f.query.trim().toLowerCase(), days = Number(f.days);
-  const ageDays = Math.floor((Date.parse(DEMO_DATE) - Date.parse(i.first_seen_at)) / DAY);
+  const ageDays = Math.floor((Date.parse(REFERENCE_DATE) - Date.parse(i.first_seen_at)) / DAY);
   return (!query || searchText(i).includes(query))
     && (!f.type || i.issue_type === f.type)
     && (!f.severity || i.severity === f.severity)

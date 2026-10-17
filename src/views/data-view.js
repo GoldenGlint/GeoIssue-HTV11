@@ -1,5 +1,5 @@
 // Data Explorer: summary cards, the records table, and the read-only Query tab.
-import { DEMO_DATE, wards } from '../data.js';
+import { REFERENCE_DATE, wards } from '../data.js';
 import { icon } from '../icons.js';
 import { DAY, esc, badge, date, typeIcon, typeColor, percent } from '../format.js';
 import { compareIssues } from '../issues.js';
@@ -72,7 +72,7 @@ const schema = [
 /** The current filters, scope, sort and page as one SQL statement (display only; never executed). */
 export function buildQuery() {
   const f = state.filters, quote = v => `'${String(v).replaceAll("'", "''")}'`, where = [];
-  if (f.days) where.push(`first_seen_at > TIMESTAMPTZ ${quote(new Date(Date.parse(DEMO_DATE) - f.days * DAY).toISOString().replace('T', ' ').slice(0, 19) + '+00')}  -- last ${f.days} days`);
+  if (f.days) where.push(`first_seen_at > TIMESTAMPTZ ${quote(new Date(Date.parse(REFERENCE_DATE) - f.days * DAY).toISOString().replace('T', ' ').slice(0, 19) + '+00')}  -- last ${f.days} days`);
   if (f.type) where.push(`issue_type = ${quote(f.type)}`);
   if (f.severity) where.push(`severity = ${quote(f.severity)}`);
   if (f.status) where.push(`resolution_status = ${quote(f.status)}`);

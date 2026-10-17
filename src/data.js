@@ -8,6 +8,9 @@
 import { osmStations, osmRoads } from './osm-infrastructure.js';
 
 export const DEMO_DATE = '2026-10-17T12:00:00Z';
+/** "Now" for ages and time filters: the demo date for sample records, the analysis run time for analysed ones. */
+export let REFERENCE_DATE = DEMO_DATE;
+export const setReferenceDate = iso => { REFERENCE_DATE = iso; };
 export const ELECTION_DATE = '2026-10-26T12:00:00Z';
 export const TORONTO_CENTER = [-79.397, 43.661];
 export const TORONTO_BOUNDS = { west: -79.64, south: 43.58, east: -79.11, north: 43.86 };
