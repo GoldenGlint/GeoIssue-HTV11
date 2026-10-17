@@ -11,8 +11,8 @@ function unproject([x, y], z) {
   return [x / size * 360 - 180, Math.atan(Math.sinh(Math.PI * (1 - 2 * y / size))) * 180 / Math.PI];
 }
 export class CivicMap {
-  constructor(element, { onSelect, onEmpty, onMove, icon }) {
-    Object.assign(this, { element, onSelect, onEmpty, onMove, icon, center: [-79.397, 43.661], zoom: 13, issues: [], selected: [], layers: [], mode: 'pan', drag: null, showHeat: false, tileCache: new Map(), motionFrame: null, renderFrame: null, lastWheel: 0, backdropTimer: null });
+  constructor(element, { onSelect, onEmpty, onMove, icon, colorFor = () => '#4ea8ff', assets = [], home = [-79.397, 43.661] }) {
+    Object.assign(this, { element, onSelect, onEmpty, onMove, icon, colorFor, assets, home, center: home, zoom: 13, issues: [], selected: [], layers: [], mode: 'pan', drag: null, pinch: null, pointers: new Map(), showHeat: false, tileCache: new Map(), motionFrame: null, renderFrame: null, lastWheel: 0, backdropTimer: null });
     element.innerHTML = '<div class="map-fallback" aria-hidden="true"><div class="fallback-grid"></div><span>TORONTO</span><i>Lake Ontario</i></div><div class="map-scene"><div class="tile-layer"></div><div class="infrastructure-layer"></div><div class="marker-layer"></div></div><div class="box-drawing"></div><div class="tile-warning" hidden>Map tiles unavailable · schematic background</div>';
     this.bindScene(element.querySelector('.map-scene'));
     this.box = element.querySelector('.box-drawing');
@@ -28,7 +28,7 @@ export class CivicMap {
       pointerdown: e => this.pointerDown(e),
       pointermove: e => this.pointerMove(e),
       pointerup: e => this.pointerUp(e),
-      pointercancel: () => { this.drag = null; this.box.style.display = 'none'; this.element.classList.remove('is-dragging'); },
+      pointercancel: e => { this.pointers.delete(e.pointerId); this.drag = null; this.pinch = null; this.box.style.display = 'none'; this.element.classList.remove('is-dragging'); },
       wheel: e => {
         e.preventDefault();
         // Trackpads emit many small wheel events; one camera step per gesture slice.
@@ -50,7 +50,7 @@ export class CivicMap {
           const c = project(this.center, this.zoom);
           this.animateTo(unproject([c[0] + delta[0], c[1] + delta[1]], this.zoom), this.zoom, 250);
         } else if (['+', '=', '-'].includes(e.key)) { e.preventDefault(); this.setZoom(Math.round(this.zoom) + (e.key === '-' ? -1 : 1)); }
-        else if (e.key === 'Home') { e.preventDefault(); this.flyTo([-79.397, 43.661], 13); }
+        else if (e.key === 'Home') { e.preventDefault(); this.flyTo(this.home, 13); }
       },
     };
     for (const [event, handler] of Object.entries(this.handlers)) element.addEventListener(event, handler, event === 'wheel' ? { passive: false } : undefined);
@@ -148,14 +148,51 @@ export class CivicMap {
     const p = project(coords, this.zoom), c = project(this.center, this.zoom);
     return [p[0] - c[0] + this.element.clientWidth / 2, p[1] - c[1] + this.element.clientHeight / 2];
   }
+  coordsAt([x, y]) {
+    const c = project(this.center, this.zoom);
+    return unproject([c[0] + x - this.element.clientWidth / 2, c[1] + y - this.element.clientHeight / 2], this.zoom);
+  }
+  /** Pans just enough to bring a point into the area not covered by panels, centring it there. */
+  ensureVisible(coords, { top = 0, right = 0, bottom = 0, left = 0 } = {}) {
+    const [x, y] = this.position(coords), w = this.element.clientWidth, h = this.element.clientHeight;
+    if (x >= left && x <= w - right && y >= top && y <= h - bottom) return;
+    const c = project(this.center, this.zoom);
+    const target = [left + Math.max(0, w - left - right) / 2, top + Math.max(0, h - top - bottom) / 2];
+    this.animateTo(unproject([c[0] + x - target[0], c[1] + y - target[1]], this.zoom), this.zoom, 420);
+  }
   pointerDown(e) {
     if (e.target.closest('button') || e.button !== 0) return;
-    this.stopMotion(); this.render();
     this.element.setPointerCapture(e.pointerId);
+    this.pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    if (this.pointers.size === 2) { this.startPinch(); return; }
+    if (this.pointers.size > 2) return;
+    this.stopMotion(); this.render();
     this.drag = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, lastTime: performance.now(), vx: 0, vy: 0, center: project(this.center, this.zoom), moved: false };
     this.element.classList.add('is-dragging');
   }
+  pinchGeometry() {
+    const [a, b] = [...this.pointers.values()], r = this.element.getBoundingClientRect();
+    return { distance: Math.max(1, Math.hypot(a[0] - b[0], a[1] - b[1])), mid: [(a[0] + b[0]) / 2 - r.left, (a[1] + b[1]) / 2 - r.top] };
+  }
+  startPinch() {
+    // A second finger turns the gesture into a pinch-zoom anchored between both fingers.
+    this.drag = null; this.box.style.display = 'none';
+    this.stopMotion(); this.render();
+    const { distance, mid } = this.pinchGeometry();
+    this.pinch = { distance, zoom: this.zoom, anchor: this.coordsAt(mid) };
+    this.element.classList.add('is-dragging');
+  }
   pointerMove(e) {
+    if (this.pointers.has(e.pointerId)) this.pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    if (this.pinch) {
+      if (this.pointers.size < 2) return;
+      const { distance, mid } = this.pinchGeometry();
+      const z = clampZoom(this.pinch.zoom + Math.log2(distance / this.pinch.distance)), p = project(this.pinch.anchor, z);
+      this.zoom = z;
+      this.center = unproject([p[0] - (mid[0] - this.element.clientWidth / 2), p[1] - (mid[1] - this.element.clientHeight / 2)], z);
+      if (!this.renderFrame) this.renderFrame = requestAnimationFrame(() => { this.renderFrame = null; this.render(); });
+      return;
+    }
     if (!this.drag) return;
     const d = this.drag, dx = e.clientX - d.x, dy = e.clientY - d.y, now = performance.now(), dt = Math.max(1, now - d.lastTime);
     d.moved ||= Math.abs(dx) + Math.abs(dy) > 5;
@@ -170,6 +207,17 @@ export class CivicMap {
     }
   }
   pointerUp(e) {
+    this.pointers.delete(e.pointerId);
+    if (this.pinch) {
+      if (this.pointers.size) return; // wait for the last finger
+      this.pinch = null; this.element.classList.remove('is-dragging');
+      cancelAnimationFrame(this.renderFrame); this.renderFrame = null;
+      // Settle on a whole zoom level so tiles stay crisp.
+      const r = this.element.getBoundingClientRect(), whole = Math.round(this.zoom);
+      if (Math.abs(this.zoom - whole) < 0.01) { this.zoom = whole; this.render(); this.onMove?.(); }
+      else this.setZoom(whole, [e.clientX - r.left, e.clientY - r.top]);
+      return;
+    }
     if (!this.drag) return;
     const d = this.drag; this.drag = null; this.box.style.display = 'none';
     this.element.classList.remove('is-dragging');
@@ -223,7 +271,7 @@ export class CivicMap {
       const issue = this.issues.find(i => i.issue_id === this.selected[0]);
       if (issue) {
         const [x, y] = this.position(issue.geometry.coordinates);
-        const radius = Math.max(14, issue.location_radius_m / (156543.03392 * Math.cos(issue.geometry.coordinates[1] * Math.PI / 180) / 2 ** this.zoom));
+        const radius = Math.max(2, issue.location_radius_m / (156543.03392 * Math.cos(issue.geometry.coordinates[1] * Math.PI / 180) / 2 ** this.zoom));
         const area = document.createElement('div'); area.className = 'uncertainty-area';
         area.style.cssText = `left:${x}px;top:${y}px;width:${radius * 2}px;height:${radius * 2}px`;
         area.setAttribute('aria-label', `Approximate location within ${issue.location_radius_m} metres`);
@@ -232,12 +280,14 @@ export class CivicMap {
     }
     for (const group of groups) {
       const first = group.items[0], multi = group.items.length > 1, key = group.items.map(i => i.issue_id).join(',');
+      // High severity gets a "!" badge, so severity never depends on colour alone.
+      const high = group.items.filter(i => i.severity === 'High').length;
       const button = oldMarkers.get(key) || document.createElement('button');
       button.dataset.key = key;
-      button.className = `map-pin ${multi ? 'cluster' : ''} ${group.items.some(i => this.selected.includes(i.issue_id)) ? 'selected' : ''} ${this.showHeat ? 'heat-pin' : ''}`;
-      button.style.cssText = `left:${group.p[0]}px;top:${group.p[1]}px;--pin:${this.color(first.issue_type)}`;
+      button.className = `map-pin ${multi ? 'cluster' : ''} ${high ? 'sev-high' : ''} ${group.items.some(i => this.selected.includes(i.issue_id)) ? 'selected' : ''} ${this.showHeat ? 'heat-pin' : ''}`;
+      button.style.cssText = `left:${group.p[0]}px;top:${group.p[1]}px;--pin:${this.colorFor(first.issue_type)}`;
       button.innerHTML = multi ? `<span>${group.items.length}</span>` : this.icon(first.issue_type);
-      const label = multi ? `${group.items.length} issues · click to explore` : `${first.issue_type} · ${first.address}`;
+      const label = multi ? `${group.items.length} issues${high ? `, ${high} high severity` : ''} · click to explore` : `${first.issue_type} · ${first.severity} severity · ${first.address}`;
       button.removeAttribute('title');
       button.setAttribute('aria-label', label);
       button.onpointerenter = e => { if (e.pointerType === 'mouse' && !this.drag) this.preview(group, button); };
@@ -255,7 +305,8 @@ export class CivicMap {
     const first = group.items[0], multi = group.items.length > 1;
     const title = document.createElement('strong'); title.textContent = multi ? `${group.items.length} issues in this cluster` : first.issue_type;
     const location = document.createElement('span'); location.textContent = multi ? [...new Set(group.items.map(i => i.issue_type))].join(' · ') : first.address;
-    const meta = document.createElement('small'); meta.textContent = multi ? 'Click to explore · Shift + click to select' : `${first.severity} priority · ${first.verification_status} · ~${first.location_radius_m}m`;
+    const high = group.items.filter(i => i.severity === 'High').length;
+    const meta = document.createElement('small'); meta.textContent = multi ? `${high ? `${high} high severity · ` : ''}Click to explore · Shift + click to select` : `${first.severity} priority · ${first.verification_status} · ~${first.location_radius_m}m`;
     this.tooltip.replaceChildren(title, location, meta);
     this.tooltip.hidden = false;
     const width = this.tooltip.offsetWidth, height = this.tooltip.offsetHeight;
@@ -265,14 +316,37 @@ export class CivicMap {
     this.tooltip.style.top = (y < 120 ? Math.min(this.element.clientHeight - height - 10, group.p[1] + 28) : y) + 'px';
     button.setAttribute('aria-describedby', this.tooltip.id);
   }
-  color(type) { return { Pothole: '#fa6575', 'Sidewalk damage': '#ffb452', Graffiti: '#ba80f6', Litter: '#25d5ac', Flooding: '#4ea8ff', Other: '#9daec3' }[type]; }
   renderInfrastructure() {
     const layer = this.scene.querySelector('.infrastructure-layer'); layer.replaceChildren();
-    const assets = [['TTC', 'Union', -79.38, 43.645], ['TTC', 'Spadina', -79.403, 43.667], ['TTC', 'Osgoode', -79.386, 43.65], ['Schools', 'U of T', -79.396, 43.663], ['Schools', 'TMU', -79.379, 43.657], ['Roads', 'Gardiner Expressway', -79.40, 43.637]];
-    for (const [type, name, lng, lat] of assets) {
-      if (!this.layers.includes(type)) continue;
-      const [x, y] = this.position([lng, lat]), el = document.createElement('span');
-      el.className = 'asset-label'; el.style.cssText = `left:${x}px;top:${y}px`; el.textContent = `${type === 'TTC' ? 'Ⓜ' : '◇'} ${name}`; layer.append(el);
+    const shown = this.assets.filter(a => this.layers.includes(a.type));
+    if (!shown.length) return;
+    const w = this.element.clientWidth, h = this.element.clientHeight, inView = ([x, y], m = 0) => x > -m && x < w + m && y > -m && y < h + m;
+    const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'asset-lines'); svg.setAttribute('width', w); svg.setAttribute('height', h);
+    const label = (asset, [x, y]) => {
+      const el = document.createElement('span');
+      el.className = `asset-label ${asset.type.toLowerCase()}`; el.style.cssText = `left:${x}px;top:${y}px`;
+      el.append(document.createElement('i'), asset.name); layer.append(el);
+    };
+    for (const asset of shown) {
+      if (asset.geometry.type !== 'Point') {
+        const lines = asset.geometry.type === 'LineString' ? [asset.geometry.coordinates] : asset.geometry.coordinates;
+        const visible = [];
+        for (const coordinates of lines) {
+          const points = coordinates.map(c => this.position(c));
+          if (!points.some(p => inView(p, 200))) continue;
+          const line = document.createElementNS(ns, 'polyline'); line.setAttribute('points', points.map(p => p.join(',')).join(' ')); svg.append(line);
+          visible.push(...points.filter(p => inView(p, -60)));
+        }
+        if (visible.length) label(asset, visible.sort((a, b) => a[0] - b[0])[Math.floor(visible.length / 2)]);
+      } else {
+        const p = this.position(asset.geometry.coordinates);
+        if (!inView(p, 40)) continue;
+        // Names only once zoomed in; at city scale a dot per asset keeps the map readable.
+        if (this.zoom >= 14.5) label(asset, p);
+        else { const dot = document.createElement('span'); dot.className = `asset-dot ${asset.type.toLowerCase()}`; dot.style.cssText = `left:${p[0]}px;top:${p[1]}px`; layer.append(dot); }
+      }
     }
+    layer.prepend(svg);
   }
 }

@@ -243,6 +243,7 @@ The test answers five questions:
 - Next.js, MapLibre, shadcn and Auth.js with roles.
 - Pages: public map (verified issues precise, unverified issues coarse or hidden), `/issues/[id]`, `/wards/[n]` digest (neutral, grounded in SQL, election-season), `/verify` (issue? pin right? choose a candidate or drag the pin → `volunteer_labels`), `/triage` (priority queue, clusters, context, 311 draft with asset ID, CSV/GeoJSON export), the **GeoExplainer** (clue geometries, candidate pins, matched reference with LightGlue match lines, confidence circle, trace) and the **Signal monitor** (live funnel per platform).
 - *Tests:* Playwright smoke at desktop and mobile widths; anonymous `/api/geolocate` and the triage APIs return **403**; API JSON never contains usernames or handles; every displayed image is a blurred derivative.
+- > **Status (2026-10-17):** the frontend was built as a dependency-free vanilla JS app (custom map engine on OpenStreetMap tiles, no Next.js/shadcn/MapLibre/Recharts yet) on the `frontEnd` branch. See `README.md` for what exists and `data-contract.md` for the issue shape the API should return. Before starting a separate Next.js app, decide as a team whether to port or keep extending it.
 
 **11. Volunteer loop and deploy**
 - Retrain fusion with volunteer labels and report the before/after honestly.
