@@ -1,0 +1,13 @@
+{
+  "exported_at": "2026-10-17T20:25:16.085211+00:00",
+  "passed": 34,
+  "by_platform": {
+    "reddit": 13,
+    "mastodon": 7,
+    "bluesky": 14
+  },
+  "cached_gemini_results": 413,
+  "images_committed": false,
+  "post_groups": 26,
+  "supplemental_images": 10
+}
