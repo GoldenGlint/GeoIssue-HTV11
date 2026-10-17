@@ -59,6 +59,32 @@ class PipelineTest(unittest.TestCase):
             self.assertFalse(set(FRONTEND_FIELDS) - issue.keys())
             self.assertEqual(issue["neighbourhood_id"], "unassigned")
 
+    def test_photos_needing_blur_are_withheld_unless_shown_on_purpose(self):
+        from .test_adapter import handoff_group
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "images").mkdir()
+            (folder / "images" / "0.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+            (folder / "post-groups.jsonl").write_text(json.dumps(handoff_group("yes")) + "\n")
+            [withheld] = self.run_sample(input_path=folder / "post-groups.jsonl")["public"]
+            conf = config()
+            conf["output"]["photos_needing_blur"] = "show"
+            [shown] = self.run_sample(conf, input_path=folder / "post-groups.jsonl")["public"]
+        self.assertIsNone(withheld["evidence_thumbnail"])
+        self.assertIn("blurred", withheld["evidence_withheld"])
+        self.assertIsNotNone(shown["evidence_thumbnail"])
+        self.assertNotIn("evidence_withheld", shown)
+        self.assertEqual(withheld["neighbourhood_id"], "parkdale")  # placed from the location guess
+
+    def test_input_without_severity_is_scored_with_the_default(self):
+        from .test_adapter import handoff_group
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "post-groups.jsonl"
+            path.write_text(json.dumps(handoff_group("yes")) + "\n")
+            [issue] = self.run_sample(input_path=path)["issues"]
+        self.assertEqual(issue["severity"], "Medium")
+        self.assertEqual(issue["priority_reasons"][0], "Medium severity (+25)")
+
     def test_fields_the_input_already_has_are_kept(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "theirs.json"

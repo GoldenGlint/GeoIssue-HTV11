@@ -10,7 +10,7 @@ FRONTEND_FIELDS = [
     "description", "explanation", "evidence_thumbnail", "evidence_credit", "is_demo",
 ]
 # Extra fields the analysis adds that are safe to publish.
-PUBLIC_EXTRA_FIELDS = ["priority_score", "priority_reasons", "sighting_ids", "reference_data"]
+PUBLIC_EXTRA_FIELDS = ["priority_score", "priority_reasons", "sighting_ids", "reference_data", "evidence_withheld"]
 LIST_FIELDS = ("geo_trace", "geo_clues", "nearby_assets")
 
 

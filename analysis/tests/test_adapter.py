@@ -78,6 +78,38 @@ class AdaptTest(unittest.TestCase):
         self.assertEqual(report["counts"]["skipped_low_confidence"], 1)
 
 
+def handoff_group(*supported):
+    """A post group in the scraping handoff's shape (scraping/shared/post-groups.jsonl), trimmed."""
+    return {
+        "post_id": "https://example.org/post/1", "platform": "reddit", "posted_at": "2026-10-16T17:44:29+00:00",
+        "caption": "Queen and Dufferin again", "post_url": "https://example.org/post/1",
+        "passed_images": [{
+            "key": f"reddit:post1:{n}", "local_path": f"images/{n}.jpg", "dhash": "d9583c3e73729043",
+            "screening": {"issue_type": "drain", "issue_confidence": "high", "location_guess": "Queen Street West and Dufferin Street, Toronto",
+                          "clues": ["Toronto street sign"], "blur_before_public_display": True},
+            "issue_details": {"issue_supported": verdict, "confidence": "medium", "description": f"Blocked drain {n}."},
+        } for n, verdict in enumerate(supported)],
+    }
+
+
+class ScrapingHandoffTest(unittest.TestCase):
+    def test_each_passed_image_becomes_a_record(self):
+        records, report = adapt([handoff_group("yes", "uncertain")])
+        self.assertEqual([r["issue_type"] for r in records], ["Flooding", "Flooding"])
+        self.assertEqual([r["description"] for r in records], ["Blocked drain 0.", "Blocked drain 1."])
+        self.assertEqual(records[0]["location_text"], "Queen Street West and Dufferin Street, Toronto")
+        self.assertEqual(records[0]["source_category"], "Public social post")
+        self.assertEqual(records[0]["detection_confidence"], 0.6)  # "medium" via [values.detection_confidence]
+        self.assertTrue(records[0]["photo_needs_blur"])
+        self.assertNotIn("post_url", records[0])
+        self.assertNotIn("passed_images[].screening.issue_type", report["unused_input_fields"])
+
+    def test_unsupported_claims_are_skipped_and_counted(self):
+        records, report = adapt([handoff_group("yes", "no", "no")])
+        self.assertEqual(len(records), 1)
+        self.assertEqual(report["counts"]["skipped_issue_supported=no"], 2)
+
+
 class ReadInputTest(unittest.TestCase):
     def test_wrapped_file_jsonl_and_folder(self):
         with tempfile.TemporaryDirectory() as tmp:

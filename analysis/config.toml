@@ -9,9 +9,13 @@
 [input]
 # When a file wraps its records, e.g. {"results": [...]}, the first of these keys holding a list is used.
 records_keys = ["results", "records", "items", "posts", "data"]
-# A photo can contain several issues. If a record has a list at this path, each element becomes its
-# own record and is readable below as "issue.<field>". Records without the list are used as they are.
-explode = "issues"
+# A record can hold several issues or photos. The first of these paths that holds a list splits the record:
+# each element becomes its own record, readable below as "issue.<field>". Records without a list are used as
+# they are. "passed_images" is the scraping handoff (scraping/data/handoff/post-groups.jsonl).
+explode = ["issues", "passed_images"]
+# Records whose field matches one of these values are skipped and counted in report.json.
+# The scraping handoff's detailed review marks each photo's claim yes / no / uncertain.
+skip_when = { issue_supported = ["no"] }
 # Detections below this confidence (0-1) are skipped.
 min_detection_confidence = 0.0
 # Records located outside this box are dropped: min lng, min lat, max lng, max lat.
@@ -21,22 +25,24 @@ toronto_bbox = [-79.64, 43.58, -79.11, 43.86]
 # Each output field lists where to look in an input record; the first non-empty value wins.
 # "a.b" reaches into nested objects and "a[0]" into lists.
 source_id            = ["id", "post_id", "uid", "uri"]
-issue_type           = ["issue.type", "issue.issue_type", "issue_type", "category", "type", "label", "analysis.issue_type", "analysis.category"]
+issue_type           = ["issue.type", "issue.issue_type", "issue.screening.issue_type", "issue_type", "category", "type", "label", "analysis.issue_type", "analysis.category"]
 severity             = ["issue.severity", "severity", "analysis.severity"]
-detection_confidence = ["issue.certainty", "issue.confidence", "detection_confidence", "confidence", "analysis.confidence"]
-description          = ["issue.evidence", "issue.description", "description", "analysis.description", "summary"]
+detection_confidence = ["issue.certainty", "issue.confidence", "issue.issue_details.confidence", "issue.screening.issue_confidence", "detection_confidence", "confidence", "analysis.confidence"]
+description          = ["issue.evidence", "issue.description", "issue.issue_details.description", "issue.screening.issue_evidence", "description", "analysis.description", "summary"]
 geometry             = ["geometry", "location.geometry"]
 lat                  = ["lat", "latitude", "location.lat", "location.latitude", "gps.lat", "gps.latitude", "geo.lat"]
 lng                  = ["lng", "lon", "longitude", "location.lng", "location.lon", "location.longitude", "gps.lng", "gps.lon", "geo.lng"]
 location_radius_m    = ["location_radius_m", "radius_m", "location.radius_m", "location.accuracy_m", "accuracy_m"]
-location_text        = ["location_text", "location.text", "location.name", "place", "address", "analysis.location_text"]
-location_clues       = ["location_clues", "geo_clues", "analysis.location_clues"]
+location_text        = ["issue.screening.location_guess", "location_text", "location.text", "location.name", "place", "address", "analysis.location_text"]
+location_clues       = ["issue.screening.clues", "location_clues", "geo_clues", "analysis.location_clues"]
 observed_at          = ["observed_at", "posted_at", "created_at", "timestamp", "date", "taken_at"]
-photo                = ["photo", "image", "image_path", "photo_path", "image_url", "media[0].path", "media[0].url"]
+photo                = ["issue.local_path", "photo", "image", "image_path", "photo_path", "image_url", "media[0].path", "media[0].url"]
 source_category      = ["source_category", "platform", "source"]
-image_hash           = ["image_hash", "phash", "analysis.image_hash"]
+image_hash           = ["issue.dhash", "image_hash", "phash", "analysis.image_hash"]
 is_demo              = ["is_sample", "is_demo"]
 evidence_credit      = ["evidence_credit", "photo_credit"]
+issue_supported      = ["issue.issue_details.issue_supported", "issue_supported"]
+photo_needs_blur     = ["issue.screening.blur_before_public_display", "blur_before_public_display"]
 # Only used to find a place name when there are no coordinates. It is never written to the output.
 post_text            = ["text", "post_text", "caption", "body"]
 
@@ -65,11 +71,18 @@ resolution_status    = ["resolution_status"]
 "Sidewalk damage" = ["sidewalk damage", "sidewalk", "broken sidewalk", "trip hazard", "curb damage"]
 "Graffiti"        = ["graffiti", "tagging", "vandalism"]
 "Litter"          = ["litter", "trash", "garbage", "illegal dumping", "dumping", "overflowing bin"]
-"Flooding"        = ["flooding", "flood", "standing water", "blocked drain", "pooling water"]
+"Flooding"        = ["flooding", "flood", "standing water", "blocked drain", "pooling water", "drain"]
+"Other"           = ["other", "blocked access", "damaged transit or shelter"]
 # Records with these labels are not civic issues and are skipped.
 _skip = ["none", "no issue", "no_issue", "not an issue", "n/a", "null"]
 # Any other label becomes this, and is counted in report.json so it can be added above.
 _default = "Other"
+
+[values.detection_confidence]
+# Confidence given as words.
+"0.85" = ["high"]
+"0.6"  = ["medium"]
+"0.35" = ["low"]
 
 [values.severity]
 "High"   = ["high", "severe", "critical", "3"]
@@ -171,6 +184,9 @@ env_files = [".env", "spikes/.env"]
 [output]
 dir = "data/analyzed"
 copy_photos = true
+# Photos flagged as needing face and plate blurring (the scraping handoff flags them) are left out of
+# issues.public.json until they are blurred: "withhold", or "show" for local review only.
+photos_needing_blur = "withhold"
 public_grid_m = 250                  # unverified issues are snapped to this grid in issues.public.json
 public_min_radius_m = 250
 # Input fields copied unchanged into every issue, e.g. ["blur_applied"]. Private fields are refused.

@@ -30,6 +30,8 @@ def print_summary(result):
     print(f"{counts.get('input_records', 0)} input records -> {counts.get('sightings', 0)} sightings -> "
           f"{counts.get('issues', 0)} issues ({counts.get('merged_away', 0)} duplicates merged)")
     skipped = {"not an issue": counts.get("skipped_not_an_issue", 0), "low confidence": counts.get("skipped_low_confidence", 0)}
+    # [input] skip_when rules count as skipped_<field>=<value>.
+    skipped.update({key.removeprefix("skipped_"): n for key, n in counts.items() if "=" in key and key.startswith("skipped_")})
     for item in report["dropped"]:
         skipped[item["reason"]] = skipped.get(item["reason"], 0) + 1
     if any(skipped.values()):
@@ -38,8 +40,10 @@ def print_summary(result):
     for field, labels in report["unrecognised_values"].items():
         print(f"Unrecognised {field} values: " + ", ".join(f"{label!r} x{n}" for label, n in labels.items())
               + f"  (add them under [values.{field}] in analysis/config.toml)")
-    if report["unused_input_fields"]:
-        print("Input fields not used: " + ", ".join(report["unused_input_fields"]))
+    unused = list(report["unused_input_fields"])
+    if unused:
+        more = f" and {len(unused) - 12} more (see report.json)" if len(unused) > 12 else ""
+        print("Input fields not used: " + ", ".join(unused[:12]) + more)
     if report["private_fields_dropped"]:
         print("Private fields dropped: " + ", ".join(report["private_fields_dropped"]))
     if result["areas"]:

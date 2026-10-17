@@ -21,6 +21,10 @@ def run(input_path, config, out_dir=None, now=None, offline=False):
     report = adapter.new_report()
     input_cfg = config.get("input", {})
     records = adapter.adapt(adapter.read_input(input_path, input_cfg.get("records_keys", [])), config, report)
+    # Label defaults first: priority scores severity, so an input without one must not score as "None".
+    for record in records:
+        for field in ("severity", "resolution_status", "verification_status", "source_category"):
+            fill(record, field, config.get("values", {}).get(field, {}).get("_default"), "default")
 
     ref = None
     if enabled(config, "locate"):
@@ -43,7 +47,7 @@ def run(input_path, config, out_dir=None, now=None, offline=False):
     out.mkdir(parents=True, exist_ok=True)
     for issue in issues:
         _finalise(issue, config, now, placeholder)
-        _publish_photo(issue, out, config.get("output", {}).get("copy_photos", True), report)
+        _publish_photo(issue, out, config.get("output", {}), report)
     for record in sightings:
         record.pop("post_text", None)
         record.get("provenance", {}).pop("post_text", None)
@@ -120,10 +124,16 @@ def _explanation(issue, radius_m):
     return " ".join(parts)
 
 
-def _publish_photo(issue, out, copy, report):
+def _publish_photo(issue, out, output_cfg, report):
     source = issue.get("photo_source")
     if not source or issue.get("evidence_thumbnail"):
         return
+    if issue.get("photo_needs_blur") and output_cfg.get("photos_needing_blur", "withhold") == "withhold":
+        # Neither copied nor linked, so the app never shows an unblurred face or plate.
+        issue["evidence_withheld"] = "Photo withheld until faces and licence plates are blurred."
+        report["counts"]["photos_withheld"] += 1
+        return
+    copy = output_cfg.get("copy_photos", True)
     if source.startswith(("http://", "https://")):
         issue["evidence_thumbnail"] = source
         return

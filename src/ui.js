@@ -42,6 +42,7 @@ export const issueRow = i => `<button class="issue-row" data-issue="${esc(i.issu
 export const statCard = ({ icon: name, label, value, note, color, extra = '' }) => `<div class="stat-card ${color}"><span class="stat-icon">${icon(name)}</span><div><span>${label}</span><strong>${typeof value === 'number' ? value.toLocaleString() : value}</strong><small>${note}</small></div>${extra}</div>`;
 
 function evidenceHtml(i) {
+  if (!i.evidence_thumbnail && i.evidence_withheld) return `<div class="evidence-placeholder">${icon('shield')}<strong>Photo withheld</strong><span>${esc(i.evidence_withheld)}</span></div>`;
   if (!i.evidence_thumbnail) return `<div class="evidence-placeholder">${icon('image')}<strong>Evidence photo</strong><span>Connect privacy-processed imagery here</span><small>Placeholder, not real evidence</small></div>`;
   const c = i.evidence_credit || {}, source = safeUrl(c.source_url);
   const credit = [source ? `<a href="${esc(source)}" target="_blank" rel="noopener">${esc(c.title || 'Source')}</a>` : '', esc(c.author), esc(c.license)].filter(Boolean).join(' · ');

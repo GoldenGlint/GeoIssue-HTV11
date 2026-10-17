@@ -119,6 +119,7 @@ def _merge(members, incident_id=None):
         "sighting_ids": [r["issue_id"] for r in members],
         "evidence_photos": [r["photo_source"] for r in members if r.get("photo_source")],
         "is_demo": any(r.get("is_demo") for r in members),
+        "photo_needs_blur": any(r.get("photo_needs_blur") for r in members) or None,
         "geo_clues": list(dict.fromkeys(c for r in members for c in r.get("geo_clues") or [])) or None,
         "geo_trace": list(located.get("geo_trace") or []) + [
             {"stage": "Duplicate merge", "result": f"{len(members)} sightings merged; the most precise location is kept", "status": "info"}],

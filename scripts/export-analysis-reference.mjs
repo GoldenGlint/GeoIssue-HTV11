@@ -31,7 +31,11 @@ const files = {
   },
   'places.json': {
     placeholder: true, note,
-    places: corners.map(({ address, lng, lat }) => ({ name: address, kind: 'intersection', match_all: address.split(' & ').map(streetWords), lng, lat, radius_m: 75 })),
+    places: [
+      ...corners.map(({ address, lng, lat }) => ({ name: address, kind: 'intersection', match_all: address.split(' & ').map(streetWords), lng, lat, radius_m: 75 })),
+      // TTC stations match only as the whole name ("Queen Station"), so "Queen Street ... near the station" does not.
+      ...infrastructure.filter(a => a.type === 'TTC' && a.geometry.type === 'Point').map(a => ({ name: a.name, kind: 'landmark', aliases: [a.name], lng: a.geometry.coordinates[0], lat: a.geometry.coordinates[1], radius_m: 150 })),
+    ],
   },
 };
 
