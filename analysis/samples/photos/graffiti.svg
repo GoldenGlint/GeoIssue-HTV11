@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="Placeholder photo: Graffiti">
+  <rect width="640" height="400" fill="#0d1b2a"/>
+  <rect x="12" y="12" width="616" height="376" rx="14" fill="none" stroke="#ba80f6" stroke-width="4" stroke-dasharray="14 10"/>
+  <path d="M0 300 L180 210 L320 270 L470 180 L640 260 L640 400 L0 400 Z" fill="#ba80f6" opacity="0.18"/>
+  <circle cx="320" cy="170" r="54" fill="none" stroke="#ba80f6" stroke-width="6"/>
+  <text x="320" y="270" text-anchor="middle" font-family="system-ui, sans-serif" font-size="34" font-weight="700" fill="#e8eef6">Graffiti</text>
+  <text x="320" y="310" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" letter-spacing="3" fill="#ba80f6">PLACEHOLDER PHOTO</text>
+</svg>

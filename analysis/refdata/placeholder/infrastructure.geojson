@@ -1,0 +1,669 @@
+{
+ "type": "FeatureCollection",
+ "placeholder": true,
+ "note": "PLACEHOLDER: approximate hand-drawn rectangles and points for the hackathon demo, not official boundaries or asset locations.",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Union Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.3806,
+     43.6453
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "St Andrew Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.3846,
+     43.6476
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Osgoode Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.3868,
+     43.6508
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "St Patrick Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.3883,
+     43.6548
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "King St W at Spadina Ave stop"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.3953,
+     43.6455
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Spadina Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.404,
+     43.6672
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "St George Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.3997,
+     43.6683
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Bathurst Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.4111,
+     43.666
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Dufferin Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.4355,
+     43.6603
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Dundas West Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.4528,
+     43.6566
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Keele Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.4597,
+     43.6556
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Broadview Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.3584,
+     43.6768
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Coxwell Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.323,
+     43.6842
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Kennedy Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.2637,
+     43.7323
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Sheppard-Yonge Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.4111,
+     43.7615
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Islington Station"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.5245,
+     43.6454
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Queen St E at Broadview Ave stop"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.353,
+     43.659
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "TTC",
+    "name": "Queen St W at Dufferin St stop"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.4285,
+     43.6425
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Schools",
+    "name": "Ogden Junior Public School"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.3955,
+     43.65
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Schools",
+    "name": "Kensington Community School"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.404,
+     43.656
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Schools",
+    "name": "Parkdale Collegiate Institute"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.431,
+     43.64
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Schools",
+    "name": "Western Technical-Commercial School"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.471,
+     43.66
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Schools",
+    "name": "Harbord Collegiate Institute"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.411,
+     43.662
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Schools",
+    "name": "Queen Alexandra Middle School"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.3545,
+     43.6655
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Schools",
+    "name": "Leslieville Junior Public School"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.334,
+     43.664
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Schools",
+    "name": "William Burgess Elementary School"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.348,
+     43.695
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Schools",
+    "name": "University of Toronto Scarborough"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.187,
+     43.784
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "Queen Street West"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.45,
+      43.6385
+     ],
+     [
+      -79.4285,
+      43.6425
+     ],
+     [
+      -79.3865,
+      43.6505
+     ],
+     [
+      -79.3795,
+      43.6525
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "Queen Street East"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.3795,
+      43.6525
+     ],
+     [
+      -79.353,
+      43.659
+     ],
+     [
+      -79.329,
+      43.663
+     ],
+     [
+      -79.306,
+      43.668
+     ],
+     [
+      -79.293,
+      43.671
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "King Street West"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.43,
+      43.639
+     ],
+     [
+      -79.3953,
+      43.6455
+     ],
+     [
+      -79.379,
+      43.649
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "Adelaide Street West"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.4,
+      43.646
+     ],
+     [
+      -79.379,
+      43.6505
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "Dundas Street West"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.467,
+      43.665
+     ],
+     [
+      -79.4528,
+      43.6566
+     ],
+     [
+      -79.421,
+      43.6495
+     ],
+     [
+      -79.398,
+      43.653
+     ],
+     [
+      -79.3802,
+      43.6561
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "Bloor Street West"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.48,
+      43.65
+     ],
+     [
+      -79.4597,
+      43.6556
+     ],
+     [
+      -79.4111,
+      43.666
+     ],
+     [
+      -79.387,
+      43.67
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "Spadina Avenue"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.392,
+      43.638
+     ],
+     [
+      -79.3953,
+      43.6455
+     ],
+     [
+      -79.4,
+      43.658
+     ],
+     [
+      -79.404,
+      43.6672
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "Strachan Avenue"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.411,
+      43.634
+     ],
+     [
+      -79.412,
+      43.644
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "The Queensway"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.54,
+      43.623
+     ],
+     [
+      -79.519,
+      43.625
+     ],
+     [
+      -79.48,
+      43.633
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "Broadview Avenue"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.353,
+      43.658
+     ],
+     [
+      -79.3584,
+      43.6768
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "type": "Roads",
+    "name": "Yonge Street"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -79.376,
+      43.642
+     ],
+     [
+      -79.387,
+      43.67
+     ],
+     [
+      -79.4,
+      43.71
+     ],
+     [
+      -79.415,
+      43.77
+     ]
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,172 @@
+# CivicLens analysis settings.
+#
+# Everything that depends on the shape of the photo-analysis output lives in [input], [fields] and
+# [values], so when that output changes this file should be the only thing to edit. After a run,
+# data/analyzed/report.json lists input fields that were not used and labels that were not recognised.
+#
+# Relative paths are resolved from the repository root.
+
+[input]
+# When a file wraps its records, e.g. {"results": [...]}, the first of these keys holding a list is used.
+records_keys = ["results", "records", "items", "posts", "data"]
+# A photo can contain several issues. If a record has a list at this path, each element becomes its
+# own record and is readable below as "issue.<field>". Records without the list are used as they are.
+explode = "issues"
+# Detections below this confidence (0-1) are skipped.
+min_detection_confidence = 0.0
+# Records located outside this box are dropped: min lng, min lat, max lng, max lat.
+toronto_bbox = [-79.64, 43.58, -79.11, 43.86]
+
+[fields]
+# Each output field lists where to look in an input record; the first non-empty value wins.
+# "a.b" reaches into nested objects and "a[0]" into lists.
+source_id            = ["id", "post_id", "uid", "uri"]
+issue_type           = ["issue.type", "issue.issue_type", "issue_type", "category", "type", "label", "analysis.issue_type", "analysis.category"]
+severity             = ["issue.severity", "severity", "analysis.severity"]
+detection_confidence = ["issue.certainty", "issue.confidence", "detection_confidence", "confidence", "analysis.confidence"]
+description          = ["issue.evidence", "issue.description", "description", "analysis.description", "summary"]
+geometry             = ["geometry", "location.geometry"]
+lat                  = ["lat", "latitude", "location.lat", "location.latitude", "gps.lat", "gps.latitude", "geo.lat"]
+lng                  = ["lng", "lon", "longitude", "location.lng", "location.lon", "location.longitude", "gps.lng", "gps.lon", "geo.lng"]
+location_radius_m    = ["location_radius_m", "radius_m", "location.radius_m", "location.accuracy_m", "accuracy_m"]
+location_text        = ["location_text", "location.text", "location.name", "place", "address", "analysis.location_text"]
+location_clues       = ["location_clues", "analysis.location_clues"]
+observed_at          = ["observed_at", "posted_at", "created_at", "timestamp", "date", "taken_at"]
+photo                = ["photo", "image", "image_path", "photo_path", "image_url", "media[0].path", "media[0].url"]
+source_category      = ["source_category", "platform", "source"]
+image_hash           = ["image_hash", "phash", "analysis.image_hash"]
+is_demo              = ["is_sample", "is_demo"]
+# Only used to find a place name when there are no coordinates. It is never written to the output.
+post_text            = ["text", "post_text", "caption", "body"]
+
+# Fields the analysis stages compute. When the input already has them, the input value is kept.
+address              = ["address", "location.address"]
+neighbourhood_id     = ["neighbourhood_id", "neighbourhood", "location.neighbourhood"]
+ward_id              = ["ward_id", "ward", "location.ward"]
+infrastructure_type  = ["infrastructure_type"]
+asset_name           = ["asset_name"]
+distance_m           = ["distance_m"]
+incident_id          = ["incident_id", "cluster_id"]
+sightings_count      = ["sightings_count"]
+priority_score       = ["priority_score"]
+explanation          = ["explanation", "analysis.explanation", "analysis.reasoning"]
+geo_confidence       = ["geo_confidence", "location.confidence"]
+verification_status  = ["verification_status"]
+resolution_status    = ["resolution_status"]
+
+[values.issue_type]
+# Frontend category = labels the photo model might use. Matching ignores case, "_" and "-".
+"Pothole"         = ["pothole", "potholes", "road damage", "road crack", "damaged road"]
+"Sidewalk damage" = ["sidewalk damage", "sidewalk", "broken sidewalk", "trip hazard", "curb damage"]
+"Graffiti"        = ["graffiti", "tagging", "vandalism"]
+"Litter"          = ["litter", "trash", "garbage", "illegal dumping", "dumping", "overflowing bin"]
+"Flooding"        = ["flooding", "flood", "standing water", "blocked drain", "pooling water"]
+# Records with these labels are not civic issues and are skipped.
+_skip = ["none", "no issue", "no_issue", "not an issue", "n/a", "null"]
+# Any other label becomes this, and is counted in report.json so it can be added above.
+_default = "Other"
+
+[values.severity]
+"High"   = ["high", "severe", "critical", "3"]
+"Medium" = ["medium", "moderate", "2"]
+"Low"    = ["low", "minor", "1"]
+_default = "Medium"
+# Numeric severities between 0 and 1: at or above _high is High, at or above _medium is Medium.
+_high = 0.67
+_medium = 0.34
+
+[values.resolution_status]
+"Open"      = ["open", "new", "active", "unresolved"]
+"In review" = ["in review", "reviewing"]
+"Resolved"  = ["resolved", "fixed", "closed"]
+_default = "Open"
+
+[values.verification_status]
+"Verified"     = ["verified", "confirmed"]
+"Needs review" = ["needs review", "unverified", "pending"]
+_default = "Needs review"
+
+[values.source_category]
+"Public imagery"       = ["bluesky", "mastodon", "reddit", "instagram", "twitter", "x", "tiktok", "wikimedia", "social", "public imagery"]
+"Community submission" = ["upload", "submission", "volunteer", "community submission"]
+_default = "Public imagery"
+
+# ---------------------------------------------------------------------------------------------
+# Stages run in this order: locate -> dedupe -> priority -> stats -> summaries.
+# Set enabled = false to turn one off; the output stays valid for the frontend either way.
+# ---------------------------------------------------------------------------------------------
+
+[stages.locate]
+enabled = true
+overwrite = false                    # true replaces area, infrastructure and address values from the input
+reference = "analysis/refdata/placeholder"
+default_radius_m = 50                # for input coordinates that come without an accuracy
+gps_geo_confidence = 0.9
+text_geo_confidence = 0.5
+use_post_text = true                 # look for place names in the post text when there are no coordinates
+address_max_distance_m = 200         # the nearest named intersection within this distance becomes the address
+context_max_radius_m = 250           # nearest infrastructure and address are only attached to locations at least this precise
+places_file = "places.json"
+
+[[stages.locate.areas]]
+file = "neighbourhoods.geojson"
+name_property = "name"
+field = "neighbourhood_id"
+searchable = true                    # area names can be matched in location text
+
+[[stages.locate.areas]]
+file = "neighbourhoods.geojson"      # the placeholder stores each area's ward as a property; real data has a wards file
+name_property = "ward"
+field = "ward_id"
+
+[stages.locate.infrastructure]
+file = "infrastructure.geojson"
+type_property = "type"               # becomes infrastructure_type; the frontend filters on TTC, Schools and Roads
+name_property = "name"
+
+[stages.dedupe]
+enabled = true
+distance_m = 30                      # sightings of the same type this close are one issue...
+use_location_radius = true           # ...or within the larger of their location radii,
+max_distance_m = 150                 # capped at this
+window_days = 14
+image_hash_max_bits = 6              # photos whose perceptual hashes differ by at most this many bits are reposts
+
+[stages.priority]
+enabled = true
+overwrite = false
+severity_points = { High = 40, Medium = 25, Low = 10 }
+points_per_extra_sighting = 8
+max_sighting_points = 24
+points_per_open_day = 0.5
+max_age_points = 15
+near_asset_m = 100
+near_asset_points = { Schools = 15, TTC = 12, Roads = 5 }
+low_confidence_below = 0.6
+low_confidence_factor = 0.7
+
+[stages.stats]
+enabled = true
+levels = ["neighbourhood_id", "ward_id"]
+trend_days = 7
+top_n = 3
+
+[stages.summaries]
+enabled = true
+levels = ["ward_id"]
+min_issues = 1
+use_gemini = true                    # needs GEMINI_API_KEY; without it a plain template is used
+model = "gemini-3.5-flash-lite"
+max_words = 90
+timeout_s = 30
+env_files = [".env", "spikes/.env"]
+
+[output]
+dir = "data/analyzed"
+copy_photos = true
+public_grid_m = 250                  # unverified issues are snapped to this grid in issues.public.json
+public_min_radius_m = 250
+# Input fields copied unchanged into every issue, e.g. ["blur_applied"]. Private fields are refused.
+passthrough = []
+# Never written anywhere, even if listed in passthrough.
+private_fields = ["author", "author_id", "username", "user", "user_id", "handle", "display_name", "account", "did", "profile", "post_text", "text"]

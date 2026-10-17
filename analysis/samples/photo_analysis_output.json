@@ -1,0 +1,174 @@
+{
+  "note": "FICTIONAL sample of what the photo analysis might output. Every post, author and photo here is made up; the photos are placeholders.",
+  "generated_at": "2026-10-17T09:00:00Z",
+  "results": [
+    {
+      "post_id": "sample-001", "platform": "bluesky", "posted_at": "2026-10-15T14:22:00Z",
+      "author": "sample-author-1", "text": "This pothole on King has been here for weeks",
+      "image": "photos/pothole.svg", "image_hash": "c3a1f0e2b4d59687", "is_sample": true,
+      "location": {"lat": 43.6457, "lng": -79.3951, "accuracy_m": 30},
+      "scene": "street", "privacy": {"faces": 0, "plates": 1, "blurred": true},
+      "issues": [{"type": "pothole", "severity": "high", "certainty": 0.91, "evidence": "Deep pothole in the curb lane beside the streetcar tracks.", "box_2d": [410, 220, 690, 610]}],
+      "location_clues": ["King St W street sign", "504 streetcar tracks"]
+    },
+    {
+      "post_id": "sample-002", "platform": "mastodon", "posted_at": "2026-10-16T08:05:00Z",
+      "author": "sample-author-2", "text": "Cyclists watch out near Spadina",
+      "image": "photos/pothole.svg", "image_hash": "1f2e3d4c5b6a7988", "is_sample": true,
+      "location": {"lat": 43.6455, "lng": -79.3954, "accuracy_m": 40},
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "Road damage", "severity": "severe", "certainty": 0.84, "evidence": "Broken asphalt with exposed base layer.", "box_2d": [300, 180, 640, 560]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-003", "platform": "bluesky", "posted_at": "2026-10-16T19:40:00Z",
+      "author": "sample-author-3", "text": "Still not fixed at king and spadina",
+      "image": "photos/pothole.svg", "image_hash": "c3a1f0e2b4d59685", "is_sample": true,
+      "scene": "street", "privacy": {"faces": 0, "plates": 1, "blurred": true},
+      "issues": [{"type": "pothole", "severity": "high", "certainty": 0.9, "evidence": "Same pothole as an earlier post.", "box_2d": [410, 220, 690, 610]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-004", "platform": "bluesky", "posted_at": "2026-10-12T17:10:00Z",
+      "author": "sample-author-4", "text": "Nearly tripped here",
+      "image": "photos/sidewalk.svg", "is_sample": true,
+      "location": {"lat": 43.6551, "lng": -79.4021},
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": false},
+      "issues": [{"type": "trip hazard", "severity": "moderate", "certainty": 0.88, "evidence": "Raised sidewalk slab about 5 cm high.", "box_2d": [500, 100, 900, 700]}],
+      "location_clues": ["Augusta Ave sign"]
+    },
+    {
+      "post_id": "sample-005", "platform": "reddit", "posted_at": "2026-10-10T12:00:00Z",
+      "author": "sample-author-5", "text": "Queen and Broadview looking rough",
+      "image": "photos/graffiti.svg", "is_sample": true,
+      "location": {"lat": 43.6591, "lng": -79.3532, "accuracy_m": 25},
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [
+        {"type": "tagging", "severity": "minor", "certainty": 0.86, "evidence": "Spray-painted tags on a transit shelter.", "box_2d": [120, 80, 480, 520]},
+        {"type": "overflowing bin", "severity": "minor", "certainty": 0.74, "evidence": "Litter bin overflowing onto the sidewalk.", "box_2d": [600, 400, 900, 760]}
+      ],
+      "location_clues": ["Queen St E sign", "Broadview Ave sign"]
+    },
+    {
+      "post_id": "sample-006", "platform": "bluesky", "posted_at": 1791991800,
+      "author": "sample-author-6", "text": "Lake Liberty is back",
+      "image": "photos/flooding.svg", "is_sample": true,
+      "location": {"lat": 43.6392, "lng": -79.4112},
+      "scene": "street", "privacy": {"faces": 0, "plates": 2, "blurred": true},
+      "issues": [{"type": "standing water", "severity": "high", "certainty": 0.86, "evidence": "Water covering both lanes over a blocked catch basin.", "box_2d": [200, 300, 980, 900]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-007", "platform": "mastodon", "posted_at": "2026-10-15T07:45:00Z",
+      "author": "sample-author-7", "text": "Strachan underpass flooded again",
+      "image": "photos/flooding.svg", "is_sample": true,
+      "location": {"lat": 43.6395, "lng": -79.4108},
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "flooding", "severity": "high", "certainty": 0.79, "evidence": "Large pool of water at the curb.", "box_2d": [100, 400, 900, 950]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-008", "platform": "bluesky", "posted_at": "2026-10-03T21:15:00Z",
+      "author": "sample-author-8", "text": "My poor tires",
+      "image": "photos/pothole.svg", "is_sample": true,
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "pothole", "severity": "high", "certainty": 0.82, "evidence": "Wide pothole at a crosswalk.", "box_2d": [350, 300, 700, 650]}],
+      "location_clues": ["Queen St W & Dufferin St street sign"]
+    },
+    {
+      "post_id": "sample-009", "platform": "reddit", "posted_at": "2026-09-28T16:30:00Z",
+      "author": "sample-author-9", "text": "New tags by the station",
+      "image": "photos/graffiti.svg", "is_sample": true,
+      "location": {"lat": 43.6662, "lng": -79.4108, "accuracy_m": 20},
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "graffiti", "severity": "low", "certainty": 0.8, "evidence": "Graffiti across a utility box.", "box_2d": [250, 200, 750, 800]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-010", "platform": "upload", "posted_at": "2026-10-13T10:20:00Z",
+      "author": "sample-volunteer-1", "text": "Mattress dumped in the laneway",
+      "image": "photos/litter.svg", "is_sample": true,
+      "location": {"lat": 43.6661, "lng": -79.3412, "accuracy_m": 15},
+      "scene": "laneway", "privacy": {"faces": 0, "plates": 0, "blurred": false},
+      "issues": [{"type": "illegal_dumping", "severity": "moderate", "certainty": 87, "evidence": "Mattress and bags left beside a laneway fence.", "box_2d": [150, 250, 850, 900]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-011", "platform": "bluesky", "posted_at": "2026-10-14T23:50:00Z",
+      "author": "sample-author-10", "text": "Dark corner tonight",
+      "image": "photos/other.svg", "is_sample": true,
+      "location": {"lat": 43.7612, "lng": -79.4112},
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "broken streetlight", "severity": "moderate", "certainty": 0.77, "evidence": "Streetlight head appears damaged and unlit.", "box_2d": [50, 400, 300, 600]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-012", "platform": "mastodon", "posted_at": "2026-10-08T13:05:00Z",
+      "author": "sample-author-11", "text": "Cracked sidewalk by trinity bellwoods, careful with strollers",
+      "image": "photos/sidewalk.svg", "is_sample": true,
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "sidewalk damage", "severity": "minor", "certainty": 0.7, "evidence": "Long crack across several sidewalk slabs.", "box_2d": [100, 500, 900, 950]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-013", "platform": "bluesky", "posted_at": "2026-10-16T15:00:00Z",
+      "author": "sample-author-12", "text": "Flooded path on campus",
+      "image": "photos/flooding.svg", "is_sample": true,
+      "location": {"lat": 43.7846, "lng": -79.188},
+      "scene": "path", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "flooding", "severity": 0.8, "certainty": 0.9, "evidence": "Walkway submerged near a drain.", "box_2d": [200, 300, 800, 900]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-014", "platform": "bluesky", "posted_at": "2026-10-16T12:30:00Z",
+      "author": "sample-author-13", "text": "Best ramen in the city",
+      "image": "photos/other.svg", "is_sample": true,
+      "scene": "food", "privacy": {"faces": 0, "plates": 0, "blurred": false},
+      "issues": [],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-015", "platform": "mastodon", "posted_at": "2026-10-16T09:10:00Z",
+      "author": "sample-author-14", "text": "Nice sunset on the lake",
+      "image": "photos/other.svg", "is_sample": true,
+      "location": {"lat": 43.6380, "lng": -79.3820},
+      "scene": "landscape", "privacy": {"faces": 0, "plates": 0, "blurred": false},
+      "issues": [{"type": "none", "certainty": 0.95}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-016", "platform": "bluesky", "posted_at": "2026-10-15T18:00:00Z",
+      "author": "sample-author-15", "text": "pothole on my street lol",
+      "image": "photos/pothole.svg", "is_sample": true,
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "pothole", "severity": "medium", "certainty": 0.83, "evidence": "Pothole on a residential street.", "box_2d": [300, 300, 700, 700]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-017", "platform": "reddit", "posted_at": "2026-10-14T11:00:00Z",
+      "author": "sample-author-16", "text": "Trash everywhere downtown Hamilton",
+      "image": "photos/litter.svg", "is_sample": true,
+      "location": {"lat": 43.2557, "lng": -79.8711},
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "litter", "severity": "low", "certainty": 0.8, "evidence": "Scattered litter on the sidewalk.", "box_2d": [100, 600, 900, 950]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-018", "platform": "bluesky", "posted_at": "2026-10-11T08:40:00Z",
+      "author": "sample-author-17", "text": "Is that a pothole or just a shadow?",
+      "image": "photos/pothole.svg", "is_sample": true,
+      "location": {"lat": 43.6579, "lng": -79.4001},
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "pothole", "severity": "medium", "certainty": 0.45, "evidence": "Possible small pothole; lighting makes it unclear.", "box_2d": [400, 400, 600, 600]}],
+      "location_clues": []
+    },
+    {
+      "post_id": "sample-019", "platform": "mastodon", "posted_at": "2026-10-14T14:15:00Z",
+      "author": "sample-author-18", "text": "Garbage piling up in Kensington Market again",
+      "image": "photos/litter.svg", "is_sample": true,
+      "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
+      "issues": [{"type": "garbage", "severity": "moderate", "certainty": 0.81, "evidence": "Bags of garbage stacked against a wall.", "box_2d": [200, 300, 800, 900]}],
+      "location_clues": []
+    }
+  ]
+}

@@ -1,0 +1,313 @@
+{
+ "placeholder": true,
+ "note": "PLACEHOLDER: approximate hand-drawn rectangles and points for the hackathon demo, not official boundaries or asset locations.",
+ "places": [
+  {
+   "name": "King St W & Spadina Ave",
+   "kind": "intersection",
+   "match_all": [
+    "king",
+    "spadina"
+   ],
+   "lng": -79.3953,
+   "lat": 43.6455,
+   "radius_m": 75
+  },
+  {
+   "name": "Queen St W & Spadina Ave",
+   "kind": "intersection",
+   "match_all": [
+    "queen",
+    "spadina"
+   ],
+   "lng": -79.397,
+   "lat": 43.6487,
+   "radius_m": 75
+  },
+  {
+   "name": "Adelaide St W & Peter St",
+   "kind": "intersection",
+   "match_all": [
+    "adelaide",
+    "peter"
+   ],
+   "lng": -79.392,
+   "lat": 43.648,
+   "radius_m": 75
+  },
+  {
+   "name": "Queen St W & University Ave",
+   "kind": "intersection",
+   "match_all": [
+    "queen",
+    "university"
+   ],
+   "lng": -79.3865,
+   "lat": 43.6505,
+   "radius_m": 75
+  },
+  {
+   "name": "Bay St & Front St W",
+   "kind": "intersection",
+   "match_all": [
+    "bay",
+    "front"
+   ],
+   "lng": -79.379,
+   "lat": 43.646,
+   "radius_m": 75
+  },
+  {
+   "name": "University Ave & Dundas St W",
+   "kind": "intersection",
+   "match_all": [
+    "university",
+    "dundas"
+   ],
+   "lng": -79.388,
+   "lat": 43.655,
+   "radius_m": 75
+  },
+  {
+   "name": "Spadina Ave & College St",
+   "kind": "intersection",
+   "match_all": [
+    "spadina",
+    "college"
+   ],
+   "lng": -79.4,
+   "lat": 43.658,
+   "radius_m": 75
+  },
+  {
+   "name": "Augusta Ave & Baldwin St",
+   "kind": "intersection",
+   "match_all": [
+    "augusta",
+    "baldwin"
+   ],
+   "lng": -79.402,
+   "lat": 43.655,
+   "radius_m": 75
+  },
+  {
+   "name": "Bloor St W & Bathurst St",
+   "kind": "intersection",
+   "match_all": [
+    "bloor",
+    "bathurst"
+   ],
+   "lng": -79.4111,
+   "lat": 43.666,
+   "radius_m": 75
+  },
+  {
+   "name": "Bloor St W & St George St",
+   "kind": "intersection",
+   "match_all": [
+    "bloor",
+    "st george"
+   ],
+   "lng": -79.4,
+   "lat": 43.668,
+   "radius_m": 75
+  },
+  {
+   "name": "Queen St W & Dufferin St",
+   "kind": "intersection",
+   "match_all": [
+    "queen",
+    "dufferin"
+   ],
+   "lng": -79.4285,
+   "lat": 43.6425,
+   "radius_m": 75
+  },
+  {
+   "name": "East Liberty St & Strachan Ave",
+   "kind": "intersection",
+   "match_all": [
+    "liberty",
+    "strachan"
+   ],
+   "lng": -79.411,
+   "lat": 43.639,
+   "radius_m": 75
+  },
+  {
+   "name": "Bloor St W & Parkside Dr",
+   "kind": "intersection",
+   "match_all": [
+    "bloor",
+    "parkside"
+   ],
+   "lng": -79.458,
+   "lat": 43.655,
+   "radius_m": 75
+  },
+  {
+   "name": "Dundas St W & Keele St",
+   "kind": "intersection",
+   "match_all": [
+    "dundas",
+    "keele"
+   ],
+   "lng": -79.467,
+   "lat": 43.665,
+   "radius_m": 75
+  },
+  {
+   "name": "Queen St E & Broadview Ave",
+   "kind": "intersection",
+   "match_all": [
+    "queen",
+    "broadview"
+   ],
+   "lng": -79.353,
+   "lat": 43.659,
+   "radius_m": 75
+  },
+  {
+   "name": "Dundas St E & Broadview Ave",
+   "kind": "intersection",
+   "match_all": [
+    "dundas",
+    "broadview"
+   ],
+   "lng": -79.354,
+   "lat": 43.664,
+   "radius_m": 75
+  },
+  {
+   "name": "Queen St E & Leslie St",
+   "kind": "intersection",
+   "match_all": [
+    "queen",
+    "leslie"
+   ],
+   "lng": -79.329,
+   "lat": 43.663,
+   "radius_m": 75
+  },
+  {
+   "name": "Dundas St E & Carlaw Ave",
+   "kind": "intersection",
+   "match_all": [
+    "dundas",
+    "carlaw"
+   ],
+   "lng": -79.341,
+   "lat": 43.666,
+   "radius_m": 75
+  },
+  {
+   "name": "Queen St E & Woodbine Ave",
+   "kind": "intersection",
+   "match_all": [
+    "queen",
+    "woodbine"
+   ],
+   "lng": -79.306,
+   "lat": 43.668,
+   "radius_m": 75
+  },
+  {
+   "name": "Coxwell Ave & Danforth Ave",
+   "kind": "intersection",
+   "match_all": [
+    "coxwell",
+    "danforth"
+   ],
+   "lng": -79.322,
+   "lat": 43.684,
+   "radius_m": 75
+  },
+  {
+   "name": "Yonge St & Sheppard Ave",
+   "kind": "intersection",
+   "match_all": [
+    "yonge",
+    "sheppard"
+   ],
+   "lng": -79.411,
+   "lat": 43.761,
+   "radius_m": 75
+  },
+  {
+   "name": "Eglinton Ave E & Kennedy Rd",
+   "kind": "intersection",
+   "match_all": [
+    "eglinton",
+    "kennedy"
+   ],
+   "lng": -79.263,
+   "lat": 43.733,
+   "radius_m": 75
+  },
+  {
+   "name": "The Queensway & Islington Ave",
+   "kind": "intersection",
+   "match_all": [
+    "queensway",
+    "islington"
+   ],
+   "lng": -79.519,
+   "lat": 43.625,
+   "radius_m": 75
+  },
+  {
+   "name": "Military Trail & Ellesmere Rd",
+   "kind": "intersection",
+   "match_all": [
+    "military trail",
+    "ellesmere"
+   ],
+   "lng": -79.188,
+   "lat": 43.785,
+   "radius_m": 75
+  },
+  {
+   "name": "Union Station",
+   "kind": "landmark",
+   "aliases": [
+    "union station"
+   ],
+   "lng": -79.3806,
+   "lat": 43.6453,
+   "radius_m": 150
+  },
+  {
+   "name": "Nathan Phillips Square",
+   "kind": "landmark",
+   "aliases": [
+    "nathan phillips",
+    "city hall"
+   ],
+   "lng": -79.384,
+   "lat": 43.6525,
+   "radius_m": 150
+  },
+  {
+   "name": "Trinity Bellwoods Park",
+   "kind": "landmark",
+   "aliases": [
+    "trinity bellwoods"
+   ],
+   "lng": -79.414,
+   "lat": 43.647,
+   "radius_m": 250
+  },
+  {
+   "name": "University of Toronto Scarborough",
+   "kind": "landmark",
+   "aliases": [
+    "utsc",
+    "u of t scarborough",
+    "university of toronto scarborough"
+   ],
+   "lng": -79.187,
+   "lat": 43.784,
+   "radius_m": 300
+  }
+ ]
+}

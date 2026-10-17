@@ -3,5 +3,8 @@ node_modules/
 .env.*
 !.env.example
 .cache/
+# Analysis input and output: real posts and photos stay on this machine.
+data/
+__pycache__/
 test-results/
 playwright-report/
