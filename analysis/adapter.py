@@ -217,8 +217,10 @@ def adapt(items, config, report):
                 photo = str(record.pop("photo"))
                 record["provenance"]["photo_source"] = record["provenance"].pop("photo")
                 record["photo_source"] = photo if re.match(r"https?://", photo) else str((base_dir / photo).resolve())
-            if isinstance(record.get("location_clues"), (list, dict)):
-                record["location_clues"] = _flatten_text(record["location_clues"])
+            clues = record.get("location_clues")
+            if clues is not None:
+                record["geo_clues"] = [_flatten_text(c) for c in clues] if isinstance(clues, list) else [_flatten_text(clues)]
+                record["location_clues"] = " ; ".join(record["geo_clues"])
             records.append(record)
 
         for leaf in _leaf_paths(raw):
@@ -244,11 +246,11 @@ def _location(record):
     record["provenance"].pop("lng", None)
     geometry = record.get("geometry")
     if isinstance(geometry, dict) and geometry.get("type") == "Point":
-        record["geo_method"] = "coordinates in input"
+        record.setdefault("geo_method", "Coordinates supplied with the photo")
     elif lat is not None and lng is not None and -90 <= lat <= 90 and -180 <= lng <= 180:
         record["geometry"] = {"type": "Point", "coordinates": [round(lng, 6), round(lat, 6)]}
         record["provenance"]["geometry"] = "input"
-        record["geo_method"] = "coordinates in input"
+        record.setdefault("geo_method", "Coordinates supplied with the photo")
     else:
         record.pop("geometry", None)
         record["provenance"].pop("geometry", None)

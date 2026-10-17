@@ -2,9 +2,9 @@
 
 Takes the photo-analysis output (JSON records plus photos) and produces what the map, table and ward pages need:
 
-1. **Locate** (map-ready issues): coordinates, or a place named in the text, then neighbourhood, ward, nearest TTC stop / school / road and a street-corner address.
+1. **Locate** (map-ready issues): coordinates, or a place named in the text, then neighbourhood, ward, nearest TTC station / school / road and a street-corner address. Each step is recorded in `geo_trace`, which the issue panel shows as "How this location was estimated".
 2. **Dedupe**: sightings of the same issue (same type, close together, within 14 days, or a reposted photo) become one incident with a sighting count.
-3. **Priority**: a 0-100 score with the reasons that produced it, for example `High severity (+40)` or `27 m from King St W at Spadina Ave stop (+12)`.
+3. **Priority**: a 0-100 score with the reasons that produced it, for example `High severity (+40)` or `49 m from University of Toronto Scarborough (+15)`.
 4. **Stats and summaries**: counts and 7-day trends per neighbourhood and ward, plus a short neutral summary per ward. Summaries come from Gemini when `GEMINI_API_KEY` is set and from a plain template otherwise.
 
 It needs only Python 3.11 or newer. Nothing has to be installed.
@@ -18,7 +18,7 @@ python -m analysis --offline                      # template summaries, no Gemin
 python -m unittest                                # the tests
 ```
 
-Then serve the repo (`npm run dev`, or `python -m http.server 5173`). The map and table load `data/analyzed/issues.public.json` and fall back to the demo records when that file is missing.
+Then serve the repo (`npm run dev`, or `python -m http.server 5173`). The map, table and dashboard load `data/analyzed/issues.public.json`, whose records follow `data-contract.md`, and fall back to the demo records when that file is missing.
 
 ## When their output format changes
 
@@ -44,7 +44,7 @@ The output stays valid for the frontend with every stage off.
 
 | File | What |
 |---|---|
-| `issues.public.json` | What the frontend reads. Frontend fields only. Unverified issues are snapped to a 250 m grid, and the radius is widened to cover the true spot. |
+| `issues.public.json` | What the frontend reads: the Issue fields in `data-contract.md`, plus priority. Unverified issues are snapped to a 250 m grid, and the radius is widened to cover the true spot. |
 | `issues.json` | Full incidents with precise locations, nearby assets and provenance. For internal use. |
 | `sightings.json` | Every input record after locating, with its `incident_id`. |
 | `areas.json` | City, neighbourhood and ward stats, plus summaries. |
@@ -59,4 +59,6 @@ The output stays valid for the frontend with every stage off.
 
 ## Reference data
 
-`analysis/refdata/placeholder/` holds **approximate, hand-made** neighbourhood rectangles (each tagged with a ward), 18 TTC stops, 9 schools, 11 roads, and 24 street corners plus 4 landmarks. Every output is marked `reference_data: "placeholder"` while these are in use. To switch to real Toronto Open Data, see `analysis/refdata/README.md`.
+`analysis/refdata/toronto/` is exported from the frontend's `src/data.js` by `node scripts/export-analysis-reference.mjs`. Analyzed issues therefore use the same neighbourhood, ward and asset IDs as the map's filters and layers. TTC stations and major roads are real OpenStreetMap geometry; schools are approximate.
+
+Neighbourhoods are assigned by the nearest of the frontend's 71 sample street corners, and each neighbourhood has one approximate ward. Area assignment is approximate, so every output is marked `reference_data: "placeholder"`. To add the City's official ward or neighbourhood boundaries, see `analysis/refdata/README.md`.

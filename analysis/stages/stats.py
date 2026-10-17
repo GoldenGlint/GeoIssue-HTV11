@@ -10,11 +10,16 @@ def run(issues, settings, now):
     trend_days = settings.get("trend_days", 7)
     by_area = {}
     for level in settings.get("levels", ["neighbourhood_id", "ward_id"]):
+        label_field = settings.get("labels", {}).get(level)
         groups = defaultdict(list)
         for issue in issues:
-            groups[issue.get(level) or "Unassigned"].append(issue)
-        by_area[level] = sorted((summarise(name, members, settings, now) for name, members in groups.items()),
-                                key=lambda a: (-a["open"], a["name"]))
+            groups[issue.get(level) or "unassigned"].append(issue)
+        areas = []
+        for name, members in groups.items():
+            area = summarise(name, members, settings, now)
+            area["label"] = next((i[label_field] for i in members if label_field and i.get(label_field)), str(name))
+            areas.append(area)
+        by_area[level] = sorted(areas, key=lambda a: (-a["open"], a["label"]))
     return {"trend_days": trend_days, "city": summarise("Toronto", issues, settings, now), "by_area": by_area}
 
 

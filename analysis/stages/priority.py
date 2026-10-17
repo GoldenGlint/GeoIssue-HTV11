@@ -40,8 +40,9 @@ def score_issue(issue, settings, now):
             reasons.append(f"Open {days} {'day' if days == 1 else 'days'} (+{p:g})")
 
     near_m = settings.get("near_asset_m", 100)
+    nearest = {a["type"]: a for a in issue.get("nearby_assets") or []}
     for kind, bonus in settings.get("near_asset_points", {}).items():
-        asset = (issue.get("nearby_assets") or {}).get(kind)
+        asset = nearest.get(kind)
         if asset and asset["distance_m"] <= near_m:
             points += bonus
             reasons.append(f"{asset['distance_m']} m from {asset['name']} (+{bonus:g})")

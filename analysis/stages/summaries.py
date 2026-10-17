@@ -42,7 +42,9 @@ def run(area_stats, settings, report, cache_path, offline=False, placeholder_are
 
 
 def display_name(area, label):
-    return f"Ward {area['name']}" if label == "ward" and str(area["name"]).isdigit() else str(area["name"])
+    if label == "ward" and str(area["name"]).isdigit():
+        return f"Ward {area['name']}" + (f" ({area['label']})" if area.get("label") not in (None, str(area["name"])) else "")
+    return str(area.get("label") or area["name"])
 
 
 def build_prompt(area, label, max_words, placeholder_areas, trend_days):

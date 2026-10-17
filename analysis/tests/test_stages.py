@@ -41,31 +41,38 @@ class GeoTest(unittest.TestCase):
 class LocateTest(unittest.TestCase):
     def test_coordinates_get_area_ward_asset_and_address(self):
         [r] = located(raw())
-        self.assertEqual((r["neighbourhood_id"], r["ward_id"]), ("Downtown", "10"))
+        self.assertEqual((r["neighbourhood_id"], r["neighbourhood_name"], r["ward_id"], r["ward_name"]),
+                         ("downtown", "Downtown", "10", "Spadina—Fort York"))
         self.assertEqual(r["address"], "King St W & Spadina Ave")
-        self.assertIn(r["infrastructure_type"], ("TTC", "Roads"))
-        self.assertLess(r["distance_m"], 50)
+        self.assertEqual({a["type"] for a in r["nearby_assets"]}, {"TTC", "Schools", "Roads"})
+        distances = [a["distance_m"] for a in r["nearby_assets"]]
+        self.assertEqual(distances, sorted(distances))
+        self.assertEqual((r["asset_id"], r["distance_m"]), (r["nearby_assets"][0]["asset_id"], distances[0]))
         self.assertEqual(r["location_radius_m"], 50)
+        self.assertEqual(r["geo_trace"][0], {"stage": "Coordinates", "result": "Supplied with the photo or post", "status": "match"})
 
     def test_place_named_in_text_when_there_are_no_coordinates(self):
         [r] = located(raw(lat=None, text="huge pothole at queen and dufferin"))
-        self.assertLess(geo.distance_m(r["geometry"]["coordinates"], [-79.4285, 43.6425]), 1)
+        self.assertLess(geo.distance_m(r["geometry"]["coordinates"], [-79.4283, 43.6425]), 1)
+        self.assertEqual(r["neighbourhood_id"], "parkdale")
         self.assertEqual(r["location_radius_m"], 75)
         self.assertIn("post text", r["geo_method"])
 
     def test_neighbourhood_level_text_gets_no_asset_or_street_address(self):
         [r] = located(raw(lat=None, text="garbage all over kensington market"))
-        self.assertEqual(r["neighbourhood_id"], "Kensington Market")
+        self.assertEqual(r["neighbourhood_id"], "kensington-market")
         self.assertGreater(r["location_radius_m"], 250)
         self.assertNotIn("asset_name", r)
+        self.assertNotIn("nearby_assets", r)
         self.assertNotIn("address", r)
 
     def test_values_from_the_input_are_kept_unless_overwrite(self):
-        [kept] = located(raw(neighbourhood="Their area", address="123 Their St"))
-        self.assertEqual((kept["neighbourhood_id"], kept["address"]), ("Their area", "123 Their St"))
+        [kept] = located(raw(neighbourhood_id="their-area", neighbourhood="Their area", address="123 Their St"))
+        self.assertEqual((kept["neighbourhood_id"], kept["neighbourhood_name"], kept["address"]), ("their-area", "Their area", "123 Their St"))
         self.assertEqual(kept["provenance"]["neighbourhood_id"], "input")
-        [replaced] = located(raw(neighbourhood="Their area"), overwrite=True)
-        self.assertEqual(replaced["neighbourhood_id"], "Downtown")
+        self.assertNotIn("ward_id", kept)  # area fields are never mixed from two sources
+        [replaced] = located(raw(neighbourhood_id="their-area"), overwrite=True)
+        self.assertEqual(replaced["neighbourhood_id"], "downtown")
 
     def test_unrecognised_text_leaves_the_record_unlocated(self):
         [r] = located(raw(lat=None, text="pothole on my street"))
@@ -113,7 +120,7 @@ class PriorityTest(unittest.TestCase):
 
     def test_severity_sightings_age_and_nearby_school_add_up(self):
         score, reasons = priority.score_issue(self.issue(severity="High", sightings_count=3, first_seen_at="2026-10-07T12:00:00Z",
-                                                         nearby_assets={"Schools": {"name": "A School", "distance_m": 40}}),
+                                                         nearby_assets=[{"type": "Schools", "asset_id": "SCH-1", "name": "A School", "distance_m": 40}]),
                                               self.settings, NOW)
         self.assertEqual(score, 40 + 16 + 5 + 15)
         self.assertIn("40 m from A School (+15)", reasons)

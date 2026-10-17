@@ -104,7 +104,7 @@
     },
     {
       "post_id": "sample-012", "platform": "mastodon", "posted_at": "2026-10-08T13:05:00Z",
-      "author": "sample-author-11", "text": "Cracked sidewalk by trinity bellwoods, careful with strollers",
+      "author": "sample-author-11", "text": "Cracked sidewalk at Queen and Lansdowne, careful with strollers",
       "image": "photos/sidewalk.svg", "is_sample": true,
       "scene": "street", "privacy": {"faces": 0, "plates": 0, "blurred": true},
       "issues": [{"type": "sidewalk damage", "severity": "minor", "certainty": 0.7, "evidence": "Long crack across several sidewalk slabs.", "box_2d": [100, 500, 900, 950]}],

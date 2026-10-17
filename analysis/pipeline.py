@@ -11,7 +11,7 @@ from pathlib import Path
 
 from . import adapter, geo
 from .config import ROOT, enabled, resolve, stage
-from .record import FRONTEND_FIELDS, PUBLIC_EXTRA_FIELDS, as_incident, fill, point
+from .record import FRONTEND_FIELDS, LIST_FIELDS, PUBLIC_EXTRA_FIELDS, as_incident, fill, point
 from .reference import Reference
 
 
@@ -90,17 +90,20 @@ def _finalise(issue, config, now, placeholder):
     values = config.get("values", {})
     for field in ("severity", "resolution_status", "verification_status", "source_category"):
         fill(issue, field, values.get(field, {}).get("_default"), "default")
-    fill(issue, "neighbourhood_id", "Unassigned", "default")
-    fill(issue, "ward_id", "Unassigned", "default")
+    fill(issue, "neighbourhood_id", "unassigned", "default")
+    fill(issue, "neighbourhood_name", "Unassigned", "default")
+    fill(issue, "ward_id", "unassigned", "default")
+    fill(issue, "ward_name", "Unassigned", "default")
     fill(issue, "sightings_count", 1, "default")
     fill(issue, "location_radius_m", stage(config, "locate").get("default_radius_m", 50), "default")
+    issue["location_radius_m"] = round(issue["location_radius_m"])
     fill(issue, "first_seen_at", _iso(now), "default (no timestamp in input)")
     fill(issue, "last_seen_at", issue["first_seen_at"], "default")
-    fill(issue, "address", f"Near {issue['asset_name']}" if issue.get("asset_name") else f"{issue['neighbourhood_id']} (approximate)", "default")
+    fill(issue, "address", f"Near {issue['asset_name']}" if issue.get("asset_name") else f"{issue['neighbourhood_name']} (approximate)", "default")
     fill(issue, "description", f"{issue['issue_type']} reported near {issue['address']}.", "default")
     fill(issue, "explanation", _explanation(issue, issue["location_radius_m"]), "default")
     for field in FRONTEND_FIELDS:
-        issue.setdefault(field, False if field == "is_demo" else None)
+        issue.setdefault(field, False if field == "is_demo" else [] if field in LIST_FIELDS else None)
     issue["reference_data"] = "placeholder" if placeholder else "configured"
     issue.pop("post_text", None)
     issue["provenance"].pop("post_text", None)
@@ -110,7 +113,7 @@ def _explanation(issue, radius_m):
     confidence = issue.get("detection_confidence")
     parts = [f"Photo analysis flagged {issue['issue_type'].lower()}"
              + (f" with {confidence:.0%} confidence." if confidence is not None else ".")]
-    parts.append(f"Location from {issue.get('geo_method') or 'the input'}, approximate within {radius_m:g} m.")
+    parts.append(f"Location method: {issue.get('geo_method') or 'supplied in the input'}; approximate within {radius_m:g} m.")
     if issue["sightings_count"] > 1:
         parts.append(f"{issue['sightings_count']} sightings were merged into this issue.")
     parts.append("A reviewer should confirm the issue and location before any action.")
@@ -148,6 +151,8 @@ def public_view(issue, output_cfg):
         view["geometry"] = {"type": "Point", "coordinates": geo.snap_to_grid(point(issue), grid)}
         # The circle must still contain the true location after snapping moves the point.
         view["location_radius_m"] = max(output_cfg.get("public_min_radius_m", 250), round((issue["location_radius_m"] or 0) + grid * 0.71))
+        view["geo_trace"] = list(issue.get("geo_trace") or []) + [
+            {"stage": "Privacy rounding", "result": f"Published position snapped to a {grid:g} m grid until verified", "status": "info"}]
         if issue.get("provenance", {}).get("explanation") == "default":
             view["explanation"] = _explanation(issue, view["location_radius_m"])
     return view

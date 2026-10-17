@@ -30,6 +30,9 @@ class PipelineTest(unittest.TestCase):
         for issue in self.run_sample()["public"]:
             self.assertFalse(set(FRONTEND_FIELDS) - issue.keys(), issue["issue_id"])
             self.assertEqual(issue["geometry"]["type"], "Point")
+            self.assertIsInstance(issue["nearby_assets"], list)
+            self.assertIsInstance(issue["location_radius_m"], int)
+            self.assertEqual(issue["geo_trace"][-1]["stage"], "Privacy rounding")
 
     def test_unverified_public_locations_are_coarse_but_still_covered(self):
         result = self.run_sample()
@@ -54,16 +57,16 @@ class PipelineTest(unittest.TestCase):
         self.assertFalse((Path(self.tmp.name) / "areas.json").exists())
         for issue in result["public"]:
             self.assertFalse(set(FRONTEND_FIELDS) - issue.keys())
-            self.assertEqual(issue["neighbourhood_id"], "Unassigned")
+            self.assertEqual(issue["neighbourhood_id"], "unassigned")
 
     def test_fields_the_input_already_has_are_kept(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "theirs.json"
-            path.write_text(json.dumps([raw("a", neighbourhood="Their area", ward="99", incident_id="THEIRS-1", priority_score=88,
-                                            address="1 Their St")]))
+            path.write_text(json.dumps([raw("a", neighbourhood_id="their-area", neighbourhood="Their area", ward="99", incident_id="THEIRS-1",
+                                            priority_score=88, address="1 Their St")]))
             [issue] = self.run_sample(input_path=path)["issues"]
-        self.assertEqual((issue["neighbourhood_id"], issue["ward_id"], issue["incident_id"], issue["priority_score"], issue["address"]),
-                         ("Their area", "99", "THEIRS-1", 88, "1 Their St"))
+        self.assertEqual((issue["neighbourhood_id"], issue["neighbourhood_name"], issue["ward_id"], issue["incident_id"], issue["priority_score"], issue["address"]),
+                         ("their-area", "Their area", "99", "THEIRS-1", 88, "1 Their St"))
         self.assertEqual(issue["provenance"]["neighbourhood_id"], "input")
 
 

@@ -49,7 +49,7 @@ function recordsHtml(rows) {
     <td><span class="table-type" style="--type-color:${typeColor(i.issue_type)}">${typeIcon(i.issue_type)}${esc(i.issue_type)}</span></td>
     <td>${badge(i.severity)}</td><td>${badge(i.resolution_status)}</td>
     <td><span class="cell-main">${esc(i.neighbourhood_name)}</span><small class="cell-sub" title="${esc(wards[i.ward_id])}">Ward ${esc(i.ward_id)}</small></td>
-    <td class="address-cell" title="${esc(i.address)}"><span class="cell-main">${esc(i.address)}</span><small class="cell-sub">${esc(i.asset_name)} · ${i.distance_m.toLocaleString()} m</small></td>
+    <td class="address-cell" title="${esc(i.address)}"><span class="cell-main">${esc(i.address)}</span><small class="cell-sub">${i.distance_m == null ? 'No nearby asset determined' : `${esc(i.asset_name)} · ${i.distance_m.toLocaleString()} m`}</small></td>
     <td>${date(i.first_seen_at)}</td><td>${date(i.last_seen_at)}</td><td class="num-cell">${i.sightings_count}</td>
     <td><span class="confidence-pill">${Math.round(i.detection_confidence * 100)}%</span></td>
     <td class="source-cell">${esc(i.source_category)}</td>

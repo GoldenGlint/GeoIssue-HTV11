@@ -12,9 +12,10 @@ from ..record import as_incident, point
 
 NAME = "dedupe"
 SEVERITY_RANK = {"Low": 1, "Medium": 2, "High": 3}
-LOCATION_FIELDS = ("geometry", "location_radius_m", "geo_confidence", "geo_method", "neighbourhood_id", "ward_id",
-                   "infrastructure_type", "asset_name", "distance_m", "nearby_assets", "address")
-EVIDENCE_FIELDS = ("description", "explanation", "detection_confidence", "photo_source", "source_category")
+LOCATION_FIELDS = ("geometry", "location_radius_m", "geo_confidence", "geo_method", "geo_trace", "neighbourhood_id",
+                   "neighbourhood_name", "ward_id", "ward_name", "infrastructure_type", "asset_id", "asset_name",
+                   "distance_m", "nearby_assets", "address")
+EVIDENCE_FIELDS = ("description", "explanation", "detection_confidence", "photo_source", "evidence_credit", "source_category")
 
 
 def run(records, settings, report):
@@ -118,6 +119,9 @@ def _merge(members, incident_id=None):
         "sighting_ids": [r["issue_id"] for r in members],
         "evidence_photos": [r["photo_source"] for r in members if r.get("photo_source")],
         "is_demo": any(r.get("is_demo") for r in members),
+        "geo_clues": list(dict.fromkeys(c for r in members for c in r.get("geo_clues") or [])) or None,
+        "geo_trace": list(located.get("geo_trace") or []) + [
+            {"stage": "Duplicate merge", "result": f"{len(members)} sightings merged; the most precise location is kept", "status": "info"}],
     }
     for field, value in merged.items():
         if value is not None:

@@ -1,15 +1,17 @@
 """Field helpers that keep upstream values and remember where each value came from."""
 
-# The fields the frontend reads for every issue (see src/data.js).
+# The Issue fields in data-contract.md, which the frontend reads for every issue.
 FRONTEND_FIELDS = [
-    "issue_id", "incident_id", "issue_type", "severity", "resolution_status", "neighbourhood_id",
-    "address", "geometry", "infrastructure_type", "asset_name", "distance_m", "sightings_count",
-    "detection_confidence", "location_radius_m", "geo_confidence", "verification_status",
-    "first_seen_at", "last_seen_at", "source_category", "evidence_thumbnail", "description",
-    "explanation", "ward_id", "is_demo",
+    "issue_id", "incident_id", "issue_type", "severity", "resolution_status", "verification_status",
+    "geometry", "location_radius_m", "geo_confidence", "geo_method", "geo_trace", "geo_clues",
+    "neighbourhood_id", "neighbourhood_name", "ward_id", "ward_name", "address",
+    "infrastructure_type", "asset_id", "asset_name", "distance_m", "nearby_assets",
+    "detection_confidence", "sightings_count", "first_seen_at", "last_seen_at", "source_category",
+    "description", "explanation", "evidence_thumbnail", "evidence_credit", "is_demo",
 ]
 # Extra fields the analysis adds that are safe to publish.
-PUBLIC_EXTRA_FIELDS = ["priority_score", "priority_reasons", "geo_method", "sighting_ids", "nearby_assets", "reference_data"]
+PUBLIC_EXTRA_FIELDS = ["priority_score", "priority_reasons", "sighting_ids", "reference_data"]
+LIST_FIELDS = ("geo_trace", "geo_clues", "nearby_assets")
 
 
 def is_missing(value):

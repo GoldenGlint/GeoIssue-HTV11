@@ -208,8 +208,20 @@ async function evidenceByCategory() {
   } catch { return {}; }
 }
 
+// Written by `python -m analysis` (see analysis/README.md); the sample records are used until it has been run.
+async function analyzedIssues() {
+  try {
+    const response = await fetch(new URL('../data/analyzed/issues.public.json', import.meta.url), { cache: 'no-store' });
+    if (!response.ok) return null;
+    const issues = await response.json();
+    return Array.isArray(issues) && issues.length ? issues : null;
+  } catch { return null; }
+}
+
 export const issueRepository = {
   async list() {
+    const analyzed = await analyzedIssues();
+    if (analyzed) return analyzed;
     const photos = await evidenceByCategory(), issues = structuredClone(demoIssues);
     for (const [j, issue] of issues.entries()) {
       const options = photos[issue.issue_type];

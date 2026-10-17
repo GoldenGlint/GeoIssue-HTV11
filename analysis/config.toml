@@ -30,26 +30,31 @@ lat                  = ["lat", "latitude", "location.lat", "location.latitude", 
 lng                  = ["lng", "lon", "longitude", "location.lng", "location.lon", "location.longitude", "gps.lng", "gps.lon", "geo.lng"]
 location_radius_m    = ["location_radius_m", "radius_m", "location.radius_m", "location.accuracy_m", "accuracy_m"]
 location_text        = ["location_text", "location.text", "location.name", "place", "address", "analysis.location_text"]
-location_clues       = ["location_clues", "analysis.location_clues"]
+location_clues       = ["location_clues", "geo_clues", "analysis.location_clues"]
 observed_at          = ["observed_at", "posted_at", "created_at", "timestamp", "date", "taken_at"]
 photo                = ["photo", "image", "image_path", "photo_path", "image_url", "media[0].path", "media[0].url"]
 source_category      = ["source_category", "platform", "source"]
 image_hash           = ["image_hash", "phash", "analysis.image_hash"]
 is_demo              = ["is_sample", "is_demo"]
+evidence_credit      = ["evidence_credit", "photo_credit"]
 # Only used to find a place name when there are no coordinates. It is never written to the output.
 post_text            = ["text", "post_text", "caption", "body"]
 
 # Fields the analysis stages compute. When the input already has them, the input value is kept.
 address              = ["address", "location.address"]
-neighbourhood_id     = ["neighbourhood_id", "neighbourhood", "location.neighbourhood"]
+neighbourhood_id     = ["neighbourhood_id", "location.neighbourhood_id"]
+neighbourhood_name   = ["neighbourhood_name", "neighbourhood", "location.neighbourhood"]
 ward_id              = ["ward_id", "ward", "location.ward"]
+ward_name            = ["ward_name"]
 infrastructure_type  = ["infrastructure_type"]
+asset_id             = ["asset_id"]
 asset_name           = ["asset_name"]
 distance_m           = ["distance_m"]
 incident_id          = ["incident_id", "cluster_id"]
 sightings_count      = ["sightings_count"]
 priority_score       = ["priority_score"]
 explanation          = ["explanation", "analysis.explanation", "analysis.reasoning"]
+geo_method           = ["geo_method", "location.method"]
 geo_confidence       = ["geo_confidence", "location.confidence"]
 verification_status  = ["verification_status"]
 resolution_status    = ["resolution_status"]
@@ -84,12 +89,14 @@ _default = "Open"
 [values.verification_status]
 "Verified"     = ["verified", "confirmed"]
 "Needs review" = ["needs review", "unverified", "pending"]
+"Dismissed"    = ["dismissed", "rejected", "not an issue"]
 _default = "Needs review"
 
 [values.source_category]
-"Public imagery"       = ["bluesky", "mastodon", "reddit", "instagram", "twitter", "x", "tiktok", "wikimedia", "social", "public imagery"]
+"Public social post"   = ["bluesky", "mastodon", "reddit", "instagram", "twitter", "x", "tiktok", "threads", "social", "public social post"]
+"Public imagery"       = ["mapillary", "wikimedia", "street-level", "public imagery"]
 "Community submission" = ["upload", "submission", "volunteer", "community submission"]
-_default = "Public imagery"
+_default = "Public social post"
 
 # ---------------------------------------------------------------------------------------------
 # Stages run in this order: locate -> dedupe -> priority -> stats -> summaries.
@@ -99,7 +106,7 @@ _default = "Public imagery"
 [stages.locate]
 enabled = true
 overwrite = false                    # true replaces area, infrastructure and address values from the input
-reference = "analysis/refdata/placeholder"
+reference = "analysis/refdata/toronto"         # exported from src/data.js by scripts/export-analysis-reference.mjs
 default_radius_m = 50                # for input coordinates that come without an accuracy
 gps_geo_confidence = 0.9
 text_geo_confidence = 0.5
@@ -108,20 +115,19 @@ address_max_distance_m = 200         # the nearest named intersection within thi
 context_max_radius_m = 250           # nearest infrastructure and address are only attached to locations at least this precise
 places_file = "places.json"
 
+# Area layers fill the output fields named in `fields` from feature properties. When several layers set
+# the same field, the first one wins, so list official boundary files (match = "contains") first.
 [[stages.locate.areas]]
-file = "neighbourhoods.geojson"
-name_property = "name"
-field = "neighbourhood_id"
-searchable = true                    # area names can be matched in location text
-
-[[stages.locate.areas]]
-file = "neighbourhoods.geojson"      # the placeholder stores each area's ward as a property; real data has a wards file
-name_property = "ward"
-field = "ward_id"
+file = "neighbourhoods.geojson"      # the frontend's sample street corners, each tagged with its neighbourhood and ward
+match = "nearest"                    # "contains" for polygon files such as the City's ward boundaries
+max_distance_m = 2500
+fields = { neighbourhood_id = "neighbourhood_id", neighbourhood_name = "neighbourhood_name", ward_id = "ward_id", ward_name = "ward_name" }
+search_name = "neighbourhood_name"   # these names can be matched in post text
 
 [stages.locate.infrastructure]
 file = "infrastructure.geojson"
 type_property = "type"               # becomes infrastructure_type; the frontend filters on TTC, Schools and Roads
+id_property = "asset_id"
 name_property = "name"
 
 [stages.dedupe]
@@ -148,6 +154,7 @@ low_confidence_factor = 0.7
 [stages.stats]
 enabled = true
 levels = ["neighbourhood_id", "ward_id"]
+labels = { neighbourhood_id = "neighbourhood_name", ward_id = "ward_name" }
 trend_days = 7
 top_n = 3
 

@@ -20,7 +20,7 @@ class AdaptTest(unittest.TestCase):
     def test_first_listed_path_wins(self):
         [record], _ = adapt([raw(lat=None, latitude=43.70, longitude=-79.40, gps={"lat": 43.80, "lng": -79.30})])
         self.assertEqual(record["geometry"]["coordinates"], [-79.40, 43.70])
-        self.assertEqual(record["geo_method"], "coordinates in input")
+        self.assertEqual(record["geo_method"], "Coordinates supplied with the photo")
 
     def test_labels_are_mapped_and_unknown_ones_reported(self):
         records, report = adapt([raw("a", issue_type="Road_Damage"), raw("b", issue_type="broken streetlight")])
