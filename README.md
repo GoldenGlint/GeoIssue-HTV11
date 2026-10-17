@@ -1,4 +1,4 @@
-﻿# CivicLens frontend
+# CivicLens frontend
 
 A local, dependency-free frontend based on `features.md`, `initial-unfinalized-plans.md`, and the three references in `UI-photos/`. Navy surfaces, cyan navigation, category-colored map markers, dashboard charts, and a synchronized issue table follow the references.
 
@@ -17,11 +17,11 @@ Open http://127.0.0.1:5173. No installation or build step is required. Alternati
 1. Edit the 24 fictional records in `src/data.js`, or replace `issueRepository.list()` with a request to your API. Its existing return values demonstrate the expected issue fields from the product plan.
 2. Replace `issueRepository.submit(draft)` with your submission endpoint. The current implementation saves metadata in browser local storage and previews photos in memory only. Real photo transport, privacy processing, review, authentication, and publication belong on the backend.
 3. Set `evidence_thumbnail` to a privacy-processed image URL to replace the evidence placeholder. Every seeded issue has `is_demo: true`.
-4. `src/map.js` is the isolated map adapter. It renders real OpenStreetMap raster tiles styled for the dark interface with no API key, geographic markers, pixel-based clusters, panning, zooming, Shift selection and box selection. It can be replaced by MapLibre while preserving callbacks. Network access is required for tiles and optional fonts; an explicitly labeled schematic background and system fonts remain available offline.
+4. `src/map.js` is the isolated map adapter. It renders real OpenStreetMap raster tiles styled for the dark interface with no API key, geographic markers, pixel-based clusters, panning, cursor-anchored eased zoom, double-click zoom, gentle pan momentum, Shift selection and box selection. Camera animation reuses the current tile scene until destination tiles are ready, and respects reduced-motion preferences. It can be replaced by MapLibre while preserving callbacks. Network access is required for tiles and optional fonts; an explicitly labeled schematic background and system fonts remain available offline.
 
 ## Implemented interactions
 
-- Map Explorer opens without a context panel. Pins open details; clusters open a sortable/filterable list without auto-zoom. Zoom in is explicit. Shift + click toggles issue IDs; Box select makes a rectangular selection; ordinary drag pans. Escape or blank-map click clears selection.
+- Map Explorer uses a compact title and floating search / filter controls over the expanded map. It opens without a context panel. Pins open details; clusters open a sortable/filterable list without auto-zoom. Zoom in is explicit. Shift + click toggles issue IDs; Box select makes a rectangular selection; ordinary drag pans. Escape or blank-map click clears selection.
 - Search, issue type, severity, time, neighbourhood, resolution, and sample infrastructure proximity filters are shared across map, table, and dashboard. The fixed sample date is **October 17, 2026**. The map's Search this area button reports the visible count without changing global filters.
 - Data Explorer defaults to all filtered Toronto records. View as table explicitly carries selected IDs with a removable scope chip. Columns sort; table selection, pagination, per-page sizes, map navigation, and CSV / GeoJSON downloads work.
 - Dashboard counts, category bars, neighbourhood rankings, resolution chart, and timeline derive from the same filtered sample records. No fake percentage growth or live AI output.
