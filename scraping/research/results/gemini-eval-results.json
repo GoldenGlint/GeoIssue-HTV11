@@ -1,0 +1,52 @@
+{
+  "evaluated_at": "2026-10-17T17:50:53.637542+00:00",
+  "scope": "Automatic one-time Gemini check against existing human labels. No new human review. No captions or image paths retained.",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "civic-screen-v1",
+  "screening_status": "ok",
+  "requests": 1,
+  "cache_hits": 90,
+  "compared_labels": 86,
+  "agreement": 78,
+  "false_keep": 4,
+  "false_reject": 4,
+  "scene_counts": {
+    "keep": 24,
+    "reject": 67
+  },
+  "gate": {
+    "agreement_rate": 0.907,
+    "agreement_target": 0.9,
+    "agreement_pass": true,
+    "trap_keeps": 0,
+    "traps_pass": true,
+    "drain_detected": true,
+    "drain_pass": true,
+    "passed": true
+  },
+  "trap_keep_examples": [],
+  "drain_checks": [
+    {
+      "issue_candidate": false,
+      "locatability": "medium",
+      "issue_present": "yes"
+    },
+    {
+      "issue_candidate": true,
+      "locatability": "high",
+      "issue_present": "yes"
+    },
+    {
+      "issue_candidate": true,
+      "locatability": "high",
+      "issue_present": "yes"
+    },
+    {
+      "issue_candidate": false,
+      "locatability": "medium",
+      "issue_present": "yes"
+    }
+  ],
+  "out_of_pocket_usd": 0,
+  "free_tier_note": "Free-tier Gemini requests may be used by Google to improve products. Inputs are public social posts."
+}

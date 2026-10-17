@@ -1,0 +1,63 @@
+{
+  "evaluated_on": "2026-10-17",
+  "recorded_at_utc": "2026-10-17T14:41:39.764877+00:00",
+  "scope": "Anonymous access checks from one environment, one public institutional profile and one Toronto hashtag. No image downloads or paid API calls. Not a coverage or quality benchmark.",
+  "results": [
+    {
+      "provider": "instaloader",
+      "version": "4.15.4",
+      "target_kind": "profile",
+      "anonymous": true,
+      "media_downloaded": false,
+      "elapsed_seconds": 8.59,
+      "status": "failed",
+      "post_count": 0,
+      "image_url_count": 0,
+      "errors": [
+        {
+          "type": "ConnectionException",
+          "detail": "JSON Query to api/v1/users/web_profile_info/: 401 Unauthorized - \"fail\" status, message \"Please wait a few minutes before you try again.\" when accessing [url]"
+        }
+      ],
+      "probe_exit_code": 1
+    },
+    {
+      "provider": "gallery-dl",
+      "version": "1.32.17",
+      "target_kind": "profile",
+      "anonymous": true,
+      "media_downloaded": false,
+      "elapsed_seconds": 0.82,
+      "status": "failed",
+      "post_count": 0,
+      "image_url_count": 0,
+      "errors": [
+        {
+          "type": "NotFoundError",
+          "detail": "Requested user could not be found"
+        }
+      ],
+      "process_exit_code": 0,
+      "probe_exit_code": 1
+    },
+    {
+      "provider": "gallery-dl",
+      "version": "1.32.17",
+      "target_kind": "hashtag",
+      "anonymous": true,
+      "media_downloaded": false,
+      "elapsed_seconds": 0.81,
+      "status": "failed",
+      "post_count": 0,
+      "image_url_count": 0,
+      "errors": [
+        {
+          "type": "AbortExtraction",
+          "detail": "HTTP redirect to login page ([url]"
+        }
+      ],
+      "process_exit_code": 0,
+      "probe_exit_code": 1
+    }
+  ]
+}
