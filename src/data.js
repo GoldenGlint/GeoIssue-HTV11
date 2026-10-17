@@ -236,4 +236,8 @@ export const issueRepository = {
     // Replace with POST /api/submissions. Do not publish uploads until privacy review.
     return { ...draft, issue_id: `LOCAL-${Date.now().toString(36).toUpperCase()}`, verification_status: 'Pending review', local_only: true };
   },
+  async submitCorrection(draft) {
+    // Replace with POST /api/issues/{issue_id}/corrections. A reviewer accepts or dismisses it; nothing changes until then.
+    return { ...draft, correction_id: `COR-${Date.now().toString(36).toUpperCase()}`, status: 'Pending review', local_only: true };
+  },
 };

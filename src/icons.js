@@ -45,5 +45,6 @@ const paths = {
   ballot: 'M3 21h18M5 21V11h14v10M9 7l2 2 4-4',
   funnel: 'M3 4h18l-7 9v6l-4 2v-8L3 4z',
   copy: 'M9 9h11v11H9V9zM5 15H4V4h11v1',
+  edit: 'M4 20h4L19 9l-4-4L4 16v4zm9-13 4 4',
 };
 export const icon = (name, cls = '') => `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name] || paths.pin}"/></svg>`;

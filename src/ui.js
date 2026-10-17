@@ -1,6 +1,8 @@
 // Shared UI pieces: toast, modal shell, issue rows, issue detail and stat cards.
 import { icon } from './icons.js';
 import { esc, badge, date, typeIcon, typeColor, wardLabel } from './format.js';
+import { googleStreetViewUrl, distanceMetres } from './coordinates.js';
+import { pendingCorrection } from './state.js';
 
 let toastTimer, previousFocus, modalCleanup = null;
 
@@ -52,6 +54,17 @@ function geoHtml(i) {
   return `<section class="geo-explainer"><h4>${icon('locate')} How this location was estimated</h4><div class="geo-summary"><strong>${esc(i.geo_method)}</strong><span>${i.location_radius_m}m radius · ${Math.round(i.geo_confidence * 100)}% confidence</span></div>${steps.length ? `<ol class="geo-trace">${steps.map(s => `<li class="${esc(s.status)}"><span></span><div><b>${esc(s.stage)}</b><small>${esc(s.result)}</small></div></li>`).join('')}</ol>` : ''}${i.geo_clues?.length ? `<div class="geo-clues">${i.geo_clues.map(c => `<span>${esc(c)}</span>`).join('')}</div>` : ''}${i.is_demo ? '<span class="geo-foot">Illustrative trace · connect the geolocation pipeline for real results</span>' : ''}</section>`;
 }
 
+export function correctionSummary(c, issue) {
+  if (c.kind === 'location') return `New location ${Math.round(distanceMetres(issue.geometry.coordinates, c.coordinates)).toLocaleString()} m from this pin`;
+  if (c.kind === 'issue_type') return `Issue type should be ${c.issue_type}`;
+  return c.kind === 'resolved' ? 'Reported as fixed' : 'Reported as not a public issue';
+}
+
+function locationHtml(i) {
+  const correction = pendingCorrection(i.issue_id);
+  return `<div class="confidence-note">${icon('target')}<div><strong>Approximate location · ${i.location_radius_m} m radius</strong><span>The pin may be off by up to this distance.</span><a class="street-link" href="${googleStreetViewUrl(i.geometry.coordinates)}" target="_blank" rel="noopener">${icon('external')} Open in Google Street View</a></div></div>${correction ? `<div class="correction-note">${icon('edit')}<div><strong>You suggested a correction</strong><span>${esc(correctionSummary(correction, i))}. A reviewer will check it.</span></div></div>` : ''}`;
+}
+
 export function detailHtml(i) {
   const facts = [
     ['Neighbourhood', i.neighbourhood_name], ['Ward', wardLabel(i.ward_id)],
@@ -59,5 +72,5 @@ export function detailHtml(i) {
     ['Detection confidence', `${Math.round(i.detection_confidence * 100)}%`], ['Independent sightings', i.sightings_count],
     ['Nearby infrastructure', i.asset_name || 'Not determined'], ['Distance to asset', i.distance_m == null ? 'Not determined' : `${i.distance_m.toLocaleString()} metres`],
   ];
-  return `<div class="detail-body"><div class="detail-title"><span class="type-orb" style="--type-color:${typeColor(i.issue_type)}">${typeIcon(i.issue_type)}</span><div><span class="eyebrow">${esc(i.issue_id)}${i.is_demo ? ' · SAMPLE RECORD' : ''}</span><h2>${esc(i.issue_type)}</h2></div></div>${evidenceHtml(i)}<div class="detail-badges">${badge(i.severity)} ${badge(i.resolution_status)} ${badge(i.verification_status)}</div><h3>${esc(i.address)}</h3><p>${esc(i.description)}</p><div class="confidence-note">${icon('target')}<div><strong>Approximate location · ${i.location_radius_m}m radius</strong><span>Location uncertainty is preserved in the public view.</span></div></div><div class="detail-grid">${facts.map(([label, value]) => `<div><span>${label}</span><strong>${esc(value)}</strong></div>`).join('')}</div>${geoHtml(i)}<div class="analysis-card"><h4>${icon('sun')} Why this was flagged</h4><p>${esc(i.explanation)}</p><span>Illustrative explanation · human review recommended</span></div><p class="fine-print">Source: ${esc(i.source_category)}${i.is_demo ? ' (sample)' : ''}. No linked 311 record. A detection does not establish a service request.</p></div>`;
+  return `<div class="detail-body"><div class="detail-title"><span class="type-orb" style="--type-color:${typeColor(i.issue_type)}">${typeIcon(i.issue_type)}</span><div><span class="eyebrow">${esc(i.issue_id)}${i.is_demo ? ' · SAMPLE RECORD' : ''}</span><h2>${esc(i.issue_type)}</h2></div></div>${evidenceHtml(i)}<div class="detail-badges">${badge(i.severity)} ${badge(i.resolution_status)} ${badge(i.verification_status)}</div><h3>${esc(i.address)}</h3><p>${esc(i.description)}</p>${locationHtml(i)}<div class="detail-grid">${facts.map(([label, value]) => `<div><span>${label}</span><strong>${esc(value)}</strong></div>`).join('')}</div>${geoHtml(i)}<div class="analysis-card"><h4>${icon('sun')} Why this was flagged</h4><p>${esc(i.explanation)}</p><span>Illustrative explanation · human review recommended</span></div><p class="fine-print">Source: ${esc(i.source_category)}${i.is_demo ? ' (sample)' : ''}. No linked 311 record. A detection does not establish a service request.</p></div>`;
 }

@@ -226,7 +226,7 @@ export class CivicMap {
       const r = this.element.getBoundingClientRect(), x1 = Math.min(d.x, e.clientX) - r.left, x2 = Math.max(d.x, e.clientX) - r.left, y1 = Math.min(d.y, e.clientY) - r.top, y2 = Math.max(d.y, e.clientY) - r.top;
       const ids = this.issues.filter(i => { const [x, y] = this.position(i.geometry.coordinates); return x >= x1 && x <= x2 && y >= y1 && y <= y2; }).map(i => i.issue_id);
       this.onSelect(ids, 'multi', e);
-    } else if (!d.moved) this.onEmpty();
+    } else if (!d.moved) this.showHeat ? this.pickHeat(e) : this.onEmpty();
     else if (this.mode === 'pan' && performance.now() - d.lastTime < 80 && Math.hypot(d.vx, d.vy) > 0.12) {
       const c = project(this.center, this.zoom), limit = v => Math.max(-170, Math.min(170, v * 140));
       this.animateTo(unproject([c[0] - limit(d.vx), c[1] - limit(d.vy)], this.zoom), this.zoom, 340);
@@ -258,7 +258,10 @@ export class CivicMap {
     }
     this.tiles.replaceChildren(fragment);
     if (this.tileCache.size > 160) for (const [key, img] of this.tileCache) { if (!img.isConnected) this.tileCache.delete(key); if (this.tileCache.size <= 120) break; }
-    const visible = this.issues.map(i => ({ issue: i, p: this.position(i.geometry.coordinates) })).filter(({ p }) => p[0] > -25 && p[0] < width + 25 && p[1] > -25 && p[1] < height + 25);
+    let visible = this.issues.map(i => ({ issue: i, p: this.position(i.geometry.coordinates) })).filter(({ p }) => p[0] > -25 && p[0] < width + 25 && p[1] > -25 && p[1] < height + 25);
+    // Density mode replaces pins with a heat surface; selected issues keep their pins so an open panel still points somewhere.
+    const heat = this.showHeat ? this.renderHeat(width, height) : null;
+    if (heat) visible = visible.filter(({ issue }) => this.selected.includes(issue.issue_id));
     const groups = [];
     for (const point of visible) {
       const group = groups.find(g => Math.hypot(g.p[0] - point.p[0], g.p[1] - point.p[1]) < (this.zoom < 14 ? 48 : 25));
@@ -266,6 +269,7 @@ export class CivicMap {
     }
     const oldMarkers = new Map([...this.markers.children].map(b => [b.dataset.key, b]));
     const markerFragment = document.createDocumentFragment();
+    if (heat) markerFragment.append(heat);
     // A selected issue gets an uncertainty area rather than implying an exact location.
     if (this.selected.length === 1) {
       const issue = this.issues.find(i => i.issue_id === this.selected[0]);
@@ -284,7 +288,7 @@ export class CivicMap {
       const high = group.items.filter(i => i.severity === 'High').length;
       const button = oldMarkers.get(key) || document.createElement('button');
       button.dataset.key = key;
-      button.className = `map-pin ${multi ? 'cluster' : ''} ${high ? 'sev-high' : ''} ${group.items.some(i => this.selected.includes(i.issue_id)) ? 'selected' : ''} ${this.showHeat ? 'heat-pin' : ''}`;
+      button.className = `map-pin ${multi ? 'cluster' : ''} ${high ? 'sev-high' : ''} ${group.items.some(i => this.selected.includes(i.issue_id)) ? 'selected' : ''}`;
       button.style.cssText = `left:${group.p[0]}px;top:${group.p[1]}px;--pin:${this.colorFor(first.issue_type)}`;
       button.innerHTML = multi ? `<span>${group.items.length}</span>` : this.icon(first.issue_type);
       const label = multi ? `${group.items.length} issues${high ? `, ${high} high severity` : ''} · click to explore` : `${first.issue_type} · ${first.severity} severity · ${first.address}`;
@@ -299,6 +303,51 @@ export class CivicMap {
     this.markers.replaceChildren(markerFragment);
     this.element.classList.toggle('box-mode', this.mode === 'box');
     this.renderInfrastructure();
+  }
+  /** Kernel density surface for the current view, drawn at half resolution: each issue adds a soft disc
+   * weighted by its sightings, and the summed intensity is coloured from faint blue (one report) to red. */
+  renderHeat(width, height) {
+    const scale = 0.5, w = Math.ceil(width * scale), h = Math.ceil(height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.className = 'heat-layer'; canvas.width = w; canvas.height = h;
+    canvas.style.cssText = `width:${width}px;height:${height}px`;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const metresPerPixel = 156543.03392 * Math.cos(this.center[1] * Math.PI / 180) / 2 ** this.zoom;
+    this.heatRadius = Math.max(26, Math.min(90, 450 / metresPerPixel));
+    const r = this.heatRadius * scale;
+    for (const issue of this.issues) {
+      const [x, y] = this.position(issue.geometry.coordinates).map(v => v * scale);
+      if (x < -r || y < -r || x > w + r || y > h + r) continue;
+      const weight = Math.min(1, 0.22 * (1 + Math.log2(issue.sightings_count || 1)));
+      const disc = ctx.createRadialGradient(x, y, 0, x, y, r);
+      disc.addColorStop(0, `rgba(0,0,0,${weight})`);
+      disc.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = disc;
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    const image = ctx.getImageData(0, 0, w, h), px = image.data, ramp = this.heatRamp();
+    for (let j = 3; j < px.length; j += 4) {
+      const k = px[j] * 4;
+      if (!k) continue;
+      px[j - 3] = ramp[k]; px[j - 2] = ramp[k + 1]; px[j - 1] = ramp[k + 2]; px[j] = ramp[k + 3];
+    }
+    ctx.putImageData(image, 0, 0);
+    return canvas;
+  }
+  heatRamp() {
+    if (this.heatColours) return this.heatColours;
+    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 1;
+    const ctx = canvas.getContext('2d'), gradient = ctx.createLinearGradient(0, 0, 256, 0);
+    for (const [stop, colour] of [[0, 'rgba(39,120,246,0)'], [0.12, 'rgba(39,120,246,.38)'], [0.35, 'rgba(39,184,246,.62)'], [0.6, 'rgba(255,180,82,.8)'], [0.85, 'rgba(250,101,117,.9)'], [1, 'rgba(255,214,222,.95)']]) gradient.addColorStop(stop, colour);
+    ctx.fillStyle = gradient; ctx.fillRect(0, 0, 256, 1);
+    return (this.heatColours = ctx.getImageData(0, 0, 256, 1).data);
+  }
+  /** In density mode a click lists the issues under the hot spot, like opening a cluster. */
+  pickHeat(e) {
+    const r = this.element.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    const ids = this.issues.filter(i => { const [px, py] = this.position(i.geometry.coordinates); return Math.hypot(px - x, py - y) <= this.heatRadius; }).map(i => i.issue_id);
+    if (ids.length) this.onSelect(ids, ids.length === 1 ? 'issue' : 'cluster', e);
+    else this.onEmpty();
   }
   preview(group, button) {
     if (this.motionFrame !== null) return;

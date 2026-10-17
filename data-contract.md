@@ -6,6 +6,7 @@ The frontend reads everything through `issueRepository` in `src/data.js`. Today 
 | --- | --- | --- |
 | `issueRepository.list()` | 240 deterministic sample issues | `GET /api/issues` → `Issue[]`, already filtered by the caller's role and privacy rules |
 | `issueRepository.submit(draft)` | Saves metadata to browser storage | `POST /api/submissions` → `{ issue_id, verification_status: 'Pending review' }` |
+| `issueRepository.submitCorrection(draft)` | Saves the correction to browser storage | `POST /api/issues/{issue_id}/corrections` → `{ correction_id, status: 'Pending review' }` |
 
 Filtering, sorting, paging and search currently run in the browser (`src/issues.js`). When the dataset outgrows that, move the same filter semantics to query parameters; the Data Explorer's **Query** tab shows the equivalent SQL for the current filters.
 
@@ -62,6 +63,32 @@ Never include usernames, handles, author IDs, original post URLs, or precise coo
 ```
 
 `coordinates` come from the upload form's map pin and are rounded to 3 decimals (about 100 m) before leaving the browser. Photos are sent separately once real upload, privacy processing and review exist; the prototype never uploads them.
+
+## Correction draft (`submitCorrection`)
+
+Anyone can suggest a fix to an issue from its detail panel. Nothing changes until a reviewer accepts it.
+
+```json
+{
+  "issue_id": "CL-506AF535",
+  "kind": "location",
+  "coordinates": [-79.3941, 43.64735],
+  "location_source": "google_maps_link",
+  "note": "It is on the south curb, by the streetcar stop.",
+  "created_at": "2026-10-17T14:02:11.000Z"
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `kind` | `location`, `issue_type`, `resolved` or `not_an_issue` |
+| `coordinates` | `[lng, lat]`, for `location` only. Kept at full precision: it is the issue's position, not a person's. |
+| `location_source` | `map_pin` (dragged on the map), `google_maps_link` or `coordinates` (typed decimal, degrees-minutes or degrees-minutes-seconds) |
+| `issue_type` | For `issue_type` only; one of the `categories` keys |
+| `reason` | For `not_an_issue` only |
+| `note` | Optional, up to 500 characters |
+
+The server sets `status` (`Pending review`, `Accepted` or `Dismissed`). Accepting a location correction should move the issue, recompute its area, ward and nearby assets, set a small radius, and add a `geo_trace` step. The prototype does the move and the trace in the browser only.
 
 ## Infrastructure
 

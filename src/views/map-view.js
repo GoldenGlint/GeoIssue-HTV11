@@ -8,7 +8,7 @@ import { searchSuggestions } from '../issues.js';
 import { state, filtered, findIssue, remember } from '../state.js';
 import { toast, detailHtml, issueRow, emptyHtml } from '../ui.js';
 import { action, filtersHtml, secondaryFilters, bindFilterChips, updateFilteredView, scopedTable, toggleSave } from '../app.js';
-import { shareIssue, streetModal } from '../modals.js';
+import { shareIssue, streetModal, correctionModal } from '../modals.js';
 
 let map = null;
 export const getMap = () => map;
@@ -89,13 +89,13 @@ export function clearSelection() {
 export function mapHtml() {
   const legend = Object.entries(categories).map(([type, c]) => `<button data-legend="${type}" class="${state.filters.type === type ? 'legend-active' : ''}"><span style="color:${c.color}">${typeIcon(type)}</span>${type}</button>`).join('');
   const hint = state.mapMode === 'box' ? 'Drag a rectangle to select issues' : 'Drag to pan · Scroll to zoom · Shift + click to select';
-  return `<div class="map-workspace">
+  return `<div class="map-workspace ${state.heat ? 'density-mode' : ''}">
     <div class="map-floating-filters"><div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}</div>
     <div id="city-map" class="city-map" role="region" aria-label="Interactive Toronto issue map"></div>
     <div class="map-top-left"><div class="map-segment"><button class="${!state.heat ? 'active' : ''}" data-action="pins">${icon('pin')} Pins</button><button class="${state.heat ? 'active' : ''}" data-action="heat">${icon('density')} Density</button></div><span class="map-demo">FICTIONAL ISSUE LOCATIONS</span></div>
     <div class="map-top-right"><button class="map-control ${state.mapMode === 'pan' ? 'active' : ''}" data-action="pan" title="Pan map" aria-label="Pan map">${icon('hand')}</button><button class="map-control ${state.mapMode === 'box' ? 'active' : ''}" data-action="box" title="Box select" aria-label="Box select">${icon('select')}</button><button class="map-control ${state.layers.length ? 'active' : ''}" data-action="layers" title="Infrastructure layers" aria-label="Infrastructure layers">${icon('layers')}</button></div>
-    <div class="map-bottom-left"><div class="map-summary"><span class="live-dot"></span><strong class="map-visible-count">Toronto, Ontario</strong> <span class="muted">· ${filtered().length} sample issues</span><button data-action="search-area" class="text-button">View area issues</button></div><div class="map-legend">${legend}<span class="legend-severity"><i>!</i>High severity</span></div></div>
-    <div class="map-bottom-right"><button class="map-control street-person" draggable="true" data-action="street" aria-label="Street-level explorer placeholder" title="Street-level imagery integration">${icon('person')}</button><div class="zoom-controls"><button class="map-control" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="map-control" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button></div><button class="map-control" data-action="fit-results" title="Fit all matching issues" aria-label="Fit all matching issues">${icon('fit')}</button><button class="map-control" data-action="center" title="Reset Toronto view" aria-label="Reset Toronto view">${icon('home')}</button></div>
+    <div class="map-bottom-left"><div class="map-summary"><span class="live-dot"></span><strong class="map-visible-count">Toronto, Ontario</strong> <span class="muted">· ${filtered().length} sample issues</span><button data-action="search-area" class="text-button">View area issues</button></div><div class="map-legend">${legend}<span class="legend-severity"><i>!</i>High severity</span></div><div class="density-legend"><span>Fewer reports</span><i></i><span>More</span><small>Click a hot spot to list its issues</small></div></div>
+    <div class="map-bottom-right"><button class="map-control street-person" draggable="true" data-action="street" aria-label="Street View at the map centre" title="Street View: click for the map centre, or drag onto the map">${icon('person')}</button><div class="zoom-controls"><button class="map-control" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="map-control" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button></div><button class="map-control" data-action="fit-results" title="Fit all matching issues" aria-label="Fit all matching issues">${icon('fit')}</button><button class="map-control" data-action="center" title="Reset Toronto view" aria-label="Reset Toronto view">${icon('home')}</button></div>
     <div class="map-hint">${icon(state.mapMode === 'box' ? 'select' : 'hand')} ${hint}</div>
     <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
     <div class="map-empty" hidden>${icon('search')}<h3>No matching sample issues</h3><p>Try a different search or remove a filter.</p><button class="button small" data-action="reset">Reset filters</button></div>
@@ -123,7 +123,11 @@ export function initMap() {
   person.ondragstart = e => { e.dataTransfer.setData('text/plain', 'civiclens-street'); element.classList.add('coverage-preview'); };
   person.ondragend = () => element.classList.remove('coverage-preview');
   element.ondragover = e => e.preventDefault();
-  element.ondrop = e => { e.preventDefault(); element.classList.remove('coverage-preview'); streetModal(); };
+  element.ondrop = e => {
+    e.preventDefault(); element.classList.remove('coverage-preview');
+    const r = element.getBoundingClientRect();
+    streetModal(map.coordsAt([e.clientX - r.left, e.clientY - r.top]));
+  };
 }
 
 /** Re-applies changed filters on the map page without rebuilding the map. */
@@ -147,8 +151,8 @@ export function setMapMode(mode) {
 }
 export function setHeat(on) {
   state.heat = on; map.stopMotion(); map.showHeat = on; map.render();
+  document.querySelector('.map-workspace').classList.toggle('density-mode', on);
   document.querySelectorAll('.map-segment button').forEach(b => b.classList.toggle('active', b.dataset.action === (on ? 'heat' : 'pins')));
-  if (on) toast('Density preview: overlapping sample issues glow.');
 }
 
 export function renderPanel() {
@@ -167,8 +171,9 @@ export function renderPanel() {
   const p = state.panel;
   if (p.mode === 'issue') {
     const i = findIssue(p.id);
-    el.innerHTML = `<div class="panel-heading"><button class="text-button" data-action="panel-back">${icon('back')} ${p.back ? 'Back to results' : 'Issue details'}</button><button class="icon-button" data-action="close-panel" aria-label="Close issue details">${icon('close')}</button></div>${detailHtml(i)}<div class="panel-footer"><button class="button" data-action="save-issue">${icon('bookmark')} ${state.saved.includes(i.issue_id) ? 'Saved' : 'Save issue'}</button><button class="button" data-action="share-issue">${icon('external')} Share</button></div>`;
+    el.innerHTML = `<div class="panel-heading"><button class="text-button" data-action="panel-back">${icon('back')} ${p.back ? 'Back to results' : 'Issue details'}</button><button class="icon-button" data-action="close-panel" aria-label="Close issue details">${icon('close')}</button></div>${detailHtml(i)}<div class="panel-footer"><button class="button" data-action="save-issue">${icon('bookmark')} ${state.saved.includes(i.issue_id) ? 'Saved' : 'Save'}</button><button class="button" data-action="share-issue">${icon('external')} Share</button><button class="button" data-action="correct-issue">${icon('edit')} Suggest correction</button></div>`;
     el.querySelector('[data-action="save-issue"]').onclick = () => toggleSave([i.issue_id]);
+    el.querySelector('[data-action="correct-issue"]').onclick = () => correctionModal(i);
     el.querySelector('[data-action="share-issue"]').onclick = () => shareIssue(i);
     el.querySelector('[data-action="panel-back"]').onclick = () => { if (p.back) { state.panel = p.back; renderPanel(); } else clearSelection(); };
   } else {

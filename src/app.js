@@ -3,7 +3,7 @@
 import { categories, issueRepository, wards, neighbourhoods, TORONTO_CENTER } from './data.js';
 import { icon } from './icons.js';
 import { esc } from './format.js';
-import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel } from './state.js';
+import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel, applyCorrection } from './state.js';
 import { toast, closeModal } from './ui.js';
 import { mapHtml, initMap, destroyMap, getMap, renderPanel, clearSelection, selectMap, openIssue, frameIssues, refreshMapFilters, setMapMode, setHeat, visibleIssues } from './views/map-view.js';
 import { dataHtml, bindData } from './views/data-view.js';
@@ -12,14 +12,7 @@ import { collectionHtml, verifyHtml, bindWorkspace } from './views/workspace-vie
 import { uploadModal, infrastructureModal, streetModal, exportModal, settingsModal, helpModal, issueModal } from './modals.js';
 
 const app = document.querySelector('#app');
-const headings = {
-  map: ['Map Explorer', 'Explore the city. See what needs attention.'],
-  data: ['Data Explorer', 'One city. One dataset. Every issue in view.'],
-  dashboard: ['City overview', 'A clearer picture of Toronto’s public spaces.'],
-  saved: ['Saved workspace', 'Your bookmarked issues and submissions, ready when you are.'],
-  recents: ['Recently viewed', 'Pick up where you left off.'],
-  verify: ['Verification queue', 'A human perspective behind every confident pin.'],
-};
+const headings = { map: 'Map Explorer', data: 'Data Explorer', dashboard: 'City overview', saved: 'Saved', recents: 'Recently viewed', verify: 'Verification queue' };
 
 // ---- Shared filters ----
 const filterLabels = { query: 'Search', type: 'Issue type', severity: 'Severity', status: 'Status', area: 'Area', days: 'Time' };
@@ -49,11 +42,11 @@ export function filtersHtml() {
     + selectHtml('days', 'Any time', [[7, 'Last 7 days'], [30, 'Last 30 days'], [90, 'Last 90 days']], 'clock')
     + areaSelectHtml();
   const reset = `<button class="reset-button" data-action="reset" title="Reset all filters">${icon('refresh')}<span>Reset</span></button>`;
-  return state.view === 'map' ? `<div class="map-search-row">${search}${reset}</div><div class="map-filter-row">${filters}</div>` : `${search}${filters}${reset}`;
+  return state.view === 'map' ? `<div class="map-search-row">${search}${reset}</div><div class="map-filter-row">${filters}</div>` : `${search}<div class="filter-selects">${filters}</div>${reset}`;
 }
 export function secondaryFilters() {
   const infra = state.filters.infra ? `<span class="scope-chip">${state.filters.infra === 'any' ? 'Any infrastructure' : esc(state.filters.infra)} · within ${state.filters.radius}m <button data-action="clear-infra" aria-label="Clear infrastructure filter">×</button></span>` : '';
-  return `<div class="filter-context"><div class="filter-status">${filterChips() || '<span class="sync-label"><span class="live-dot"></span> Shared filters across map, data & dashboard</span>'}</div><div class="context-actions">${infra}<button class="text-button" data-action="proximity">${icon('layers')} Infrastructure & proximity</button><span class="context-divider"></span><span><strong>${filtered().length}</strong> sample issues</span></div></div>`;
+  return `<div class="filter-context"><div class="filter-status">${filterChips()}</div><div class="context-actions">${infra}<button class="text-button" data-action="proximity">${icon('layers')} Infrastructure & proximity</button><span class="context-divider"></span><span><strong>${filtered().length}</strong> sample issues</span></div></div>`;
 }
 export function updateFilteredView() {
   state.page = 1; state.selected = [];
@@ -68,7 +61,7 @@ function navItem(view, glyph, title, count) {
 }
 function sidebarHtml() {
   const roles = ['Public', 'Volunteer', 'City Staff'];
-  const reviewCount = state.pending.length + state.issues.filter(i => i.verification_status === 'Needs review').length;
+  const reviewCount = state.pending.length + state.corrections.filter(c => c.status === 'Pending review').length + state.issues.filter(i => i.verification_status === 'Needs review').length;
   return `<aside class="sidebar"><a class="brand" href="#map" data-nav="map" aria-label="CivicLens home"><span class="brand-mark"><i></i></span><span>Civic<span class="cyan">Lens</span></span></a><div class="workspace-label">TORONTO WORKSPACE <span class="live-dot"></span></div><nav aria-label="Main navigation">${navItem('map', 'map', 'Map Explorer')}${navItem('data', 'database', 'Data Explorer')}${navItem('dashboard', 'chart', 'Dashboard')}<div class="nav-divider"></div><span class="nav-section">YOUR WORKSPACE</span>${navItem('saved', 'bookmark', 'Saved', state.saved.length)}${navItem('recents', 'clock', 'Recents')}${state.role !== 'Public' ? navItem('verify', 'shield', 'Verify', reviewCount) : ''}</nav><button class="button primary upload-button" data-action="upload" title="Upload new issue" aria-label="Upload new issue">${icon('plus')}<span>Upload new issue</span></button><div class="sidebar-note">Small observations.<br><strong>Better neighbourhoods.</strong><span>A little attention goes a long way.</span></div><div class="sidebar-bottom"><button class="nav-item" data-action="settings" title="Settings" aria-label="Settings">${icon('settings')}<span>Settings</span></button><button class="nav-item" data-action="help" title="Help and methodology" aria-label="Help and methodology">${icon('help')}<span>Help & methodology</span></button><div class="account"><span class="avatar">JD</span><div><strong>Jamie Davis</strong><select id="role-select" aria-label="Demo account type">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div><span class="account-dots">···</span></div></div></aside>`;
 }
 function pageHtml() {
@@ -82,8 +75,10 @@ function pageHtml() {
 }
 export function render() {
   destroyMap();
-  const [title, subtitle] = headings[state.view] || headings.map, onMap = state.view === 'map';
-  app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div><div class="eyebrow">CIVIC INTELLIGENCE <span>/</span> TORONTO, ON</div><h1>${title}</h1><p>${subtitle}</p></div><div class="header-right"><span class="demo-label"><span></span> Demo workspace</span><button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="About this demo">${icon('help')}</button></div></header>
+  const title = headings[state.view] || headings.map, onMap = state.view === 'map';
+  const sample = state.issues.some(i => i.is_demo);
+  const source = `<span class="data-source" title="${sample ? 'Fictional records for the demo. None of them are real reports.' : 'Issues from the analysis pipeline.'}">${sample ? 'Sample data' : 'Analysis data'}</span>`;
+  app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1>${source}</div><div class="header-right"><button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="About this demo">${icon('help')}</button></div></header>
   ${onMap ? '' : `<div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}`}
   <div class="workspace-content" id="workspace-content">${pageHtml()}</div>
   ${onMap ? '' : '<footer class="page-footer"><span>CivicLens · Built for a more responsive city</span><span>Fictional sample data · Snapshot: Oct 17, 2026</span></footer>'}</main>`;
@@ -208,6 +203,8 @@ window.addEventListener('hashchange', () => { if (state.issues.length) route(); 
 async function start() {
   try {
     state.issues = await issueRepository.list();
+    // Corrections accepted in this browser stay applied across reloads (an API would return updated issues).
+    state.corrections.filter(c => c.status === 'Accepted').forEach(applyCorrection);
     route();
   } catch (error) {
     app.innerHTML = '<div class="load-error"><h1>Couldn’t load the workspace</h1><p>Check your issue repository connection and reload.</p><button onclick="location.reload()">Retry</button></div>';

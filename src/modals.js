@@ -1,12 +1,13 @@
-// Dialogs: upload, infrastructure & proximity, export, settings, help, street-level and issue details.
+// Dialogs: upload, corrections, infrastructure & proximity, export, settings, help, street-level and issue details.
 import { categories, infrastructure, issueRepository, TORONTO_BOUNDS, TORONTO_CENTER } from './data.js';
 import { CivicMap } from './map.js';
 import { icon } from './icons.js';
-import { esc, badge, typeIcon, countBy } from './format.js';
+import { esc, badge, typeIcon, typeColor, countBy } from './format.js';
+import { parseLocation, formatDms, formatDecimal, distanceMetres, googleStreetViewUrl, googleMapsUrl } from './coordinates.js';
 import { state, scopedRows, persist, remember } from './state.js';
 import { toast, showModal, closeModal, modalHeader, detailHtml } from './ui.js';
 import { render, nav, toggleSave } from './app.js';
-import { getMap, openIssue, frameIssues } from './views/map-view.js';
+import { getMap, openIssue, frameIssues, renderPanel } from './views/map-view.js';
 
 const freshDraft = () => ({ photos: [], category: '', description: '', address: '', confirmed: false, coordinates: null });
 let uploadDraft = freshDraft(), picker = null;
@@ -107,8 +108,105 @@ export function infrastructureModal() {
   };
 }
 
-export function streetModal() {
-  showModal(`${modalHeader('STREET-LEVEL EXPLORER', 'A closer look, coming soon')}<div class="modal-body"><div class="street-placeholder">${icon('person')}<strong>No street-level imagery connected</strong><span>Mapillary viewer integration point</span></div><p>Connect your Mapillary image lookup and viewer here to browse available photos near a dropped position.</p><p class="fine-print">Coverage, photo dates, attribution, and adjacent-image navigation depend on the provider. This prototype does not claim live street-level coverage.</p></div><div class="modal-footer"><button class="button" data-close>Return to map</button></div>`, { label: 'Street-level explorer' });
+/** Street View for a point: the map centre, or wherever the person icon was dropped. */
+export function streetModal(coords = getMap()?.center || state.center) {
+  showModal(`${modalHeader('STREET VIEW', 'See this spot at street level')}<div class="modal-body"><div class="street-target">${icon('person')}<div><strong>${formatDecimal(coords)}</strong><span>${formatDms(coords)}</span></div></div><p>Google Street View opens in a new tab at the panorama nearest this point. Coverage and photo dates depend on Google.</p><p class="fine-print">Drag the person icon onto the map to choose a different spot. CivicLens links to Street View but never copies or stores its imagery.</p></div><div class="modal-footer"><a class="button" href="${googleMapsUrl(coords)}" target="_blank" rel="noopener">${icon('map')} Open in Google Maps</a><a class="button primary" href="${googleStreetViewUrl(coords)}" target="_blank" rel="noopener">${icon('external')} Open Street View</a></div>`, { label: 'Street View' });
+}
+
+// ---- Corrections ----
+const correctionKinds = [
+  ['location', 'Location', 'The pin is in the wrong place'],
+  ['issue_type', 'Issue type', 'It’s a different kind of issue'],
+  ['resolved', 'Already fixed', 'It has been repaired or cleared'],
+  ['not_an_issue', 'Not a public issue', 'Private property, or nothing wrong'],
+];
+const notIssueReasons = ['Private property', 'Nothing wrong in the photo', 'Duplicate of another issue', 'Photo shows people, not an issue'];
+let correctionMap = null;
+
+/** Lets anyone suggest a fix to an issue record. Nothing changes until a reviewer accepts it. */
+export function correctionModal(issue) {
+  const current = issue.geometry.coordinates;
+  let kind = 'location', proposed = current, source = 'map_pin', fromInput = false;
+  showModal(`${modalHeader(`${esc(issue.issue_id)} · ${esc(issue.issue_type.toUpperCase())}`, 'Suggest a correction')}<form id="correction-form" novalidate><div class="modal-body">
+    <p class="modal-intro">Tell reviewers what’s wrong with this record. Nothing changes on the map until someone checks it.</p>
+    <fieldset class="correction-kinds"><legend>What needs correcting?</legend>${correctionKinds.map(([value, label, hint]) => `<label><input type="radio" name="kind" value="${value}" ${value === kind ? 'checked' : ''}><strong>${label}</strong><small>${hint}</small></label>`).join('')}</fieldset>
+    <section data-kind="location">
+      <div class="picker-map-wrap correction-map"><div id="correction-map" class="city-map" aria-label="Drag the map so the pin sits on the correct spot"></div><span class="picker-pin">${icon('pin')}</span></div>
+      <small class="picker-hint">Drag the map so the red pin sits on the issue. The current pin stays where it is, underneath.</small>
+      <div class="form-label"><label for="location-input">Or paste a Google Maps link or coordinates</label><div class="input-with-icon">${icon('locate')}<input id="location-input" autocomplete="off" spellcheck="false" aria-describedby="location-feedback" placeholder="43.6455, -79.3953  or  43°38′43.8″N 79°23′43.1″W"></div><small id="location-feedback" aria-live="polite">Decimal degrees, degrees-minutes-seconds and full Google Maps links all work.</small></div>
+      <div class="correction-compare"><div><span>Now</span><strong>${formatDecimal(current)}</strong><small>${formatDms(current)}</small></div><div><span>Suggested</span><strong id="proposed-decimal"></strong><small id="proposed-dms"></small></div><div><span>Moves the pin</span><strong id="proposed-distance"></strong><small id="proposed-radius">Current radius ${issue.location_radius_m} m</small></div></div>
+      <div class="correction-links"><a id="proposed-street" target="_blank" rel="noopener">${icon('external')} Check this spot in Street View</a><a id="proposed-maps" target="_blank" rel="noopener">${icon('map')} Open in Google Maps</a></div>
+    </section>
+    <section data-kind="issue_type" hidden><label class="form-label">Correct issue type<select name="issue_type">${Object.keys(categories).filter(t => t !== issue.issue_type).map(t => `<option>${t}</option>`).join('')}</select></label></section>
+    <section data-kind="resolved" hidden><div class="notice-banner">${icon('check')} A reviewer confirms the repair, ideally with a new photo, before the issue is marked resolved.</div></section>
+    <section data-kind="not_an_issue" hidden><label class="form-label">Why isn’t it a public issue?<select name="reason">${notIssueReasons.map(r => `<option>${r}</option>`).join('')}</select></label></section>
+    <label class="form-label">Anything a reviewer should know? <em>Optional</em><textarea name="note" maxlength="500" placeholder="e.g. The pothole is on the south side, outside number 410."></textarea></label>
+    <div id="correction-error" class="form-error" role="alert"></div>
+  </div><div class="modal-footer"><span class="subtle-label">Saved in this browser for review</span><button class="button" type="button" data-close>Cancel</button><button class="button primary" type="submit">${icon('check')} Send correction</button></div></form>`, { label: 'Suggest a correction', onClose: () => { correctionMap?.destroy(); correctionMap = null; } });
+
+  const form = document.querySelector('#correction-form'), input = document.querySelector('#location-input');
+  const feedback = document.querySelector('#location-feedback'), error = document.querySelector('#correction-error');
+  const showProposed = () => {
+    const moved = distanceMetres(current, proposed);
+    document.querySelector('#proposed-decimal').textContent = formatDecimal(proposed);
+    document.querySelector('#proposed-dms').textContent = formatDms(proposed);
+    document.querySelector('#proposed-distance').textContent = moved < 5 ? 'Not moved yet' : `${Math.round(moved).toLocaleString()} m`;
+    document.querySelector('#proposed-street').href = googleStreetViewUrl(proposed);
+    document.querySelector('#proposed-maps').href = googleMapsUrl(proposed);
+  };
+  correctionMap = new CivicMap(document.querySelector('#correction-map'), { onSelect() {}, onEmpty() {}, icon: typeIcon, colorFor: typeColor, home: current,
+    onMove: () => {
+      proposed = correctionMap.center.map(v => Number(v.toFixed(6)));
+      // Dragging after pasting means the pin, not the pasted text, is now the answer.
+      if (!fromInput && source !== 'map_pin') { source = 'map_pin'; feedback.textContent = 'Using the pin position.'; feedback.className = ''; }
+      fromInput = false;
+      showProposed();
+    } });
+  correctionMap.center = current; correctionMap.zoom = 17;
+  correctionMap.setData([issue], [issue.issue_id]);
+  showProposed();
+
+  let typing;
+  input.oninput = () => {
+    clearTimeout(typing);
+    typing = setTimeout(() => {
+      if (!input.value.trim()) { feedback.textContent = 'Decimal degrees, degrees-minutes-seconds and full Google Maps links all work.'; feedback.className = ''; return; }
+      const result = parseLocation(input.value);
+      if (result.error) { feedback.textContent = result.error; feedback.className = 'invalid'; return; }
+      // onMove fires when the camera arrives, unless it is already there.
+      fromInput = distanceMetres(correctionMap.center, result.coordinates) > 0.5;
+      source = result.source; proposed = result.coordinates;
+      feedback.textContent = `Found ${formatDecimal(result.coordinates)}${result.source === 'google_maps_link' ? ' in the link' : ''}.${result.note ? ` ${result.note}` : ''} The pin moved there.`;
+      feedback.className = 'valid';
+      correctionMap.flyTo(result.coordinates, 17);
+      showProposed();
+    }, 250);
+  };
+  form.onchange = e => {
+    if (e.target.name !== 'kind') return;
+    kind = e.target.value; error.textContent = '';
+    form.querySelectorAll('section[data-kind]').forEach(s => { s.hidden = s.dataset.kind !== kind; });
+    if (kind === 'location') correctionMap.render();
+  };
+  form.onsubmit = async e => {
+    e.preventDefault();
+    if (kind === 'location' && distanceMetres(current, proposed) < 5) { error.textContent = 'Move the pin, or paste a link or coordinates, to suggest a new location.'; return; }
+    const draft = { issue_id: issue.issue_id, kind, note: form.note.value.trim(), created_at: new Date().toISOString(),
+      ...(kind === 'location' && { coordinates: proposed, location_source: source }),
+      ...(kind === 'issue_type' && { issue_type: form.issue_type.value }),
+      ...(kind === 'not_an_issue' && { reason: form.reason.value }) };
+    form.querySelector('[type="submit"]').disabled = true;
+    try {
+      state.corrections.push(await issueRepository.submitCorrection(draft));
+      persist('corrections', state.corrections);
+      closeModal();
+      toast('Correction sent for review');
+      if (getMap()) renderPanel(); else render();
+    } catch {
+      form.querySelector('[type="submit"]').disabled = false;
+      error.textContent = 'Couldn’t send the correction. Your changes are still here; try again.';
+    }
+  };
 }
 
 export function exportModal(preferredScope = 'filtered') {
@@ -172,7 +270,8 @@ export async function shareIssue(i) {
 
 export function issueModal(i) {
   remember(i);
-  showModal(`<div class="modal-heading"><div><span class="eyebrow">ISSUE DETAILS</span><h2>${esc(i.issue_id)}</h2></div><button class="icon-button" data-close aria-label="Close issue">${icon('close')}</button></div>${detailHtml(i)}<div class="modal-footer"><button class="button" id="modal-save">${icon('bookmark')} ${state.saved.includes(i.issue_id) ? 'Remove saved' : 'Save issue'}</button><button class="button primary" id="modal-on-map">${icon('map')} View on map</button></div>`, { label: `Issue ${i.issue_id}` });
+  showModal(`<div class="modal-heading"><div><span class="eyebrow">ISSUE DETAILS</span><h2>${esc(i.issue_id)}</h2></div><button class="icon-button" data-close aria-label="Close issue">${icon('close')}</button></div>${detailHtml(i)}<div class="modal-footer"><button class="button" id="modal-save">${icon('bookmark')} ${state.saved.includes(i.issue_id) ? 'Remove saved' : 'Save issue'}</button><button class="button" id="modal-correct">${icon('edit')} Suggest correction</button><button class="button primary" id="modal-on-map">${icon('map')} View on map</button></div>`, { label: `Issue ${i.issue_id}` });
   document.querySelector('#modal-save').onclick = () => { toggleSave([i.issue_id]); closeModal(); };
+  document.querySelector('#modal-correct').onclick = () => correctionModal(i);
   document.querySelector('#modal-on-map').onclick = () => { closeModal(); nav('map'); openIssue(i.issue_id); frameIssues([i]); };
 }
