@@ -23,7 +23,7 @@ EXTENSIONS = {"image/jpg": "jpg", "image/jpeg": "jpg", "image/png": "png", "imag
 
 
 def load_config(path=DEFAULT_CONFIG):
-    data = json.loads(Path(path).read_text())
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
     api = str(data.get("api") or "").rstrip("/")
     if api != "https://arctic-shift.photon-reddit.com/api":
         raise ValueError("reddit.json api must be the Arctic Shift HTTPS API.")

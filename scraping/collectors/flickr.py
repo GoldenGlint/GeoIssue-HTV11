@@ -30,7 +30,7 @@ def load_api_key():
     token = os.environ.get("FLICKR_API_KEY", "")
     path = ROOT / ".env"
     if not token and path.exists():
-        for line in path.read_text().splitlines():
+        for line in path.read_text(encoding="utf-8").splitlines():
             if line.strip().startswith("FLICKR_API_KEY="):
                 token = line.split("=", 1)[1].strip().strip("\"'")
     if not token or any(character.isspace() for character in token):
@@ -41,7 +41,7 @@ def load_api_key():
 
 
 def load_config(path=DEFAULT_CONFIG):
-    data = json.loads(Path(path).read_text())
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
     areas = data.get("areas") or []
     if not areas or len(areas) > 6:
         raise ValueError("Configure 1–6 Flickr areas with bbox arrays.")

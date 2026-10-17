@@ -138,9 +138,9 @@ def main():
                 server.serve_forever()
             return
         if args.command == "export":
-            labels = json.loads(args.labels.read_text())
+            labels = json.loads(args.labels.read_text(encoding="utf-8"))
             if isinstance(labels, dict):
-                report = json.loads((args.out / "report.json").read_text())
+                report = json.loads((args.out / "report.json").read_text(encoding="utf-8"))
                 if labels.get("batch_id") != report["batch_id"]:
                     raise ValueError("Labels belong to a different batch.")
                 labels = labels["labels"]
@@ -158,19 +158,19 @@ def main():
         elif args.command == "resume":
             token = apify.load_token()
             budget = apify.preflight(token)
-            state = json.loads((args.out / "apify-run.json").read_text())
+            state = json.loads((args.out / "apify-run.json").read_text(encoding="utf-8"))
             if not state.get("run_id"):
                 raise ValueError("No run ID was received. Inspect Apify Console before any new launch.")
             records, stats = apify.normalize(apify.read_run(token, state["run_id"], args.out))
             metadata.update(mode="live", budget=budget)
         elif args.command == "import-apify":
-            records, stats = apify.normalize(json.loads(args.file.read_text()))
+            records, stats = apify.normalize(json.loads(args.file.read_text(encoding="utf-8")))
         else:
             records = [MediaRecord(**row) for row in read_jsonl(args.file)]
             stats = {"source_items": len(records)}
             hosts = tuple(args.allow_host)
         if (args.out / "apify-run.json").exists():
-            metadata["run"] = json.loads((args.out / "apify-run.json").read_text())
+            metadata["run"] = json.loads((args.out / "apify-run.json").read_text(encoding="utf-8"))
         finish(records, stats, args.out, since, metadata, hosts)
     except (ValueError, OSError, KeyError, TypeError) as exc:
         parser.exit(1, f"Stopped: {exc}\n")

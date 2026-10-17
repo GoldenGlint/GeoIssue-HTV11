@@ -22,7 +22,7 @@ def load_token():
     token = os.environ.get("APIFY_TOKEN", "")
     path = ROOT / ".env"
     if not token and path.exists():
-        for line in path.read_text().splitlines():
+        for line in path.read_text(encoding="utf-8").splitlines():
             if line.strip().startswith("APIFY_TOKEN="):
                 token = line.split("=", 1)[1].strip().strip("\"'")
     if not token or any(character.isspace() for character in token):
@@ -163,7 +163,7 @@ def collect(token, urls, output, *, limit=10, cap=MAX_FREE_CREDIT, since=None):
             "addParentData": False}
     if since:
         body["onlyPostsNewerThan"] = since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    with state.open("x") as handle:
+    with state.open("x", encoding="utf-8") as handle:
         import json
         handle.write(json.dumps({"status": "launch_requested", "cap_usd": float(cap)}) + "\n")
     run = api_request(token, f"actors/{ACTOR}/runs", method="POST", body=body,

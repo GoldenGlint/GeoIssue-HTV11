@@ -30,7 +30,7 @@ def human_useful(label):
 
 
 def load_labels(path):
-    data = json.loads(Path(path).read_text())
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
     items = data["labels"] if isinstance(data, dict) else data
     return {item["key"]: item for item in items}
 

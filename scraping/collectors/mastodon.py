@@ -44,7 +44,7 @@ def html_to_text(value):
 
 
 def load_config(path=DEFAULT_CONFIG):
-    data = json.loads(Path(path).read_text())
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
     instance = str(data.get("instance") or "").rstrip("/")
     if not re.fullmatch(r"https://[A-Za-z0-9.-]+", instance):
         raise ValueError("mastodon.json needs an https instance host.")

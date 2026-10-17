@@ -68,7 +68,7 @@ def load_session(loader, path=SESSION_FILE):
     if not path.is_file():
         raise ValueError("No local session. Run: python -m scraping.instagram_local login")
     try:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         username, cookies = data["username"], data["cookies"]
         if (not isinstance(username, str) or not re.fullmatch(r"[A-Za-z0-9._]{1,30}", username)
                 or not isinstance(cookies, dict)

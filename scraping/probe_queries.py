@@ -93,7 +93,7 @@ def main():
     except (ValueError, OSError, requests.RequestException) as exc:
         parser.exit(1, f"Probe stopped: {exc}\n")
     results.sort(key=lambda row: (-row["issue_word_images"], -row["images"]))
-    previous = json.loads(RESULTS.read_text()) if RESULTS.is_file() else {}
+    previous = json.loads(RESULTS.read_text(encoding="utf-8")) if RESULTS.is_file() else {}
     previous[args.platform] = {"probed_at": now.isoformat(), "days": args.days, "results": results}
     write_json(RESULTS, previous)
     print(f"{'source':45} {'posts':>5} {'photos':>6} {'images':>6} {'issue imgs':>10}")

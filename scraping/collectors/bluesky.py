@@ -311,7 +311,7 @@ def run(*, queries=(), authors=(), output=DEFAULT_OUTPUT, days=7,
     output.mkdir(parents=True, exist_ok=True)
     lock = output / ".bluesky.lock"
     try:
-        handle = lock.open("x")
+        handle = lock.open("x", encoding="utf-8")
     except FileExistsError:
         raise ValueError("Another collector owns this output directory, or a stale lock needs removing.") from None
     handle.close()

@@ -111,7 +111,7 @@ def redact_text(text):
 
 
 def read_jsonl(path):
-    return [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
+    return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 def source_post_url(row):
@@ -129,11 +129,11 @@ def source_post_url(row):
 
 def write_json(path, value):
     path = Path(path)
-    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n")
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def write_jsonl(path, rows):
-    Path(path).write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows))
+    Path(path).write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
 
 
 def allowed_url(url, hosts):
@@ -297,8 +297,8 @@ def write_gallery(output, rows, metadata, *, post_groups=None):
     if post_groups is not None:
         payload["post_groups"] = post_groups
     text = json.dumps(payload, ensure_ascii=True).replace("<", "\\u003c")
-    (output / "data.js").write_text("window.REVIEW_DATA = " + text + ";\n")
-    (output / "index.html").write_text(REVIEW_TEMPLATE.read_text())
+    (output / "data.js").write_text("window.REVIEW_DATA = " + text + ";\n", encoding="utf-8")
+    (output / "index.html").write_text(REVIEW_TEMPLATE.read_text(encoding="utf-8"), encoding="utf-8")
     write_json(output / "report.json", {
         **metadata, "images": len(rows),
         "ready": sum(row["auto_status"] == "ready" for row in rows),

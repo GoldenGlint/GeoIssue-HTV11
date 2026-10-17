@@ -91,7 +91,7 @@ def load_api_key():
     token = os.environ.get("GEMINI_API_KEY", "")
     path = ROOT / ".env"
     if not token and path.exists():
-        for line in path.read_text().splitlines():
+        for line in path.read_text(encoding="utf-8").splitlines():
             if line.strip().startswith("GEMINI_API_KEY="):
                 token = line.split("=", 1)[1].strip().strip("\"'")
     if not token or any(character.isspace() for character in token):
@@ -432,7 +432,7 @@ def screen_batch(batch, *, model=None, max_requests=1000, key=None, session=None
         meta = {}
         if (batch / "report.json").is_file():
             try:
-                meta = json.loads((batch / "report.json").read_text())
+                meta = json.loads((batch / "report.json").read_text(encoding="utf-8"))
             except ValueError:
                 meta = {}
         write_gallery(batch, read_jsonl(batch / "media.jsonl"), {

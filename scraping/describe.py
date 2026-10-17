@@ -207,7 +207,7 @@ def run(batch, *, max_requests=100, model=None, key=None, session=None, cache_pa
     report["needs_review_images"] = support["no"] + support["uncertain"]
     report["status"] = "partial" if report["pending_groups"] or report["errors"] else "ok"
     write_json(batch / "descriptions-report.json", report)
-    metadata = json.loads((batch / "report.json").read_text())
+    metadata = json.loads((batch / "report.json").read_text(encoding="utf-8"))
     write_gallery(batch, passed, {**metadata, "described_groups": report["described_groups"],
                   "issue_support_counts": dict(support), "needs_review_images": report["needs_review_images"]}, post_groups=groups)
     return report
