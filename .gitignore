@@ -1,10 +1,17 @@
+# Dependencies and caches
 node_modules/
+.venv/
+__pycache__/
+*.py[cod]
+.cache/
+test-results/
+playwright-report/
+
+# Secrets (keys live in .env; .env.example shows the names)
 .env
 .env.*
 !.env.example
-.cache/
-# Analysis input and output: real posts and photos stay on this machine.
+
+# Local data: real posts and photos stay on this machine (the repository is public)
 data/
-__pycache__/
-test-results/
-playwright-report/
+scraping/data/

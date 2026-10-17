@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CivicLens · Handoff preview</title>
+<style>
+  :root{--green:#1f6b45;--line:#d5e0d4;--muted:#5d6d60}
+  *{box-sizing:border-box}body{margin:0;font:16px/1.45 system-ui,sans-serif;background:#f6f8f5;color:#1c2b22}
+  header{background:#fff;border-bottom:1px solid var(--line)}
+  .top{max-width:1200px;margin:auto;padding:18px 28px;display:flex;justify-content:space-between;align-items:center}
+  .brand{font-weight:700;font-size:18px}.tag{margin-left:8px;font-size:12px;background:#edf4ec;color:#3a6448;padding:4px 8px;border-radius:20px}
+  main{max-width:1200px;margin:auto;padding:28px}
+  h1{margin:8px 0;font-size:28px}p.lead{color:var(--muted);max-width:640px}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0}
+  select,button{font:inherit}select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .count{color:var(--muted);font-size:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px;align-items:start}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .photo{height:280px;background:#e9ede7}.photo a{display:block;height:100%}.photo img{width:100%;height:100%;object-fit:contain}
+  .body{padding:14px} .type{font-weight:700} .meta{color:var(--muted);font-size:13px;margin-top:4px}
+  .evidence{margin-top:8px;font-size:14px} .empty{padding:48px 8px;color:var(--muted)}
+  .facts{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:13px;margin:12px 0}.facts dt{color:var(--muted)}.facts dd{margin:0}
+  details{border-top:1px solid var(--line);margin-top:14px;padding-top:10px;font-size:13px}summary{cursor:pointer;color:var(--green)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.5;background:#f6f8f5;padding:10px;border-radius:6px}
+  .section-label{font-weight:700;margin:18px 0 8px}.media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px}
+  .image-block{min-width:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}.image-body{padding:10px}.image-status{font-size:13px;font-weight:700}.passed{color:var(--green)}.companion{color:#80531c}.context-note,.reason,.issue-detail{font-size:13px;margin-top:7px}.photo-missing{height:100%;display:grid;place-items:center;color:var(--muted);font-size:13px}
+  .review-needed{display:inline-block;color:#80531c;background:#fff2d7;border-radius:5px;padding:2px 6px;font-size:12px;font-weight:700}.supported{color:var(--green);font-size:12px;font-weight:700}.caption{margin-top:10px;white-space:pre-wrap;font-size:14px}.excluded{font-size:13px;margin:6px 0;color:var(--muted)}
+  .issue-title{font-weight:700;margin-top:7px}.issue-description{font-size:14px;margin-top:5px}.incomplete{margin:10px 0;padding:8px 10px;border-radius:7px;background:#fff2d7;color:#80531c;font-size:13px}
+  a{color:var(--green)}
+  @media(max-width:600px){main{padding:16px}.top{padding:16px;gap:12px}.tag{display:none}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header><div class="top"><div class="brand">CivicLens <span class="tag">Handoff preview</span></div><span class="meta">Local verification · read-only</span></div></header>
+<main>
+  <h1>Images passed to the next stage</h1>
+  <p class="lead">Inspect the images and data passed to the next stage. Click a photo for the saved full-size image, or expand its exact handoff record. These are model-screened candidates; location guesses are unverified.</p>
+  <p id="description-summary" class="meta"></p>
+  <div class="toolbar"><select id="issue" aria-label="Issue type"><option value="all">All issue types</option></select><select id="source" aria-label="Source platform"><option value="all">All sources</option></select><span id="count" class="count" role="status"></span></div>
+  <section id="grid" class="grid"></section>
+</main>
+<script src="data.js"></script>
+<script>
+(() => {
+  const batch = window.REVIEW_DATA;
+  const grid = document.getElementById('grid');
+  const rows = (batch && batch.records) || [];
+  const groups = batch && Array.isArray(batch.post_groups) ? batch.post_groups : null;
+  const grouped = groups !== null;
+  const issueNames = {blocked_access:'Blocked access', sidewalk_damage:'Sidewalk damage', pothole:'Pothole', dumping:'Dumping', drain:'Drain', flooding:'Flooding', damaged_transit_or_shelter:'Damaged shelter or transit', other:'Other issue'};
+  const passedImages = group => Array.isArray(group.passed_images) ? group.passed_images : [];
+  const issueType = row => row.screening?.issue_type || '';
+  if (!batch || batch.metadata?.unscreened) {
+    grid.innerHTML = '<div class="empty">Not screened yet.</div>';
+    document.getElementById('count').textContent = '';
+    return;
+  }
+  const visibleRows = grouped ? groups.flatMap(passedImages) : rows;
+  const described = visibleRows.filter(row => row.issue_details);
+  if (described.length) {
+    const supported = described.filter(row => row.issue_details.issue_supported === 'yes').length;
+    document.getElementById('description-summary').textContent = `Detailed review: ${supported} image claims supported · ${described.length - supported} need review. Original screening results are retained below.`;
+  }
+  const types = [...new Set(visibleRows.map(issueType).filter(Boolean))].sort();
+  const select = document.getElementById('issue');
+  for (const type of types) {
+    const option = document.createElement('option');
+    option.value = type;
+    option.textContent = issueNames[type] || type;
+    select.append(option);
+  }
+  const sourceSelect = document.getElementById('source');
+  const platforms = grouped ? groups.map(group => group.platform) : rows.map(row => row.platform);
+  for (const platform of [...new Set(platforms.filter(Boolean))].sort()) {
+    const option = document.createElement('option');
+    option.value = platform;
+    option.textContent = platform;
+    sourceSelect.append(option);
+  }
+  const el = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  };
+  const formatDate = value => {
+    const date = value && new Date(value);
+    return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) : 'Unknown date';
+  };
+  const photoNumber = record => Number.isInteger(record.media_index) ? `#${record.media_index + 1}` : 'unknown';
+  function appendImage(record, {companion = false, group} = {}) {
+    const block = el('section', 'image-block');
+    const photo = el('div', 'photo');
+    if (record.local_path && /^images\/[a-f0-9]{64}\.jpg$/.test(record.local_path)) {
+      const image = el('img');
+      image.src = record.local_path;
+      image.alt = record.screening?.issue_evidence || record.alt_text || (companion ? 'Same-post context photo' : 'Passed civic image');
+      const link = el('a');
+      link.href = record.local_path;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.title = 'Open full-size saved image';
+      link.append(image);
+      photo.append(link);
+    } else {
+      photo.append(el('div', 'photo-missing', 'Saved photo unavailable'));
+    }
+    const body = el('div', 'image-body');
+    if (companion) {
+      body.append(el('div', 'image-status companion', `Companion photo ${photoNumber(record)} · ${record.screening_status === 'not_passed' ? 'not passed' : 'not screened'}`));
+      body.append(el('div', 'context-note', 'Same-post context; not independently passed. Same post does not guarantee the same incident.'));
+      if (record.blur_before_public_display) body.append(el('div', 'reason', 'Blur before public display.'));
+      const screening = record.screening || {};
+      const reasons = [...(Array.isArray(record.reasons) ? record.reasons : []), ...(Array.isArray(screening.pass_blockers) ? screening.pass_blockers : [])];
+      if (screening.decision) reasons.unshift(`Decision: ${screening.decision}`);
+      if (reasons.length) body.append(el('div', 'reason', `Screening reasons: ${reasons.join('; ')}`));
+      const assessment = screening.assessment || {};
+      const evidence = assessment.issue?.evidence;
+      if (evidence) body.append(el('div', 'evidence', `Screening note: ${evidence}`));
+    } else {
+      body.append(el('div', 'image-status passed', `Passed initial screening · original photo ${photoNumber(record)}`));
+      const screening = record.screening || {};
+      const type = issueNames[issueType(record)] || issueType(record) || 'Issue';
+      body.append(el('div', 'type', type));
+      const evidence = el('div', 'evidence', [screening.issue_evidence, (screening.clues || []).slice(0, 3).join('; ')].filter(Boolean).join(' · '));
+      if (evidence.textContent) body.append(evidence);
+      const facts = el('dl', 'facts');
+      for (const [label, value] of [
+        ['Scene', (screening.scene_type || 'Unknown').replaceAll('_', ' ')],
+        ['Toronto', [screening.toronto_verdict, screening.toronto_basis && `basis: ${screening.toronto_basis}`].filter(Boolean).join(' · ')],
+        ['Issue confidence', screening.issue_confidence || 'Unknown'],
+        ['Location', `${screening.locatability || 'Unknown'} locatability · ${screening.location_verified ? 'verified' : 'unverified'}`],
+        ['Location guess', screening.location_guess || 'Not named'],
+        ['Saved image', record.saved_width && record.saved_height ? `${record.saved_width} × ${record.saved_height} px` : 'See full image'],
+        ['Captured', record.captured_at || 'Unknown; posting date only'],
+      ]) {
+        facts.append(el('dt', '', label), el('dd', '', value || 'Unknown'));
+      }
+      body.append(facts);
+      const detail = record.issue_details || (group?.issue_details?.issues || []).find(item => item.primary_image_key === record.key);
+      if (detail) appendIssueDetails(body, detail, group);
+    }
+    block.append(photo, body);
+    return block;
+  }
+  function appendIssueDetails(parent, detail, group) {
+    const wrapper = el('div', 'issue-detail');
+    const status = detail.issue_supported === 'yes'
+      ? el('span', 'supported', 'Description supports the issue')
+      : el('span', 'review-needed', `Needs review · issue support ${detail.issue_supported || 'uncertain'}`);
+    wrapper.append(status);
+    wrapper.append(el('div', 'issue-title', `${detail.title || 'Issue description'} · AI-assisted`));
+    if (detail.description) wrapper.append(el('div', 'issue-description', detail.description));
+    if (detail.affected_infrastructure) wrapper.append(el('div', 'reason', `Affected infrastructure: ${detail.affected_infrastructure}`));
+    const allPhotos = [...(group?.passed_images || []), ...(group?.supplemental_images || [])];
+    const photosByKey = new Map(allPhotos.map(photo => [photo.key, photo]));
+    const supporting = (detail.supporting_image_keys || []).map(key => {
+      const photo = photosByKey.get(key);
+      if (photo) return photoNumber(photo);
+      const index = /:(\d+)$/.exec(key || '')?.[1];
+      return index === undefined ? 'unavailable, number unknown' : `#${Number(index) + 1} (unavailable)`;
+    });
+    if (supporting.length) wrapper.append(el('div', 'reason', `Supporting original photos: ${supporting.join(', ')}`));
+    const notes = el('details');
+    const noteRows = [['Observations', detail.observations], ['Uncertainties', detail.uncertainties], ['Caption claims', detail.caption_claims]]
+      .filter(([, values]) => Array.isArray(values) && values.length);
+    if (noteRows.length) {
+      notes.append(el('summary', '', 'Observations, uncertainties, and caption claims'));
+      for (const [label, values] of noteRows) notes.append(el('p', '', `${label}: ${values.join('; ')}`));
+      wrapper.append(notes);
+    }
+    parent.append(wrapper);
+  }
+  function appendSourceLink(parent, url) {
+    if (url && /^https:\/\//.test(url)) {
+      const link = el('a', '', 'View source post');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      parent.append(link);
+    }
+  }
+  function appendGroup(group) {
+    const images = passedImages(group);
+    const card = el('article', 'card');
+    const body = el('div', 'body');
+    body.append(el('div', 'type', `${group.platform || 'Source'} · ${formatDate(group.posted_at)}`));
+    if (group.caption) {
+      const caption = el('details');
+      caption.append(el('summary', '', 'Post caption · source claim'), el('div', 'caption', group.caption));
+      body.append(caption);
+    }
+    appendSourceLink(body, group.post_url);
+    const restore = group.restore_context || {};
+    const missing = new Set([
+      ...(group.unavailable_image_keys || []), ...(restore.unavailable_image_keys || []),
+      ...(group.issue_details?.unavailable_image_keys || []), ...(group.issue_details?.restore_context?.unavailable_image_keys || []),
+      ...(group.issue_details?.issues || []).flatMap(issue => issue.unavailable_image_keys || []),
+      ...passedImages(group).flatMap(image => [
+        ...(image.issue_details?.unavailable_image_keys || []),
+        ...(image.issue_details?.restore_context?.unavailable_image_keys || []),
+      ]),
+    ]);
+    if (group.context_incomplete || restore.context_incomplete || missing.size) {
+      body.append(el('div', 'incomplete', `Incomplete context: some original photos or cited images could not be restored${missing.size ? ` (${missing.size} unavailable)` : ''}.`));
+    }
+    body.append(el('div', 'section-label', `Passed images (${images.length})`));
+    body.append(el('div', 'context-note', 'Each photo in this section passed image screening independently.'));
+    const passed = el('div', 'media-grid');
+    for (const image of images) passed.append(appendImage(image, {group}));
+    body.append(passed);
+    const companions = Array.isArray(group.supplemental_images) ? group.supplemental_images : [];
+    if (companions.length) {
+      body.append(el('div', 'section-label', `Companion context photos (${companions.length})`));
+      body.append(el('div', 'context-note', 'These photos are included as same-post context. They are not approved, independently passed, or guaranteed to show the same incident.'));
+      const supplemental = el('div', 'media-grid');
+      for (const image of companions) supplemental.append(appendImage(image, {companion: true, group}));
+      body.append(supplemental);
+    }
+    const excluded = Array.isArray(group.excluded_supplemental) ? group.excluded_supplemental : [];
+    if (excluded.length) {
+      body.append(el('div', 'section-label', `Other post images excluded from context (${excluded.length})`));
+      for (const image of excluded) body.append(el('div', 'excluded', `${image.key || `Media ${image.media_index}`} · ${(image.reasons || []).join(', ') || 'excluded'}`));
+    }
+    if (group.detail_status === 'pending') body.append(el('div', 'meta', 'Detailed issue descriptions are pending.'));
+    if (group.previous_issue_details) body.append(el('div', 'context-note', 'A previous description used different or unavailable photos. It is preserved in the full group record, separately from the current assessment.'));
+    const details = el('details');
+    details.append(el('summary', '', 'Exact full post group JSON'));
+    details.append(el('pre', '', JSON.stringify(group, null, 2)));
+    body.append(details);
+    card.append(body);
+    return card;
+  }
+  function appendFlat(row) {
+    const card = el('article', 'card');
+    const photo = el('div', 'photo');
+    const body = el('div', 'body');
+    const type = issueNames[issueType(row)] || issueType(row) || 'Issue';
+    const when = formatDate(row.posted_at);
+    const place = row.screening?.location_guess || 'Location not named';
+    if (row.local_path && /^images\/[a-f0-9]{64}\.jpg$/.test(row.local_path)) {
+      const image = el('img');
+      image.src = row.local_path;
+      image.alt = row.screening?.issue_evidence || 'Passed civic image';
+      const link = el('a'); link.href = row.local_path; link.target = '_blank'; link.rel = 'noopener'; link.title = 'Open full-size saved image'; link.append(image); photo.append(link);
+    }
+    body.append(el('div', 'type', type));
+    body.append(el('div', 'meta', `${row.platform || 'source'} · ${when} · ${row.screening?.locatability || ''} · ${place}`));
+    body.append(el('div', 'evidence', [row.screening?.issue_evidence, (row.screening?.clues || []).slice(0, 3).join('; ')].filter(Boolean).join(' · ')));
+    const facts = el('dl', 'facts');
+    for (const [label, value] of [
+      ['Scene', (row.screening?.scene_type || 'Unknown').replaceAll('_', ' ')],
+      ['Toronto', [row.screening?.toronto_verdict, row.screening?.toronto_basis && `basis: ${row.screening.toronto_basis}`].filter(Boolean).join(' · ')],
+      ['Issue confidence', row.screening?.issue_confidence || 'Unknown'],
+      ['Location', `${row.screening?.locatability || 'Unknown'} locatability · ${row.screening?.location_verified ? 'verified' : 'unverified'}`],
+      ['Saved image', row.saved_width && row.saved_height ? `${row.saved_width} × ${row.saved_height} px` : 'See full image'],
+      ['Captured', row.captured_at || 'Unknown; posting date only'],
+    ]) facts.append(el('dt', '', label), el('dd', '', value || 'Unknown'));
+    body.append(facts);
+    appendSourceLink(body, row.post_url);
+    if (row.issue_details) appendIssueDetails(body, row.issue_details, {passed_images: [row]});
+    const details = el('details'); details.append(el('summary', '', 'Full handoff record'), el('pre', '', JSON.stringify(row, null, 2))); body.append(details);
+    card.append(photo, body);
+    return card;
+  }
+  function render() {
+    const chosen = select.value;
+    const shown = grouped
+      ? groups.filter(group => (sourceSelect.value === 'all' || group.platform === sourceSelect.value)
+          && (chosen === 'all' || passedImages(group).some(row => issueType(row) === chosen)))
+      : rows.filter(row => (chosen === 'all' || issueType(row) === chosen)
+          && (sourceSelect.value === 'all' || row.platform === sourceSelect.value));
+    document.getElementById('count').textContent = grouped
+      ? `${shown.length} of ${groups.length} source posts · ${shown.reduce((count, group) => count + passedImages(group).length, 0)} passed images`
+      : `${shown.length} of ${rows.length} passed images`;
+    grid.replaceChildren();
+    if (!shown.length) {
+      grid.append(el('div', 'empty', (grouped ? groups.length : rows.length) ? 'No images match these filters.' : 'No images passed.'));
+      return;
+    }
+    for (const item of shown) grid.append(grouped ? appendGroup(item) : appendFlat(item));
+  }
+  select.addEventListener('change', render);
+  sourceSelect.addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>

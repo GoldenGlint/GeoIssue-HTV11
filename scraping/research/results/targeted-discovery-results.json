@@ -1,0 +1,101 @@
+{
+  "started_at": "2026-10-17T15:41:17.834046+00:00",
+  "since": "2026-10-10T15:41:17.834046+00:00",
+  "completed_at": "2026-10-17T15:41:52.986944+00:00",
+  "authenticated": false,
+  "paid_services_used": false,
+  "sources": [
+    {
+      "kind": "query",
+      "source_hash": "d1f7fbaf1a8381df",
+      "posts_returned": 0,
+      "pages": 1,
+      "reposts_skipped": 0,
+      "errors": [],
+      "query": "Toronto pothole"
+    },
+    {
+      "kind": "query",
+      "source_hash": "0b2e6ef68e38e9a8",
+      "posts_returned": 16,
+      "pages": 1,
+      "reposts_skipped": 0,
+      "errors": [],
+      "query": "Toronto sidewalk"
+    },
+    {
+      "kind": "query",
+      "source_hash": "b3c1da9d357da711",
+      "posts_returned": 25,
+      "pages": 1,
+      "reposts_skipped": 0,
+      "errors": [],
+      "query": "Toronto \"bike lane\""
+    },
+    {
+      "kind": "query",
+      "source_hash": "38d2ccfb79d97229",
+      "posts_returned": 7,
+      "pages": 1,
+      "reposts_skipped": 0,
+      "errors": [],
+      "query": "Toronto flooding"
+    },
+    {
+      "kind": "query",
+      "source_hash": "075183d5535cfa4d",
+      "posts_returned": 0,
+      "pages": 1,
+      "reposts_skipped": 0,
+      "errors": [],
+      "query": "Scarborough dumping"
+    },
+    {
+      "kind": "query",
+      "source_hash": "e917e75867cf592d",
+      "posts_returned": 2,
+      "pages": 1,
+      "reposts_skipped": 0,
+      "errors": [],
+      "query": "Spadina construction"
+    },
+    {
+      "kind": "query",
+      "source_hash": "c1ac309173140923",
+      "posts_returned": 25,
+      "pages": 1,
+      "reposts_skipped": 0,
+      "errors": [],
+      "query": "\"Queen\" \"Spadina\""
+    },
+    {
+      "kind": "query",
+      "source_hash": "f48feb82e0484a09",
+      "posts_returned": 14,
+      "pages": 1,
+      "reposts_skipped": 0,
+      "errors": [],
+      "query": "Toronto streetphotography"
+    }
+  ],
+  "unique_posts_returned": 89,
+  "normalization": {
+    "posts_inspected": 89,
+    "non_photo_posts_skipped": 58
+  },
+  "persistence": {
+    "images_attempted": 44,
+    "images_removed": 0,
+    "download_failed": 0,
+    "images_downloaded": 44
+  },
+  "stored_images": 44,
+  "ready_for_review": 43,
+  "photo_posts": 31,
+  "location_evidence_records": 0,
+  "known_capture_dates": 0,
+  "exact_duplicates_excluded": 1,
+  "scope": "Bounded discovery pilot, not representative of Toronto; 25 posts and 1 page per query, 7-day posting window; capture age unknown.",
+  "automatic_visual_or_geographic_verification": false,
+  "human_review": "Exploratory contact-sheet inspection and drain-image inspection only; no complete labels, reference-image matches, or geographic benchmark."
+}

@@ -1,0 +1,9 @@
+{
+  "evaluated_at": "2026-10-17T17:30:00+00:00",
+  "scope": "Access dependency check only. No Flickr API calls were made.",
+  "status": "blocked_missing_key",
+  "detail": "FLICKR_API_KEY was not set in the process environment. The Flickr collector and config are implemented and ready; run after adding a free application key to scraping/.env.",
+  "collector": "scraping.collectors.flickr",
+  "config": "scraping/config/flickr.json",
+  "out_of_pocket_usd": 0
+}

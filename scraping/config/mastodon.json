@@ -1,0 +1,9 @@
+{
+  "instance": "https://mastodon.social",
+  "tags": ["Toronto", "BikeTO", "TOpoli", "onpoli", "TTC", "BikeLanes"],
+  "max_pages_per_feed": 5,
+  "posts_per_page": 40,
+  "max_images": 300,
+  "days": 7,
+  "pool": "live"
+}
