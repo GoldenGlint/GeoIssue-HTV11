@@ -77,7 +77,8 @@ export function render() {
   destroyMap();
   const title = headings[state.view] || headings.map, onMap = state.view === 'map';
   const sample = state.issues.some(i => i.is_demo);
-  const source = `<span class="data-source" title="${sample ? 'Fictional records for the demo. None of them are real reports.' : 'Issues from the analysis pipeline.'}">${sample ? 'Sample data' : 'Analysis data'}</span>`;
+  const run = state.pipeline?.generated_at ? ` · analysed ${new Date(state.pipeline.generated_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}` : '';
+  const source = `<span class="data-source" title="${sample ? 'Fictional records for the demo. None of them are real reports.' : 'Issues from the analysis pipeline.'}">${sample ? 'Sample data' : 'Analysis data'}${run}</span>`;
   app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1>${source}</div><div class="header-right"><button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="About this demo">${icon('help')}</button></div></header>
   ${onMap ? '' : `<div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}`}
   <div class="workspace-content" id="workspace-content">${pageHtml()}</div>
@@ -203,6 +204,8 @@ window.addEventListener('hashchange', () => { if (state.issues.length) route(); 
 async function start() {
   try {
     state.issues = await issueRepository.list();
+    // The run's report only describes the records when they came from that run.
+    state.pipeline = issueRepository.source === 'analysis' ? await issueRepository.pipeline() : null;
     // Corrections accepted in this browser stay applied across reloads (an API would return updated issues).
     state.corrections.filter(c => c.status === 'Accepted').forEach(applyCorrection);
     route();

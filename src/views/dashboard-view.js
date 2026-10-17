@@ -89,14 +89,26 @@ function wardDigestHtml(rows, previous) {
 }
 
 function pipelineHtml() {
-  const recent = state.issues.filter(i => age(i) < demoPipeline.window_days);
-  const stages = [
-    ['Posts scanned', demoPipeline.posts_scanned, false], ['With images', demoPipeline.with_images, false],
-    ['Toronto-relevant', demoPipeline.toronto_relevant, false], ['Public scenes', demoPipeline.public_scenes, false],
-    ['Issues detected', recent.length, true], ['Verified', recent.filter(i => i.verification_status === 'Verified').length, true],
-  ];
-  const top = Math.log10(stages[0][1]);
-  return `<section class="card"><div class="card-header"><h2>${icon('funnel')} Pipeline funnel</h2><span class="subtle-label">Last ${demoPipeline.window_days} days · unfiltered</span></div><div class="funnel">${stages.map(([label, value, fromData], j) => `<div class="funnel-row ${fromData ? 'derived' : ''}"><span>${label}${j ? `<small>${percent(value, stages[j - 1][1])}% of previous</small>` : '<small>Bluesky, Mastodon, Reddit</small>'}</span><div class="bar-track"><i style="width:${Math.max(2, Math.log10(Math.max(1, value)) / top * 100)}%"></i></div><strong>${value.toLocaleString()}</strong></div>`).join('')}</div><p class="funnel-foot">The first four stages are sample ingestion metrics until the pipeline is connected; issues detected and verified come from the dataset. Bars use a log scale.</p></section>`;
+  const report = state.pipeline, verified = state.issues.filter(i => i.verification_status === 'Verified').length;
+  let stages, subtitle, foot, firstNote;
+  if (report?.counts) {
+    // The analysis run's own counts (data/analyzed/report.json), so every number is measured.
+    const c = report.counts, found = (c.sightings || 0) + (c.dropped || 0);
+    stages = [['Photos analysed', c.input_records || 0, true], ['Civic issues found', found, true], ['Located in Toronto', c.sightings || 0, true], ['Unique issues', c.issues || 0, true], ['Verified', verified, true]];
+    subtitle = `Last analysis run · ${date(report.generated_at)}`;
+    firstNote = 'From the photo analysis';
+    const reasons = Object.entries(countBy(report.dropped || [], 'reason')).map(([reason, n]) => `${n} ${reason}`).join(', ');
+    foot = `Counts from the analysis report. Duplicate sightings were merged into unique issues${reasons ? `; dropped: ${reasons}` : ''}. Bars use a log scale.`;
+  } else {
+    const recent = state.issues.filter(i => age(i) < demoPipeline.window_days);
+    stages = [['Posts scanned', demoPipeline.posts_scanned, false], ['With images', demoPipeline.with_images, false], ['Toronto-relevant', demoPipeline.toronto_relevant, false], ['Public scenes', demoPipeline.public_scenes, false],
+      ['Issues detected', recent.length, true], ['Verified', recent.filter(i => i.verification_status === 'Verified').length, true]];
+    subtitle = `Last ${demoPipeline.window_days} days · sample metrics`;
+    firstNote = 'Bluesky, Mastodon, Reddit';
+    foot = 'The first four stages are sample ingestion metrics until the pipeline is connected; issues detected and verified come from the dataset. Bars use a log scale.';
+  }
+  const top = Math.log10(Math.max(10, stages[0][1]));
+  return `<section class="card"><div class="card-header"><h2>${icon('funnel')} Pipeline funnel</h2><span class="subtle-label">${subtitle}</span></div><div class="funnel">${stages.map(([label, value, fromData], j) => `<div class="funnel-row ${fromData ? 'derived' : ''}"><span>${label}<small>${j ? `${percent(value, stages[j - 1][1])}% of previous` : firstNote}</small></span><div class="bar-track"><i style="width:${Math.max(2, Math.log10(Math.max(1, value)) / top * 100)}%"></i></div><strong>${value.toLocaleString()}</strong></div>`).join('')}</div><p class="funnel-foot">${esc(foot)}</p></section>`;
 }
 
 export function dashboardHtml() {

@@ -219,8 +219,18 @@ async function analyzedIssues() {
 }
 
 export const issueRepository = {
+  /** 'analysis' or 'sample': which records list() returned. */
+  source: null,
+  /** Counts from the last analysis run (data/analyzed/report.json), or null when there is none. */
+  async pipeline() {
+    try {
+      const response = await fetch(new URL('../data/analyzed/report.json', import.meta.url), { cache: 'no-store' });
+      return response.ok ? await response.json() : null;
+    } catch { return null; }
+  },
   async list() {
     const analyzed = await analyzedIssues();
+    this.source = analyzed ? 'analysis' : 'sample';
     if (analyzed) return analyzed;
     const photos = await evidenceByCategory(), issues = structuredClone(demoIssues);
     for (const [j, issue] of issues.entries()) {

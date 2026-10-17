@@ -13,7 +13,7 @@ export const state = {
   issues: [], view: 'map', filters: { ...DEFAULT_FILTERS }, selected: [], scope: null, panel: null,
   saved: read('saved', []), recent: read('recent', []), pending: read('pending', []), corrections: read('corrections', []), historyEnabled: read('historyEnabled', true),
   role: 'Public', sort: 'first_seen_at', direction: -1, page: 1, perPage: 10, dataTab: 'records',
-  layers: [], mapMode: 'pan', heat: false, center: TORONTO_CENTER, zoom: 13,
+  layers: [], mapMode: 'pan', heat: false, center: TORONTO_CENTER, zoom: 13, pipeline: null,
 };
 
 export const filtered = (filters = state.filters) => state.issues.filter(i => issueMatches(i, filters));
