@@ -91,9 +91,6 @@ def _keep_located(records, bbox, report):
 
 def _finalise(issue, config, now, placeholder):
     """Defaults so every issue has the fields the frontend reads, even with every stage turned off."""
-    values = config.get("values", {})
-    for field in ("severity", "resolution_status", "verification_status", "source_category"):
-        fill(issue, field, values.get(field, {}).get("_default"), "default")
     fill(issue, "neighbourhood_id", "unassigned", "default")
     fill(issue, "neighbourhood_name", "Unassigned", "default")
     fill(issue, "ward_id", "unassigned", "default")

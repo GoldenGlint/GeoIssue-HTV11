@@ -1,6 +1,6 @@
 # CivicLens data contract (frontend ⇄ issue API)
 
-The frontend reads everything through `issueRepository` in `src/data.js`. Today it returns generated sample records; swap its two methods for API calls and the map, table, dashboard and exports keep working unchanged.
+The frontend reads everything through `issueRepository` in `src/data.js`. Today it returns generated sample records; swap its methods for API calls and the map, table, dashboard and exports keep working unchanged.
 
 | Method | Today | Replace with |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ Fields follow `features.md` §7. Rows marked *display* are extras the UI uses th
 | `evidence_thumbnail` | URL \| null | Privacy-processed (blurred, EXIF-stripped) derivative only. |
 | `evidence_credit` | `{ title, author, license, license_url, source_url, is_sample }` \| null | *display* Required when the image is third-party or a sample. Only `http(s)` source links are rendered. |
 | `evidence_withheld` | string \| null | *display* Why there is no photo, e.g. it still needs face and plate blurring. Set by the analysis when a photo is flagged for blurring. |
-| `evidence_blurred` | boolean | *display* Optional. `true` shows a "Faces and plates blurred" tag on the evidence photo. The pipeline should set it from the photo analysis's `privacy.blurred`. |
+| `evidence_blurred` | boolean | *display* Optional. `true` shows a "Faces and plates blurred" tag on the evidence photo. Set it only once a photo really is blurred. Until then the analysis withholds flagged photos and sets `evidence_withheld` instead. |
 | `is_demo` | boolean | `true` for every sample record. |
 
 Never include usernames, handles, author IDs, original post URLs, or precise coordinates for unverified issues in public responses.

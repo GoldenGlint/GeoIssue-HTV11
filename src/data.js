@@ -98,7 +98,6 @@ const weighted = entries => { let r = random() * entries.reduce((sum, [, w]) => 
 const round = (value, digits = 0) => Number(value.toFixed(digits));
 
 const metres = ([lng1, lat1], [lng2, lat2]) => { const k = Math.cos((lat1 + lat2) / 2 * Math.PI / 180); return Math.hypot((lng2 - lng1) * 111320 * k, (lat2 - lat1) * 110540); };
-export const distanceMetres = metres;
 function distanceTo(point, asset) {
   if (asset.geometry.type === 'Point') return metres(point, asset.geometry.coordinates);
   // Distance to the nearest segment, in a local metric plane centred on the point.
@@ -140,6 +139,16 @@ export function nearbyAssets(point) {
     const [asset, distance] = infrastructure.filter(a => a.type === type).map(a => [a, distanceTo(point, a)]).sort((a, b) => a[1] - b[1])[0];
     return { type, asset_id: asset.asset_id, name: asset.name, distance_m: Math.round(distance) };
   }).sort((a, b) => a.distance_m - b.distance_m);
+}
+
+/** The named street corner nearest a point, within maxMetres, or null. */
+export function nearestCorner(point, maxMetres = 200) {
+  let best = null, bestDistance = Infinity;
+  for (const n of neighbourhoods) for (const [address, lng, lat] of n.places) {
+    const d = metres(point, [lng, lat]);
+    if (d < bestDistance) { best = address; bestDistance = d; }
+  }
+  return bestDistance <= maxMetres ? best : null;
 }
 
 /** The sample neighbourhood whose street corners are closest to a point (the same rule the analysis uses). */

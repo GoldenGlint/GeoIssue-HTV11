@@ -1,3 +1,5 @@
+> **Historical.** This is the first plan. The folders it names (`spikes/`, `pipeline/`) were never created: collection lives in `scraping/` and analysis in `analysis/`. See `README.md` for what exists now.
+
 # CivicLens v2: stepwise plan with feasibility tests first
 
 ## Context

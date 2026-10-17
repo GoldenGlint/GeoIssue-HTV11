@@ -1,10 +1,11 @@
+import { isSampleData, sampleWord } from './state.js';
 // Small accessible search popup. Items come from the shared, filtered dataset.
 export function attachSearch(input, { getItems, onChoose, icon }) {
   const popup = document.createElement('div');
   popup.className = 'search-suggestions';
   popup.id = 'map-search-results';
   popup.setAttribute('role', 'listbox');
-  popup.setAttribute('aria-label', 'Matching sample places and issues');
+  popup.setAttribute('aria-label', `Matching ${sampleWord()}places and issues`);
   popup.hidden = true;
   input.closest('.map-search-row').append(popup);
   input.setAttribute('role', 'combobox');
@@ -42,7 +43,7 @@ export function attachSearch(input, { getItems, onChoose, icon }) {
     popup.replaceChildren();
     const heading = document.createElement('div');
     heading.className = 'search-suggestion-heading';
-    heading.textContent = items.length ? 'Jump to a place or issue' : 'No matching sample issues';
+    heading.textContent = items.length ? 'Jump to a place or issue' : `No matching ${sampleWord()}issues`;
     popup.append(heading);
     for (const [index, item] of items.entries()) {
       const row = document.createElement('div');
@@ -70,7 +71,7 @@ export function attachSearch(input, { getItems, onChoose, icon }) {
     }
     const footer = document.createElement('div');
     footer.className = 'search-suggestion-footer';
-    footer.textContent = '↑ ↓ Navigate   ↵ Open   Esc Close · Sample records';
+    footer.textContent = `↑ ↓ Navigate   ↵ Open   Esc Close${isSampleData() ? ' · Sample records' : ''}`;
     popup.append(footer);
     popup.hidden = false;
     input.setAttribute('aria-expanded', 'true');

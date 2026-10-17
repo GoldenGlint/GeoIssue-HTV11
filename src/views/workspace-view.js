@@ -1,7 +1,7 @@
 // Personal workspace pages: Saved, Recents, and the volunteer Verify queue.
 import { icon } from '../icons.js';
 import { esc, badge, date, typeIcon, typeColor } from '../format.js';
-import { state, filtered, findIssue, isSighting, reviewQueue, persist, applyCorrection } from '../state.js';
+import { state, filtered, findIssue, isSighting, reviewQueue, persist, applyCorrection, isSampleData, sampleWord } from '../state.js';
 import { emptyHtml, issueRow, toast, correctionSummary } from '../ui.js';
 import { render } from '../app.js';
 
@@ -34,17 +34,17 @@ export function verifyHtml() {
   if (state.role === 'Public') return emptyHtml('Volunteer access required', 'Switch the demo account to Volunteer to preview the review workflow.');
   const queue = state.issues.filter(i => i.verification_status === 'Needs review');
   const corrections = state.corrections.filter(c => c.status === 'Pending review');
-  const review = queue.map(i => `<div class="review-item">${issueRow(i)}<div class="review-actions"><button class="button small" data-review="${i.issue_id}" data-decision="confirm">${icon('check')} Confirm sample</button><button class="button small" data-review="${i.issue_id}" data-decision="dismiss">Dismiss sample</button></div></div>`).join('');
+  const review = queue.map(i => `<div class="review-item">${issueRow(i)}<div class="review-actions"><button class="button small" data-review="${i.issue_id}" data-decision="confirm">${icon('check')} Confirm${isSampleData() ? ' sample' : ''}</button><button class="button small" data-review="${i.issue_id}" data-decision="dismiss">Dismiss${isSampleData() ? ' sample' : ''}</button></div></div>`).join('');
   const submissions = reviewQueue();
   const correctionList = corrections.length ? `<div class="collection-heading"><h2>Suggested corrections <span>${corrections.length}</span></h2><span class="subtle-label">Accepting updates the issue for everyone</span></div><div class="submission-list">${corrections.map(c => correctionCard(c, true)).join('')}</div>` : '';
-  return `<div class="collection-page"><div class="notice-banner">${icon('shield')} Demo role switcher only. Production access must be enforced by your server.</div>${correctionList}<div class="collection-heading"><h2>Awaiting a human review <span>${queue.length + submissions.length}</span></h2></div>${submissions.map(pendingCard).join('')}<div class="card review-list">${review || (!submissions.length ? emptyHtml('You’re all caught up', 'No sample issues are waiting for review.') : '')}</div></div>`;
+  return `<div class="collection-page"><div class="notice-banner">${icon('shield')} Demo role switcher only. Production access must be enforced by your server.</div>${correctionList}<div class="collection-heading"><h2>Awaiting a human review <span>${queue.length + submissions.length}</span></h2></div>${submissions.map(pendingCard).join('')}<div class="card review-list">${review || (!submissions.length ? emptyHtml('You’re all caught up', 'No ${sampleWord()}issues are waiting for review.') : '')}</div></div>`;
 }
 
 export function bindWorkspace() {
   document.querySelectorAll('[data-review]').forEach(b => b.onclick = () => {
     const i = findIssue(b.dataset.review), confirm = b.dataset.decision === 'confirm';
     i.verification_status = confirm ? 'Verified' : 'Dismissed';
-    toast(`Sample ${i.issue_id} ${confirm ? 'verified' : 'dismissed'} for this session`);
+    toast(`${isSampleData() ? 'Sample ' : ''}${i.issue_id} ${confirm ? 'verified' : 'dismissed'} for this session`);
     render();
   });
   document.querySelectorAll('[data-correction]').forEach(b => b.onclick = () => {

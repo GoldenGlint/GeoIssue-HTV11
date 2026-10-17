@@ -10,7 +10,7 @@ Re-run it whenever the neighbourhoods, wards or infrastructure in `src/data.js` 
 
 - `neighbourhoods.geojson`: one point per sample street corner, with `neighbourhood_id`, `neighbourhood_name`, `ward_id` and `ward_name`. Issues take the values of the nearest corner within 2.5 km. This is approximate, so the file carries `"placeholder": true`, and that marks every output as placeholder.
 - `infrastructure.geojson`: the map's assets with `asset_id`, `type` (`TTC`, `Schools` or `Roads`) and `name`, as Point or MultiLineString features.
-- `places.json`: the same street corners, for finding places named in post text and for display addresses.
+- `places.json`: the same street corners plus the TTC stations (matched only as their whole name, such as "Queen Station"), for finding places named in post text and for display addresses.
 
 ## Using official boundaries
 

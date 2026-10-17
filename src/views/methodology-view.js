@@ -8,7 +8,7 @@ const status = kind => ({ live: '<span class="method-status live">Live in this p
 export function methodologyHtml() {
   const counts = state.pipeline.report?.counts;
   const issues = state.dataSource === 'pipeline'
-    ? `Pipeline output from <code>python -m analysis</code>${counts ? `: ${counts.input_records} input records → ${counts.sightings} sightings → ${counts.issues} issues` : ''}.`
+    ? `Pipeline output from <code>python -m analysis</code>${counts ? `: ${counts.records ?? counts.input_records} photos analysed → ${(counts.sightings || 0) + (counts.dropped || 0)} civic issues found → ${counts.sightings} located in Toronto → ${counts.issues} unique issues` : ''}.`
     : `${state.sources.sample} fictional records generated for the demo (deterministic, so everyone sees the same data). Switch to pipeline output in the header once <code>python -m analysis</code> has run.`;
   const steps = [
     ['Collect', 'Public posts from official platform APIs and photos people upload here. No logged-in scraping and no private accounts.', 'planned'],
