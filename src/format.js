@@ -13,3 +13,5 @@ export const wardLabel = id => wards[id] ? `Ward ${id} · ${wards[id]}` : `Ward 
 export const percent = (part, whole) => whole ? Math.round(part / whole * 100) : 0;
 export const plural = (n, word, many = `${word}s`) => `${n.toLocaleString()} ${n === 1 ? word : many}`;
 export const countBy = (rows, key) => rows.reduce((counts, row) => { const k = typeof key === 'function' ? key(row) : row[key]; counts[k] = (counts[k] || 0) + 1; return counts; }, {});
+/** Only http(s) links from data make it into an href; anything else (e.g. javascript:) becomes ''. */
+export const safeUrl = url => { if (!url) return ''; try { const u = new URL(url, location.href); return ['http:', 'https:'].includes(u.protocol) ? u.href : ''; } catch { return ''; } };

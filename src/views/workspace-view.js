@@ -1,11 +1,14 @@
 // Personal workspace pages: Saved, Recents, and the volunteer Verify queue.
 import { icon } from '../icons.js';
 import { esc, badge, date, typeIcon, typeColor } from '../format.js';
-import { state, filtered, findIssue, persist, applyCorrection } from '../state.js';
+import { state, filtered, findIssue, isSighting, reviewQueue, persist, applyCorrection } from '../state.js';
 import { emptyHtml, issueRow, toast, correctionSummary } from '../ui.js';
 import { render } from '../app.js';
 
-const pendingCard = i => `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · Local submission${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>${esc(i.category)}</h3><p>${esc(i.description)}</p><p>${esc(i.address)}${i.coordinates ? ` · ${i.coordinates[1].toFixed(3)}, ${i.coordinates[0].toFixed(3)}` : ''}</p></div>${badge('Pending review')}<span class="subtle-label">Privacy processing not connected</span></div>`;
+const where = i => `${esc(i.address)}${i.coordinates ? ` · ${i.coordinates[1].toFixed(3)}, ${i.coordinates[0].toFixed(3)}` : ''}`;
+const pendingCard = i => isSighting(i)
+  ? `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · Sighting${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>Added to ${esc(i.joined_issue_id)} · ${esc(i.category)}</h3>${i.description ? `<p>${esc(i.description)}</p>` : ''}<p>${where(i)}</p></div>${badge('Sighting added', 'verified')}<button class="button small" data-issue="${esc(i.joined_issue_id)}">Open issue</button></div>`
+  : `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · Local submission${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>${esc(i.category)}${i.severity ? ` · ${esc(i.severity)} severity` : ''}</h3><p>${esc(i.description)}</p><p>${where(i)}</p>${i.ai_suggestion ? `<p class="fine-print">Gemini suggested ${esc(i.ai_suggestion.category)} · ${esc(i.ai_suggestion.severity)} (${Math.round(i.ai_suggestion.confidence * 100)}%)${i.blurred_areas ? ` · ${i.blurred_areas} area${i.blurred_areas === 1 ? '' : 's'} blurred` : ''}</p>` : ''}</div>${badge('Pending review')}<span class="subtle-label">Privacy processing not connected</span></div>`;
 
 /** A suggested correction; reviewers get Accept and Dismiss. */
 const correctionCard = (c, review = false) => {
@@ -32,8 +35,9 @@ export function verifyHtml() {
   const queue = state.issues.filter(i => i.verification_status === 'Needs review');
   const corrections = state.corrections.filter(c => c.status === 'Pending review');
   const review = queue.map(i => `<div class="review-item">${issueRow(i)}<div class="review-actions"><button class="button small" data-review="${i.issue_id}" data-decision="confirm">${icon('check')} Confirm sample</button><button class="button small" data-review="${i.issue_id}" data-decision="dismiss">Dismiss sample</button></div></div>`).join('');
+  const submissions = reviewQueue();
   const correctionList = corrections.length ? `<div class="collection-heading"><h2>Suggested corrections <span>${corrections.length}</span></h2><span class="subtle-label">Accepting updates the issue for everyone</span></div><div class="submission-list">${corrections.map(c => correctionCard(c, true)).join('')}</div>` : '';
-  return `<div class="collection-page"><div class="notice-banner">${icon('shield')} Demo role switcher only. Production access must be enforced by your server.</div>${correctionList}<div class="collection-heading"><h2>Awaiting a human review <span>${queue.length + state.pending.length}</span></h2></div>${state.pending.map(pendingCard).join('')}<div class="card review-list">${review || (!state.pending.length ? emptyHtml('You’re all caught up', 'No sample issues are waiting for review.') : '')}</div></div>`;
+  return `<div class="collection-page"><div class="notice-banner">${icon('shield')} Demo role switcher only. Production access must be enforced by your server.</div>${correctionList}<div class="collection-heading"><h2>Awaiting a human review <span>${queue.length + submissions.length}</span></h2></div>${submissions.map(pendingCard).join('')}<div class="card review-list">${review || (!submissions.length ? emptyHtml('You’re all caught up', 'No sample issues are waiting for review.') : '')}</div></div>`;
 }
 
 export function bindWorkspace() {

@@ -11,8 +11,15 @@ function unproject([x, y], z) {
   return [x / size * 360 - 180, Math.atan(Math.sinh(Math.PI * (1 - 2 * y / size))) * 180 / Math.PI];
 }
 export class CivicMap {
-  constructor(element, { onSelect, onEmpty, onMove, icon, colorFor = () => '#4ea8ff', assets = [], home = [-79.397, 43.661] }) {
-    Object.assign(this, { element, onSelect, onEmpty, onMove, icon, colorFor, assets, home, center: home, zoom: 13, issues: [], selected: [], layers: [], mode: 'pan', drag: null, pinch: null, pointers: new Map(), showHeat: false, tileCache: new Map(), motionFrame: null, renderFrame: null, lastWheel: 0, backdropTimer: null });
+  constructor(element, { onSelect, onEmpty, onMove, onArea, icon, colorFor = () => '#4ea8ff', assets = [], boundaries = [], home = [-79.397, 43.661] }) {
+    Object.assign(this, { element, onSelect, onEmpty, onMove, onArea, icon, colorFor, assets, home, center: home, zoom: 13, issues: [], selected: [], layers: [], activeArea: '', mode: 'pan', drag: null, pinch: null, pointers: new Map(), showHeat: false, tileCache: new Map(), motionFrame: null, renderFrame: null, lastWheel: 0, backdropTimer: null });
+    // Ward outlines ({ id, name, rings }), labelled at the centroid of each ward's largest ring.
+    this.boundaries = boundaries.map(b => {
+      const area = ring => ring.reduce((sum, [x, y], i) => { const [x2, y2] = ring[(i + 1) % ring.length]; return sum + x * y2 - x2 * y; }, 0) / 2;
+      const ring = b.rings.reduce((best, r) => Math.abs(area(r)) > Math.abs(area(best)) ? r : best), a = area(ring);
+      const c = ring.reduce(([cx, cy], [x, y], i) => { const [x2, y2] = ring[(i + 1) % ring.length], f = x * y2 - x2 * y; return [cx + (x + x2) * f, cy + (y + y2) * f]; }, [0, 0]);
+      return { ...b, labelAt: [c[0] / (6 * a), c[1] / (6 * a)] };
+    });
     element.innerHTML = '<div class="map-fallback" aria-hidden="true"><div class="fallback-grid"></div><span>TORONTO</span><i>Lake Ontario</i></div><div class="map-scene"><div class="tile-layer"></div><div class="infrastructure-layer"></div><div class="marker-layer"></div></div><div class="box-drawing"></div><div class="tile-warning" hidden>Map tiles unavailable · schematic background</div>';
     this.bindScene(element.querySelector('.map-scene'));
     this.box = element.querySelector('.box-drawing');
@@ -29,6 +36,8 @@ export class CivicMap {
       pointermove: e => this.pointerMove(e),
       pointerup: e => this.pointerUp(e),
       pointercancel: e => { this.pointers.delete(e.pointerId); this.drag = null; this.pinch = null; this.box.style.display = 'none'; this.element.classList.remove('is-dragging'); },
+      // Text in the map (the offline fallback labels) must never start a native text drag: it cancels panning.
+      dragstart: e => e.preventDefault(),
       wheel: e => {
         e.preventDefault();
         // Trackpads emit many small wheel events; one camera step per gesture slice.
@@ -367,11 +376,26 @@ export class CivicMap {
   }
   renderInfrastructure() {
     const layer = this.scene.querySelector('.infrastructure-layer'); layer.replaceChildren();
-    const shown = this.assets.filter(a => this.layers.includes(a.type));
-    if (!shown.length) return;
+    const shown = this.assets.filter(a => this.layers.includes(a.type)), wards = this.layers.includes('Wards') ? this.boundaries : [];
+    if (!shown.length && !wards.length) return;
     const w = this.element.clientWidth, h = this.element.clientHeight, inView = ([x, y], m = 0) => x > -m && x < w + m && y > -m && y < h + m;
     const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('class', 'asset-lines'); svg.setAttribute('width', w); svg.setAttribute('height', h);
+    for (const ward of wards) {
+      const path = document.createElementNS(ns, 'path'), active = this.activeArea === `ward:${ward.id}`;
+      path.setAttribute('d', ward.rings.map(ring => `M${ring.map(c => this.position(c).map(v => v.toFixed(1)).join(',')).join('L')}Z`).join(''));
+      path.setAttribute('class', `ward-outline ${active ? 'active' : ''}`);
+      svg.append(path);
+      const at = this.position(ward.labelAt);
+      if (this.zoom < 11.5 || !inView(at, -20)) continue;
+      // Ward labels are buttons: clicking one filters the whole workspace to that ward.
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = `ward-label ${active ? 'active' : ''}`; button.style.cssText = `left:${at[0]}px;top:${at[1]}px`;
+      button.innerHTML = `<b>${ward.id}</b>${this.zoom >= 12.5 ? `<span>${ward.name}</span>` : ''}`;
+      button.setAttribute('aria-label', `Ward ${ward.id} ${ward.name}: filter to this ward`);
+      button.onclick = e => { e.stopPropagation(); this.onArea?.(`ward:${ward.id}`); };
+      layer.append(button);
+    }
     const label = (asset, [x, y]) => {
       const el = document.createElement('span');
       el.className = `asset-label ${asset.type.toLowerCase()}`; el.style.cssText = `left:${x}px;top:${y}px`;

@@ -1,7 +1,7 @@
 // Map Explorer: the map canvas, floating controls, and the selection-driven right panel.
 import { CivicMap } from '../map.js';
 import { attachSearch } from '../search.js';
-import { categories, infrastructure, TORONTO_CENTER } from '../data.js';
+import { categories, infrastructure, wardBoundaries, TORONTO_CENTER } from '../data.js';
 import { icon } from '../icons.js';
 import { typeIcon, typeColor } from '../format.js';
 import { searchSuggestions } from '../issues.js';
@@ -105,8 +105,10 @@ export function mapHtml() {
 
 export function initMap() {
   const element = document.querySelector('#city-map');
-  map = new CivicMap(element, { onSelect: selectMap, onEmpty: clearSelection, onMove: updateMapMeta, icon: typeIcon, colorFor: typeColor, assets: infrastructure, home: TORONTO_CENTER });
-  map.center = state.center; map.zoom = state.zoom; map.mode = state.mapMode; map.layers = state.layers; map.showHeat = state.heat;
+  // Clicking a ward label filters to that ward; clicking the active ward clears the filter.
+  const onArea = area => { state.filters.area = state.filters.area === area ? '' : area; updateFilteredView(); };
+  map = new CivicMap(element, { onSelect: selectMap, onEmpty: clearSelection, onMove: updateMapMeta, onArea, icon: typeIcon, colorFor: typeColor, assets: infrastructure, boundaries: wardBoundaries, home: TORONTO_CENTER });
+  map.center = state.center; map.zoom = state.zoom; map.mode = state.mapMode; map.layers = state.layers; map.showHeat = state.heat; map.activeArea = state.filters.area;
   map.setData(filtered(), state.selected); renderPanel(); updateMapMeta();
   attachSearch(document.querySelector('#global-search'), {
     icon, getItems: query => searchSuggestions(filtered(), query),
@@ -134,6 +136,7 @@ export function initMap() {
 export function refreshMapFilters() {
   clearSelection();
   const rows = filtered();
+  map.activeArea = state.filters.area;
   map.setData(rows, []);
   document.querySelectorAll('[data-filter]').forEach(el => el.value = state.filters[el.dataset.filter]);
   document.querySelector('#global-search').value = state.filters.query;

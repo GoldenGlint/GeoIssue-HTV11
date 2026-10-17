@@ -1,18 +1,20 @@
 // App shell: sidebar, page header, shared filters, routing, actions and keyboard shortcuts.
 // Each page lives in src/views/; dialogs live in src/modals.js.
-import { categories, issueRepository, wards, neighbourhoods, TORONTO_CENTER, REFERENCE_DATE, setReferenceDate } from './data.js';
+import { categories, issueRepository, wards, neighbourhoods, TORONTO_CENTER, DEMO_DATE, REFERENCE_DATE, setReferenceDate } from './data.js';
 import { icon } from './icons.js';
 import { esc, date } from './format.js';
-import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel, applyCorrection } from './state.js';
+import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel, applyCorrection, reviewQueue, applyLocalSightings } from './state.js';
 import { toast, closeModal } from './ui.js';
 import { mapHtml, initMap, destroyMap, getMap, renderPanel, clearSelection, selectMap, openIssue, frameIssues, refreshMapFilters, setMapMode, setHeat, visibleIssues } from './views/map-view.js';
 import { dataHtml, bindData } from './views/data-view.js';
 import { dashboardHtml, bindDashboard } from './views/dashboard-view.js';
 import { collectionHtml, verifyHtml, bindWorkspace } from './views/workspace-view.js';
+import { methodologyHtml } from './views/methodology-view.js';
 import { uploadModal, infrastructureModal, streetModal, exportModal, settingsModal, helpModal, issueModal } from './modals.js';
 
 const app = document.querySelector('#app');
-const headings = { map: 'Map Explorer', data: 'Data Explorer', dashboard: 'City overview', saved: 'Saved', recents: 'Recently viewed', verify: 'Verification queue' };
+const headings = { map: 'Map Explorer', data: 'Data Explorer', dashboard: 'City overview', saved: 'Saved', recents: 'Recently viewed', verify: 'Verification queue', methodology: 'Methodology' };
+const VIEWS = ['map', 'data', 'dashboard', 'saved', 'recents', 'methodology'];
 
 // ---- Shared filters ----
 const filterLabels = { query: 'Search', type: 'Issue type', severity: 'Severity', status: 'Status', area: 'Area', days: 'Time' };
@@ -61,8 +63,8 @@ function navItem(view, glyph, title, count) {
 }
 function sidebarHtml() {
   const roles = ['Public', 'Volunteer', 'City Staff'];
-  const reviewCount = state.pending.length + state.corrections.filter(c => c.status === 'Pending review').length + state.issues.filter(i => i.verification_status === 'Needs review').length;
-  return `<aside class="sidebar"><a class="brand" href="#map" data-nav="map" aria-label="CivicLens home"><span class="brand-mark"><i></i></span><span>Civic<span class="cyan">Lens</span></span></a><div class="workspace-label">Toronto <span class="live-dot"></span></div><nav aria-label="Main navigation">${navItem('map', 'map', 'Map Explorer')}${navItem('data', 'database', 'Data Explorer')}${navItem('dashboard', 'chart', 'Dashboard')}<div class="nav-divider"></div><span class="nav-section">Your workspace</span>${navItem('saved', 'bookmark', 'Saved', state.saved.length)}${navItem('recents', 'clock', 'Recents')}${state.role !== 'Public' ? navItem('verify', 'shield', 'Verify', reviewCount) : ''}</nav><button class="button primary upload-button" data-action="upload" title="Upload new issue" aria-label="Upload new issue">${icon('plus')}<span>Upload new issue</span></button><div class="sidebar-bottom"><button class="nav-item" data-action="settings" title="Settings" aria-label="Settings">${icon('settings')}<span>Settings</span></button><button class="nav-item" data-action="help" title="Help and methodology" aria-label="Help and methodology">${icon('help')}<span>Help & methodology</span></button><div class="account"><span class="avatar">JD</span><div><strong>Jamie Davis</strong><select id="role-select" aria-label="Demo account type">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div><span class="account-dots">···</span></div></div></aside>`;
+  const reviewCount = reviewQueue().length + state.corrections.filter(c => c.status === 'Pending review').length + state.issues.filter(i => i.verification_status === 'Needs review').length;
+  return `<aside class="sidebar"><a class="brand" href="#map" data-nav="map" aria-label="CivicLens home"><span class="brand-mark"><i></i></span><span>Civic<span class="cyan">Lens</span></span></a><div class="workspace-label">Toronto <span class="live-dot"></span></div><nav aria-label="Main navigation">${navItem('map', 'map', 'Map Explorer')}${navItem('data', 'database', 'Data Explorer')}${navItem('dashboard', 'chart', 'Dashboard')}<div class="nav-divider"></div><span class="nav-section">Your workspace</span>${navItem('saved', 'bookmark', 'Saved', state.saved.length)}${navItem('recents', 'clock', 'Recents')}${state.role !== 'Public' ? navItem('verify', 'shield', 'Verify', reviewCount) : ''}</nav><button class="button primary upload-button" data-action="upload" title="Upload new issue" aria-label="Upload new issue">${icon('plus')}<span>Upload new issue</span></button><div class="sidebar-bottom"><button class="nav-item" data-action="settings" title="Settings" aria-label="Settings">${icon('settings')}<span>Settings</span></button><button class="nav-item ${state.view === 'methodology' ? 'active' : ''}" data-nav="methodology" title="Help and methodology" aria-label="Help and methodology">${icon('help')}<span>Help & methodology</span></button><div class="account"><span class="avatar">JD</span><div><strong>Jamie Davis</strong><select id="role-select" aria-label="Demo account type">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div><span class="account-dots">···</span></div></div></aside>`;
 }
 function pageHtml() {
   switch (state.view) {
@@ -70,19 +72,28 @@ function pageHtml() {
     case 'data': return dataHtml();
     case 'dashboard': return dashboardHtml();
     case 'verify': return verifyHtml();
+    case 'methodology': return methodologyHtml();
     default: return collectionHtml();
   }
 }
+// Which dataset is showing, with a switch when pipeline output exists (`python -m analysis`).
+function dataSourceHtml() {
+  const { sample, pipeline } = state.sources;
+  if (!pipeline) return `<span class="data-source" title="Run python -m analysis to add pipeline output">${icon('database')} Sample data · ${sample}</span>`;
+  return `<label class="data-source">${icon('database')}<select id="data-source" aria-label="Data shown"><option value="sample" ${state.dataSource === 'sample' ? 'selected' : ''}>Sample data · ${sample}</option><option value="pipeline" ${state.dataSource === 'pipeline' ? 'selected' : ''}>Pipeline output · ${pipeline}</option></select></label>`;
+}
+function footerHtml() {
+  const generated = state.pipeline.report?.generated_at;
+  const source = state.dataSource === 'pipeline' ? `Pipeline output${generated ? ` · generated ${new Date(generated).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}` : ''}` : `Fictional sample data · As of ${date(REFERENCE_DATE, { year: 'numeric' })}`;
+  return `<footer class="page-footer"><span>CivicLens · Built for a more responsive city</span><span>${source}</span></footer>`;
+}
 export function render() {
   destroyMap();
-  const title = headings[state.view] || headings.map, onMap = state.view === 'map';
-  const sample = state.issues.some(i => i.is_demo);
-  const run = state.pipeline?.generated_at ? `<span class="data-run"> · analysed ${new Date(state.pipeline.generated_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}</span>` : '';
-  const source = `<span class="data-source" title="${sample ? 'Fictional records for the demo. None of them are real reports.' : 'Issues from the analysis pipeline.'}">${sample ? 'Sample data' : 'Analysis data'}${run}</span>`;
-  app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1>${source}</div><div class="header-right"><button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="About this demo">${icon('help')}</button></div></header>
-  ${onMap ? '' : `<div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}`}
+  const title = headings[state.view] || headings.map, onMap = state.view === 'map', withFilters = !onMap && state.view !== 'methodology';
+  app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1></div><div class="header-right">${dataSourceHtml()}<button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="Map controls and help">${icon('help')}</button></div></header>
+  ${withFilters ? `<div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}` : ''}
   <div class="workspace-content" id="workspace-content">${pageHtml()}</div>
-  ${onMap ? '' : `<footer class="page-footer"><span>CivicLens · Built for a more responsive city</span><span>${sample ? 'Fictional sample data' : 'Analysis data'} · As of ${date(REFERENCE_DATE, { year: 'numeric' })}</span></footer>`}</main>`;
+  ${onMap ? '' : footerHtml()}</main>`;
   bindShell();
   if (onMap) initMap();
   if (state.view === 'data') bindData();
@@ -122,15 +133,43 @@ function bindShell() {
   app.querySelectorAll('[data-nav]').forEach(b => b.onclick = e => { e.preventDefault(); nav(b.dataset.nav); });
   app.querySelectorAll('[data-action]').forEach(b => b.onclick = () => action(b.dataset.action));
   app.querySelectorAll('[data-filter]').forEach(el => el.onchange = () => { state.filters[el.dataset.filter] = el.value; updateFilteredView(); });
+  const source = document.querySelector('#data-source');
+  if (source) source.onchange = () => switchDataSource(source.value);
   const search = document.querySelector('#global-search');
-  search.oninput = () => {
+  if (search) search.oninput = () => {
     state.filters.query = search.value; state.panel = null;
     const caret = search.selectionStart;
     updateFilteredView();
     const next = document.querySelector('#global-search'); next.focus(); next.setSelectionRange(caret, caret);
   };
-  document.querySelector('#role-select').onchange = e => { state.role = e.target.value; if (state.view === 'verify' && state.role === 'Public') state.view = 'map'; render(); };
+  document.querySelector('#role-select').onchange = e => setRole(e.target.value);
   app.querySelectorAll('[data-save]').forEach(b => b.onclick = () => toggleSave([b.dataset.save]));
+}
+/** Demo role switch. City Staff work from the priority queue, so the table re-sorts by priority for them. */
+export function setRole(role) {
+  state.role = role;
+  if (role === 'City Staff') { state.sort = 'priority_score'; state.direction = -1; }
+  if (state.view === 'verify' && role === 'Public') state.view = 'map';
+  render();
+}
+async function loadIssues() {
+  state.sources = await issueRepository.sources();
+  if (state.dataSource === 'pipeline' && !state.sources.pipeline) state.dataSource = 'sample';
+  state.issues = await issueRepository.list(state.dataSource);
+  const pipeline = state.dataSource === 'pipeline';
+  [state.pipeline.report, state.pipeline.areas] = pipeline ? await Promise.all([issueRepository.pipelineReport(), issueRepository.areaSummaries()]) : [null, null];
+  // Ages and "last N days" count back from when the pipeline ran, so newly scraped posts are never in the future.
+  setReferenceDate(pipeline ? state.pipeline.report?.generated_at || new Date().toISOString() : DEMO_DATE);
+  applyLocalSightings();
+  // Corrections accepted in this browser stay applied across reloads (an API would return updated issues).
+  state.corrections.filter(c => c.status === 'Accepted').forEach(applyCorrection);
+}
+async function switchDataSource(source) {
+  state.dataSource = source; persist('dataSource', source);
+  state.selected = []; state.panel = null; state.scope = null; state.page = 1;
+  await loadIssues();
+  toast(source === 'pipeline' ? `Showing pipeline output: ${state.issues.length} issues` : `Showing sample data: ${state.issues.length} issues`);
+  render();
 }
 function bindIssueLinks(root) {
   root.querySelectorAll('[data-issue]').forEach(b => b.onclick = () => {
@@ -188,7 +227,7 @@ document.addEventListener('keydown', e => {
 
 function route() {
   const [view, query] = location.hash.slice(1).split('?');
-  if (['map', 'data', 'dashboard', 'saved', 'recents'].includes(view)) state.view = view;
+  if (VIEWS.includes(view)) state.view = view;
   const shared = new URLSearchParams(query || '').get('issue'), record = shared && findIssue(shared);
   if (record) {
     state.view = 'map'; state.panel = null; state.selected = [];
@@ -203,13 +242,7 @@ window.addEventListener('hashchange', () => { if (state.issues.length) route(); 
 
 async function start() {
   try {
-    state.issues = await issueRepository.list();
-    // The run's report only describes the records when they came from that run.
-    state.pipeline = issueRepository.source === 'analysis' ? await issueRepository.pipeline() : null;
-    // Ages and "last N days" count back from when the analysis ran, so newly scraped posts are never in the future.
-    if (issueRepository.source === 'analysis') setReferenceDate(state.pipeline?.generated_at || new Date().toISOString());
-    // Corrections accepted in this browser stay applied across reloads (an API would return updated issues).
-    state.corrections.filter(c => c.status === 'Accepted').forEach(applyCorrection);
+    await loadIssues();
     route();
   } catch (error) {
     app.innerHTML = '<div class="load-error"><h1>Couldn’t load the workspace</h1><p>Check your issue repository connection and reload.</p><button onclick="location.reload()">Retry</button></div>';

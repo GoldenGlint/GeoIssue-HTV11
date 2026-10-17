@@ -4,15 +4,15 @@ import { icon } from '../icons.js';
 import { DAY, esc, badge, date, typeIcon, typeColor, percent } from '../format.js';
 import { compareIssues } from '../issues.js';
 import { state, scopedRows } from '../state.js';
-import { statCard, emptyHtml, toast } from '../ui.js';
+import { statCard, emptyHtml, toast, priorityLevel } from '../ui.js';
 import { render } from '../app.js';
 
 const columns = [
-  ['issue_id', 'Issue ID'], ['issue_type', 'Issue type'], ['severity', 'Severity'], ['resolution_status', 'Status'],
+  ['issue_id', 'Issue ID'], ['issue_type', 'Issue type'], ['severity', 'Severity'], ['priority_score', 'Priority'], ['resolution_status', 'Status'],
   ['neighbourhood_name', 'Area'], ['address', 'Location'], ['first_seen_at', 'Detected'], ['last_seen_at', 'Last seen'],
   ['sightings_count', 'Sightings'], ['detection_confidence', 'Confidence'], ['source_category', 'Source'], ['verification_status', 'Verification'],
 ];
-const newestFirst = ['severity', 'detection_confidence', 'first_seen_at', 'last_seen_at', 'sightings_count'];
+const newestFirst = ['severity', 'priority_score', 'detection_confidence', 'first_seen_at', 'last_seen_at', 'sightings_count'];
 const sortedRows = () => scopedRows().sort((a, b) => compareIssues(a, b, state.sort, state.direction));
 
 export function dataHtml() {
@@ -25,8 +25,8 @@ function statsHtml(rows) {
   const review = rows.filter(i => i.verification_status === 'Needs review').length;
   const confidence = rows.length ? Math.round(rows.reduce((sum, i) => sum + i.detection_confidence, 0) / rows.length * 100) : 0;
   return `<div class="stat-grid">${[
-    statCard({ icon: 'database', label: 'Total records', value: state.issues.length, note: 'Accessible sample dataset', color: 'blue' }),
-    statCard({ icon: 'filter', label: 'Filtered results', value: rows.length, note: `${percent(rows.length, state.issues.length)}% of sample records`, color: 'cyan' }),
+    statCard({ icon: 'database', label: 'Total records', value: state.issues.length, note: state.dataSource === 'pipeline' ? 'Pipeline output' : 'Accessible sample dataset', color: 'blue' }),
+    statCard({ icon: 'filter', label: 'Filtered results', value: rows.length, note: `${percent(rows.length, state.issues.length)}% of all records`, color: 'cyan' }),
     statCard({ icon: 'shield', label: 'Awaiting verification', value: review, note: 'Needs a volunteer review', color: 'amber' }),
     statCard({ icon: 'target', label: 'Avg. detection confidence', value: rows.length ? `${confidence}%` : '–', note: 'Across filtered records', color: 'green' }),
   ].join('')}</div>`;
@@ -47,7 +47,9 @@ function recordsHtml(rows) {
     <td><input type="checkbox" data-select-id="${i.issue_id}" aria-label="Select ${i.issue_id}" ${isSelected(i) ? 'checked' : ''}></td>
     <td><button class="table-id" data-issue="${i.issue_id}">${i.issue_id}</button></td>
     <td><span class="table-type" style="--type-color:${typeColor(i.issue_type)}">${typeIcon(i.issue_type)}${esc(i.issue_type)}</span></td>
-    <td>${badge(i.severity)}</td><td>${badge(i.resolution_status)}</td>
+    <td>${badge(i.severity)}</td>
+    <td>${i.priority_score == null ? '–' : `<span class="priority-pill ${priorityLevel(i.priority_score)}" title="${esc((i.priority_reasons || []).join('\n'))}">${i.priority_score}</span>`}</td>
+    <td>${badge(i.resolution_status)}</td>
     <td><span class="cell-main">${esc(i.neighbourhood_name)}</span><small class="cell-sub" title="${esc(wards[i.ward_id])}">Ward ${esc(i.ward_id)}</small></td>
     <td class="address-cell" title="${esc(i.address)}"><span class="cell-main">${esc(i.address)}</span><small class="cell-sub">${i.distance_m == null ? 'No nearby asset determined' : `${esc(i.asset_name)} · ${i.distance_m.toLocaleString()} m`}</small></td>
     <td>${date(i.first_seen_at)}</td><td>${date(i.last_seen_at)}</td><td class="num-cell">${i.sightings_count}</td>
@@ -65,7 +67,7 @@ const schema = [
   ['issue_id', 'text'], ['incident_id', 'text'], ['geom', 'geometry(Point, 4326)'], ['location_radius_m', 'integer'],
   ['neighbourhood_id', 'text'], ['neighbourhood_name', 'text'], ['ward_id', 'text'], ['address', 'text'], ['issue_type', 'text'], ['severity', 'text'],
   ['resolution_status', 'text'], ['verification_status', 'text'], ['detection_confidence', 'real'], ['geo_confidence', 'real'], ['geo_method', 'text'],
-  ['first_seen_at', 'timestamptz'], ['last_seen_at', 'timestamptz'], ['sightings_count', 'integer'], ['infrastructure_type', 'text'],
+  ['first_seen_at', 'timestamptz'], ['last_seen_at', 'timestamptz'], ['sightings_count', 'integer'], ['priority_score', 'integer'], ['priority_reasons', 'text[]'], ['infrastructure_type', 'text'],
   ['asset_id', 'text'], ['distance_m', 'integer'], ['source_category', 'text'], ['evidence_thumbnail', 'text'], ['explanation', 'text'],
 ];
 
@@ -83,7 +85,7 @@ export function buildQuery() {
   if (state.scope) where.push(`issue_id = ANY(:selected_ids)  -- ${state.scope.length} selected issues`);
   const ranked = { severity: "array_position(ARRAY['Low', 'Medium', 'High'], severity)", resolution_status: "array_position(ARRAY['Open', 'In review', 'Resolved'], resolution_status)" };
   return [
-    'SELECT issue_id, issue_type, severity, resolution_status,',
+    'SELECT issue_id, issue_type, severity, priority_score, resolution_status,',
     '       neighbourhood_name, ward_id, address, first_seen_at,',
     '       last_seen_at, sightings_count, detection_confidence,',
     '       source_category, verification_status',
