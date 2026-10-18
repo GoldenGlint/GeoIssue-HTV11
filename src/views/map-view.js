@@ -21,6 +21,28 @@ export function destroyMap() {
   if (!map) return;
   state.center = map.center; state.zoom = map.zoom;
   map.destroy(); map = null;
+  controlsObserver?.disconnect();
+}
+
+/** Seats Pins / Density / Plan crew route right under the search and filters, beside the filter-context row's
+ * active-filter chips and Infrastructure button when there is room, and below them when there is not. */
+let controlsObserver = null;
+function placeTopLeft() {
+  const row = document.querySelector('.map-top-left'), bar = document.querySelector('.map-floating-filters .filterbar');
+  if (!row || !bar || !row.offsetParent) return;
+  // `top` and offsetLeft count from the workspace's padding box, so measure from inside its border.
+  const gap = 8, parent = row.offsetParent, box = parent.getBoundingClientRect(), width = row.offsetWidth, height = row.offsetHeight, left = row.offsetLeft;
+  const origin = { left: box.left + parent.clientLeft, top: box.top + parent.clientTop };
+  const blockers = [...document.querySelectorAll('.map-floating-filters .filter-status > *, .map-floating-filters .context-actions')]
+    .map(el => el.getBoundingClientRect()).filter(r => r.width && r.height).map(r => ({ left: r.left - origin.left, right: r.right - origin.left, top: r.top - origin.top, bottom: r.bottom - origin.top }));
+  let top = bar.getBoundingClientRect().bottom - origin.top + gap;
+  for (let moved = true; moved;) {
+    moved = false;
+    for (const b of blockers) {
+      if (b.left < left + width + gap && b.right + gap > left && b.top < top + height && b.bottom > top) { top = b.bottom + gap; moved = true; }
+    }
+  }
+  row.style.top = `${Math.round(top)}px`;
 }
 
 /** Screen space covered by floating controls and the open panel, in pixels. */
@@ -115,6 +137,10 @@ export function initMap() {
   map = new CivicMap(element, { onSelect: selectMap, onEmpty: clearSelection, onMove: updateMapMeta, onArea, icon: typeIcon, colorFor: typeColor, assets: infrastructure, boundaries: wardBoundaries, home: TORONTO_CENTER });
   map.center = state.center; map.zoom = state.zoom; map.mode = state.mapMode; map.layers = state.layers; map.showHeat = state.heat; map.activeArea = state.filters.area;
   map.setData(filtered(), state.selected); renderPanel(); updateMapMeta();
+  controlsObserver = new ResizeObserver(placeTopLeft);
+  controlsObserver.observe(document.querySelector('.map-floating-filters'));
+  controlsObserver.observe(document.querySelector('.map-workspace'));
+  placeTopLeft();
   attachSearch(document.querySelector('#global-search'), {
     icon, getItems: query => searchSuggestions(filtered(), query),
     onChoose: item => {
@@ -149,7 +175,7 @@ export function refreshMapFilters() {
   document.querySelectorAll('.map-floating-filters .filter-context [data-action]').forEach(b => b.onclick = () => action(b.dataset.action));
   document.querySelector('.map-summary .muted').textContent = `· ${rows.length} ${sampleWord()}issues`;
   document.querySelectorAll('[data-legend]').forEach(b => b.classList.toggle('legend-active', b.dataset.legend === state.filters.type));
-  bindFilterChips(); updateMapMeta();
+  bindFilterChips(); updateMapMeta(); placeTopLeft();
 }
 
 export function setMapMode(mode) {

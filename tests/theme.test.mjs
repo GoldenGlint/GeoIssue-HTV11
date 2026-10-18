@@ -23,7 +23,7 @@ test('both themes define the same tokens', () => {
 test('text tokens meet WCAG AA (4.5:1) on every surface they sit on, in both themes', () => {
   const pairs = [
     ...['text', 'text-2', 'text-3', 'accent-text', 'danger-text', 'warning-text', 'success-text', 'purple-text'].flatMap(fg => ['bg', 'surface', 'surface-2'].map(bg => [fg, bg])),
-    ['text-3', 'surface-3'], ['on-accent', 'accent'], ['on-accent', 'accent-hover'], ['on-danger', 'danger'],
+    ['text-3', 'surface-3'], ['text-4', 'bg'], ['text-4', 'surface'], ['text-4', 'surface-2'], ['text-4', 'surface-3'], ['on-accent', 'accent'], ['on-accent', 'accent-hover'], ['on-danger', 'danger'],
     ['accent-text', 'accent-soft'], ['danger-text', 'danger-soft'], ['warning-text', 'warning-soft'], ['success-text', 'success-soft'], ['purple-text', 'purple-soft'],
   ];
   for (const [name, t] of Object.entries(themes)) {

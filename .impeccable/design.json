@@ -1,0 +1,1658 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-18T05:09:56+00:00",
+  "title": "Design System: CivicLens",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Civic Grey Ground",
+        "canonical": "#f5f6f8",
+        "theme": "light",
+        "cssVar": "--bg",
+        "tonalRamp": [
+          "oklch(15% 0.003 265)",
+          "oklch(26% 0.003 265)",
+          "oklch(38% 0.003 265)",
+          "oklch(49% 0.003 265)",
+          "oklch(61% 0.003 265)",
+          "oklch(72% 0.003 265)",
+          "oklch(84% 0.003 265)",
+          "oklch(95% 0.003 265)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff",
+        "theme": "light",
+        "cssVar": "--surface",
+        "tonalRamp": [
+          "oklch(15% 0.000 90)",
+          "oklch(26% 0.000 90)",
+          "oklch(38% 0.000 90)",
+          "oklch(49% 0.000 90)",
+          "oklch(61% 0.000 90)",
+          "oklch(72% 0.000 90)",
+          "oklch(84% 0.000 90)",
+          "oklch(95% 0.000 90)"
+        ]
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Faint Mist",
+        "canonical": "#f8f9fb",
+        "theme": "light",
+        "cssVar": "--surface-2",
+        "tonalRamp": [
+          "oklch(15% 0.003 265)",
+          "oklch(26% 0.003 265)",
+          "oklch(38% 0.003 265)",
+          "oklch(49% 0.003 265)",
+          "oklch(61% 0.003 265)",
+          "oklch(72% 0.003 265)",
+          "oklch(84% 0.003 265)",
+          "oklch(95% 0.003 265)"
+        ]
+      },
+      "surface-3": {
+        "role": "neutral",
+        "displayName": "Quiet Fill",
+        "canonical": "#eef0f3",
+        "theme": "light",
+        "cssVar": "--surface-3",
+        "tonalRamp": [
+          "oklch(15% 0.005 258)",
+          "oklch(26% 0.005 258)",
+          "oklch(38% 0.005 258)",
+          "oklch(49% 0.005 258)",
+          "oklch(61% 0.005 258)",
+          "oklch(72% 0.005 258)",
+          "oklch(84% 0.005 258)",
+          "oklch(95% 0.005 258)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e4e7eb",
+        "theme": "light",
+        "cssVar": "--border",
+        "tonalRamp": [
+          "oklch(15% 0.006 255)",
+          "oklch(26% 0.006 255)",
+          "oklch(38% 0.006 255)",
+          "oklch(49% 0.006 255)",
+          "oklch(61% 0.006 255)",
+          "oklch(72% 0.006 255)",
+          "oklch(84% 0.006 255)",
+          "oklch(95% 0.006 255)"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Control Edge",
+        "canonical": "#cfd4da",
+        "theme": "light",
+        "cssVar": "--border-strong",
+        "tonalRamp": [
+          "oklch(15% 0.010 253)",
+          "oklch(26% 0.010 253)",
+          "oklch(38% 0.010 253)",
+          "oklch(49% 0.010 253)",
+          "oklch(61% 0.010 253)",
+          "oklch(72% 0.010 253)",
+          "oklch(84% 0.010 253)",
+          "oklch(95% 0.010 253)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#111827",
+        "theme": "light",
+        "cssVar": "--text",
+        "tonalRamp": [
+          "oklch(15% 0.018 265)",
+          "oklch(26% 0.022 265)",
+          "oklch(38% 0.026 265)",
+          "oklch(49% 0.030 265)",
+          "oklch(61% 0.030 265)",
+          "oklch(72% 0.026 265)",
+          "oklch(84% 0.022 265)",
+          "oklch(95% 0.018 265)"
+        ]
+      },
+      "text-2": {
+        "role": "neutral",
+        "displayName": "Slate Ink",
+        "canonical": "#374151",
+        "theme": "light",
+        "cssVar": "--text-2",
+        "tonalRamp": [
+          "oklch(15% 0.017 260)",
+          "oklch(26% 0.021 260)",
+          "oklch(38% 0.025 260)",
+          "oklch(49% 0.029 260)",
+          "oklch(61% 0.029 260)",
+          "oklch(72% 0.025 260)",
+          "oklch(84% 0.021 260)",
+          "oklch(95% 0.017 260)"
+        ]
+      },
+      "text-3": {
+        "role": "neutral",
+        "displayName": "Muted Slate",
+        "canonical": "#545b67",
+        "theme": "light",
+        "cssVar": "--text-3",
+        "tonalRamp": [
+          "oklch(15% 0.012 261)",
+          "oklch(26% 0.015 261)",
+          "oklch(38% 0.017 261)",
+          "oklch(49% 0.020 261)",
+          "oklch(61% 0.020 261)",
+          "oklch(72% 0.017 261)",
+          "oklch(84% 0.015 261)",
+          "oklch(95% 0.012 261)"
+        ]
+      },
+      "text-4": {
+        "role": "neutral",
+        "displayName": "Icon Grey",
+        "canonical": "#6b7280",
+        "theme": "light",
+        "cssVar": "--text-4",
+        "tonalRamp": [
+          "oklch(15% 0.013 264)",
+          "oklch(26% 0.016 264)",
+          "oklch(38% 0.019 264)",
+          "oklch(49% 0.022 264)",
+          "oklch(61% 0.022 264)",
+          "oklch(72% 0.019 264)",
+          "oklch(84% 0.016 264)",
+          "oklch(95% 0.013 264)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Civic Blue",
+        "canonical": "#2563eb",
+        "theme": "light",
+        "cssVar": "--accent",
+        "tonalRamp": [
+          "oklch(15% 0.121 263)",
+          "oklch(26% 0.148 263)",
+          "oklch(38% 0.175 263)",
+          "oklch(49% 0.202 263)",
+          "oklch(61% 0.202 263)",
+          "oklch(72% 0.175 263)",
+          "oklch(84% 0.148 263)",
+          "oklch(95% 0.121 263)"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Pressed Blue",
+        "canonical": "#1d4ed8",
+        "theme": "light",
+        "cssVar": "--accent-hover",
+        "tonalRamp": [
+          "oklch(15% 0.122 264)",
+          "oklch(26% 0.149 264)",
+          "oklch(38% 0.177 264)",
+          "oklch(49% 0.204 264)",
+          "oklch(61% 0.204 264)",
+          "oklch(72% 0.177 264)",
+          "oklch(84% 0.149 264)",
+          "oklch(95% 0.122 264)"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Selection Wash",
+        "canonical": "#eef3ff",
+        "theme": "light",
+        "cssVar": "--accent-soft",
+        "tonalRamp": [
+          "oklch(15% 0.017 268)",
+          "oklch(26% 0.017 268)",
+          "oklch(38% 0.017 268)",
+          "oklch(49% 0.017 268)",
+          "oklch(61% 0.017 268)",
+          "oklch(72% 0.017 268)",
+          "oklch(84% 0.017 268)",
+          "oklch(95% 0.017 268)"
+        ]
+      },
+      "accent-border": {
+        "role": "primary",
+        "displayName": "Selection Edge",
+        "canonical": "#bfd2fd",
+        "theme": "light",
+        "cssVar": "--accent-border",
+        "tonalRamp": [
+          "oklch(15% 0.036 266)",
+          "oklch(26% 0.044 266)",
+          "oklch(38% 0.052 266)",
+          "oklch(49% 0.059 266)",
+          "oklch(61% 0.059 266)",
+          "oklch(72% 0.052 266)",
+          "oklch(84% 0.044 266)",
+          "oklch(95% 0.036 266)"
+        ]
+      },
+      "accent-text": {
+        "role": "primary",
+        "displayName": "Link Blue",
+        "canonical": "#1d4ed8",
+        "theme": "light",
+        "cssVar": "--accent-text",
+        "tonalRamp": [
+          "oklch(15% 0.122 264)",
+          "oklch(26% 0.149 264)",
+          "oklch(38% 0.177 264)",
+          "oklch(49% 0.204 264)",
+          "oklch(61% 0.204 264)",
+          "oklch(72% 0.177 264)",
+          "oklch(84% 0.149 264)",
+          "oklch(95% 0.122 264)"
+        ]
+      },
+      "danger": {
+        "role": "status",
+        "displayName": "Alert Red",
+        "canonical": "#dc2626",
+        "theme": "light",
+        "cssVar": "--danger",
+        "tonalRamp": [
+          "oklch(15% 0.121 27)",
+          "oklch(26% 0.148 27)",
+          "oklch(38% 0.175 27)",
+          "oklch(49% 0.202 27)",
+          "oklch(61% 0.202 27)",
+          "oklch(72% 0.175 27)",
+          "oklch(84% 0.148 27)",
+          "oklch(95% 0.121 27)"
+        ]
+      },
+      "danger-soft": {
+        "role": "status",
+        "displayName": "Alert Wash",
+        "canonical": "#fef2f2",
+        "theme": "light",
+        "cssVar": "--danger-soft",
+        "tonalRamp": [
+          "oklch(15% 0.013 17)",
+          "oklch(26% 0.013 17)",
+          "oklch(38% 0.013 17)",
+          "oklch(49% 0.013 17)",
+          "oklch(61% 0.013 17)",
+          "oklch(72% 0.013 17)",
+          "oklch(84% 0.013 17)",
+          "oklch(95% 0.013 17)"
+        ]
+      },
+      "danger-border": {
+        "role": "status",
+        "displayName": "Alert Edge",
+        "canonical": "#fcc9c9",
+        "theme": "light",
+        "cssVar": "--danger-border",
+        "tonalRamp": [
+          "oklch(15% 0.033 18)",
+          "oklch(26% 0.040 18)",
+          "oklch(38% 0.047 18)",
+          "oklch(49% 0.055 18)",
+          "oklch(61% 0.055 18)",
+          "oklch(72% 0.047 18)",
+          "oklch(84% 0.040 18)",
+          "oklch(95% 0.033 18)"
+        ]
+      },
+      "danger-text": {
+        "role": "status",
+        "displayName": "Alert Ink",
+        "canonical": "#b91c1c",
+        "theme": "light",
+        "cssVar": "--danger-text",
+        "tonalRamp": [
+          "oklch(15% 0.107 28)",
+          "oklch(26% 0.131 28)",
+          "oklch(38% 0.155 28)",
+          "oklch(49% 0.179 28)",
+          "oklch(61% 0.179 28)",
+          "oklch(72% 0.155 28)",
+          "oklch(84% 0.131 28)",
+          "oklch(95% 0.107 28)"
+        ]
+      },
+      "warning": {
+        "role": "status",
+        "displayName": "Caution Amber",
+        "canonical": "#d97706",
+        "theme": "light",
+        "cssVar": "--warning",
+        "tonalRamp": [
+          "oklch(15% 0.089 58)",
+          "oklch(26% 0.108 58)",
+          "oklch(38% 0.128 58)",
+          "oklch(49% 0.148 58)",
+          "oklch(61% 0.148 58)",
+          "oklch(72% 0.128 58)",
+          "oklch(84% 0.108 58)",
+          "oklch(95% 0.089 58)"
+        ]
+      },
+      "warning-soft": {
+        "role": "status",
+        "displayName": "Caution Wash",
+        "canonical": "#fffbeb",
+        "theme": "light",
+        "cssVar": "--warning-soft",
+        "tonalRamp": [
+          "oklch(15% 0.012 95)",
+          "oklch(26% 0.015 95)",
+          "oklch(38% 0.017 95)",
+          "oklch(49% 0.020 95)",
+          "oklch(61% 0.020 95)",
+          "oklch(72% 0.017 95)",
+          "oklch(84% 0.015 95)",
+          "oklch(95% 0.012 95)"
+        ]
+      },
+      "warning-border": {
+        "role": "status",
+        "displayName": "Caution Edge",
+        "canonical": "#fce4a6",
+        "theme": "light",
+        "cssVar": "--warning-border",
+        "tonalRamp": [
+          "oklch(15% 0.047 89)",
+          "oklch(26% 0.057 89)",
+          "oklch(38% 0.068 89)",
+          "oklch(49% 0.078 89)",
+          "oklch(61% 0.078 89)",
+          "oklch(72% 0.068 89)",
+          "oklch(84% 0.057 89)",
+          "oklch(95% 0.047 89)"
+        ]
+      },
+      "warning-text": {
+        "role": "status",
+        "displayName": "Caution Ink",
+        "canonical": "#a8520a",
+        "theme": "light",
+        "cssVar": "--warning-text",
+        "tonalRamp": [
+          "oklch(15% 0.076 52)",
+          "oklch(26% 0.092 52)",
+          "oklch(38% 0.109 52)",
+          "oklch(49% 0.126 52)",
+          "oklch(61% 0.126 52)",
+          "oklch(72% 0.109 52)",
+          "oklch(84% 0.092 52)",
+          "oklch(95% 0.076 52)"
+        ]
+      },
+      "success": {
+        "role": "status",
+        "displayName": "Crew Green",
+        "canonical": "#059669",
+        "theme": "light",
+        "cssVar": "--success",
+        "tonalRamp": [
+          "oklch(15% 0.072 163)",
+          "oklch(26% 0.088 163)",
+          "oklch(38% 0.104 163)",
+          "oklch(49% 0.119 163)",
+          "oklch(61% 0.119 163)",
+          "oklch(72% 0.104 163)",
+          "oklch(84% 0.088 163)",
+          "oklch(95% 0.072 163)"
+        ]
+      },
+      "success-soft": {
+        "role": "status",
+        "displayName": "Crew Wash",
+        "canonical": "#ecfdf5",
+        "theme": "light",
+        "cssVar": "--success-soft",
+        "tonalRamp": [
+          "oklch(15% 0.012 166)",
+          "oklch(26% 0.014 166)",
+          "oklch(38% 0.017 166)",
+          "oklch(49% 0.019 166)",
+          "oklch(61% 0.019 166)",
+          "oklch(72% 0.017 166)",
+          "oklch(84% 0.014 166)",
+          "oklch(95% 0.012 166)"
+        ]
+      },
+      "success-border": {
+        "role": "status",
+        "displayName": "Crew Edge",
+        "canonical": "#a7f0cf",
+        "theme": "light",
+        "cssVar": "--success-border",
+        "tonalRamp": [
+          "oklch(15% 0.048 165)",
+          "oklch(26% 0.059 165)",
+          "oklch(38% 0.070 165)",
+          "oklch(49% 0.081 165)",
+          "oklch(61% 0.081 165)",
+          "oklch(72% 0.070 165)",
+          "oklch(84% 0.059 165)",
+          "oklch(95% 0.048 165)"
+        ]
+      },
+      "success-text": {
+        "role": "status",
+        "displayName": "Crew Ink",
+        "canonical": "#047857",
+        "theme": "light",
+        "cssVar": "--success-text",
+        "tonalRamp": [
+          "oklch(15% 0.059 166)",
+          "oklch(26% 0.072 166)",
+          "oklch(38% 0.085 166)",
+          "oklch(49% 0.098 166)",
+          "oklch(61% 0.098 166)",
+          "oklch(72% 0.085 166)",
+          "oklch(84% 0.072 166)",
+          "oklch(95% 0.059 166)"
+        ]
+      },
+      "purple": {
+        "role": "status",
+        "displayName": "Asset Violet",
+        "canonical": "#7c3aed",
+        "theme": "light",
+        "cssVar": "--purple",
+        "tonalRamp": [
+          "oklch(15% 0.139 293)",
+          "oklch(26% 0.170 293)",
+          "oklch(38% 0.200 293)",
+          "oklch(49% 0.231 293)",
+          "oklch(61% 0.231 293)",
+          "oklch(72% 0.200 293)",
+          "oklch(84% 0.170 293)",
+          "oklch(95% 0.139 293)"
+        ]
+      },
+      "purple-soft": {
+        "role": "status",
+        "displayName": "Asset Wash",
+        "canonical": "#f5f3ff",
+        "theme": "light",
+        "cssVar": "--purple-soft",
+        "tonalRamp": [
+          "oklch(15% 0.016 294)",
+          "oklch(26% 0.016 294)",
+          "oklch(38% 0.016 294)",
+          "oklch(49% 0.016 294)",
+          "oklch(61% 0.016 294)",
+          "oklch(72% 0.016 294)",
+          "oklch(84% 0.016 294)",
+          "oklch(95% 0.016 294)"
+        ]
+      },
+      "purple-border": {
+        "role": "status",
+        "displayName": "Asset Edge",
+        "canonical": "#ddd5fe",
+        "theme": "light",
+        "cssVar": "--purple-border",
+        "tonalRamp": [
+          "oklch(15% 0.032 294)",
+          "oklch(26% 0.039 294)",
+          "oklch(38% 0.046 294)",
+          "oklch(49% 0.053 294)",
+          "oklch(61% 0.053 294)",
+          "oklch(72% 0.046 294)",
+          "oklch(84% 0.039 294)",
+          "oklch(95% 0.032 294)"
+        ]
+      },
+      "purple-text": {
+        "role": "status",
+        "displayName": "Asset Ink",
+        "canonical": "#6d28d9",
+        "theme": "light",
+        "cssVar": "--purple-text",
+        "tonalRamp": [
+          "oklch(15% 0.136 293)",
+          "oklch(26% 0.166 293)",
+          "oklch(38% 0.196 293)",
+          "oklch(49% 0.226 293)",
+          "oklch(61% 0.226 293)",
+          "oklch(72% 0.196 293)",
+          "oklch(84% 0.166 293)",
+          "oklch(95% 0.136 293)"
+        ]
+      },
+      "on-accent": {
+        "role": "neutral",
+        "displayName": "On-Blue White",
+        "canonical": "#ffffff",
+        "theme": "light",
+        "cssVar": "--on-accent",
+        "tonalRamp": [
+          "oklch(15% 0.000 90)",
+          "oklch(26% 0.000 90)",
+          "oklch(38% 0.000 90)",
+          "oklch(49% 0.000 90)",
+          "oklch(61% 0.000 90)",
+          "oklch(72% 0.000 90)",
+          "oklch(84% 0.000 90)",
+          "oklch(95% 0.000 90)"
+        ]
+      },
+      "on-color": {
+        "role": "neutral",
+        "displayName": "On-Colour Ink",
+        "canonical": "#111827",
+        "theme": "light",
+        "cssVar": "--on-color",
+        "tonalRamp": [
+          "oklch(15% 0.018 265)",
+          "oklch(26% 0.022 265)",
+          "oklch(38% 0.026 265)",
+          "oklch(49% 0.030 265)",
+          "oklch(61% 0.030 265)",
+          "oklch(72% 0.026 265)",
+          "oklch(84% 0.022 265)",
+          "oklch(95% 0.018 265)"
+        ]
+      },
+      "on-danger": {
+        "role": "neutral",
+        "displayName": "On-Red Ink",
+        "canonical": "#ffffff",
+        "theme": "light",
+        "cssVar": "--on-danger",
+        "tonalRamp": [
+          "oklch(15% 0.000 90)",
+          "oklch(26% 0.000 90)",
+          "oklch(38% 0.000 90)",
+          "oklch(49% 0.000 90)",
+          "oklch(61% 0.000 90)",
+          "oklch(72% 0.000 90)",
+          "oklch(84% 0.000 90)",
+          "oklch(95% 0.000 90)"
+        ]
+      },
+      "overlay": {
+        "role": "neutral",
+        "displayName": "Scrim",
+        "canonical": "rgb(17 24 39 / .45)",
+        "theme": "light",
+        "cssVar": "--overlay"
+      },
+      "dark-bg": {
+        "role": "neutral",
+        "displayName": "Civic Grey Ground (dark)",
+        "canonical": "#0e0f11",
+        "theme": "dark",
+        "cssVar": "--bg",
+        "tonalRamp": [
+          "oklch(15% 0.004 264)",
+          "oklch(26% 0.004 264)",
+          "oklch(38% 0.004 264)",
+          "oklch(49% 0.004 264)",
+          "oklch(61% 0.004 264)",
+          "oklch(72% 0.004 264)",
+          "oklch(84% 0.004 264)",
+          "oklch(95% 0.004 264)"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Paper White (dark)",
+        "canonical": "#17181b",
+        "theme": "dark",
+        "cssVar": "--surface",
+        "tonalRamp": [
+          "oklch(15% 0.006 271)",
+          "oklch(26% 0.006 271)",
+          "oklch(38% 0.006 271)",
+          "oklch(49% 0.006 271)",
+          "oklch(61% 0.006 271)",
+          "oklch(72% 0.006 271)",
+          "oklch(84% 0.006 271)",
+          "oklch(95% 0.006 271)"
+        ]
+      },
+      "dark-surface-2": {
+        "role": "neutral",
+        "displayName": "Faint Mist (dark)",
+        "canonical": "#1d1e22",
+        "theme": "dark",
+        "cssVar": "--surface-2",
+        "tonalRamp": [
+          "oklch(15% 0.008 275)",
+          "oklch(26% 0.008 275)",
+          "oklch(38% 0.008 275)",
+          "oklch(49% 0.008 275)",
+          "oklch(61% 0.008 275)",
+          "oklch(72% 0.008 275)",
+          "oklch(84% 0.008 275)",
+          "oklch(95% 0.008 275)"
+        ]
+      },
+      "dark-surface-3": {
+        "role": "neutral",
+        "displayName": "Quiet Fill (dark)",
+        "canonical": "#25262b",
+        "theme": "dark",
+        "cssVar": "--surface-3",
+        "tonalRamp": [
+          "oklch(15% 0.009 277)",
+          "oklch(26% 0.009 277)",
+          "oklch(38% 0.009 277)",
+          "oklch(49% 0.009 277)",
+          "oklch(61% 0.009 277)",
+          "oklch(72% 0.009 277)",
+          "oklch(84% 0.009 277)",
+          "oklch(95% 0.009 277)"
+        ]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "#2b2d33",
+        "theme": "dark",
+        "cssVar": "--border",
+        "tonalRamp": [
+          "oklch(15% 0.011 271)",
+          "oklch(26% 0.011 271)",
+          "oklch(38% 0.011 271)",
+          "oklch(49% 0.011 271)",
+          "oklch(61% 0.011 271)",
+          "oklch(72% 0.011 271)",
+          "oklch(84% 0.011 271)",
+          "oklch(95% 0.011 271)"
+        ]
+      },
+      "dark-border-strong": {
+        "role": "neutral",
+        "displayName": "Control Edge (dark)",
+        "canonical": "#3c3f46",
+        "theme": "dark",
+        "cssVar": "--border-strong",
+        "tonalRamp": [
+          "oklch(15% 0.013 267)",
+          "oklch(26% 0.013 267)",
+          "oklch(38% 0.013 267)",
+          "oklch(49% 0.013 267)",
+          "oklch(61% 0.013 267)",
+          "oklch(72% 0.013 267)",
+          "oklch(84% 0.013 267)",
+          "oklch(95% 0.013 267)"
+        ]
+      },
+      "dark-text": {
+        "role": "neutral",
+        "displayName": "Ink (dark)",
+        "canonical": "#ececef",
+        "theme": "dark",
+        "cssVar": "--text",
+        "tonalRamp": [
+          "oklch(15% 0.004 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(38% 0.004 286)",
+          "oklch(49% 0.004 286)",
+          "oklch(61% 0.004 286)",
+          "oklch(72% 0.004 286)",
+          "oklch(84% 0.004 286)",
+          "oklch(95% 0.004 286)"
+        ]
+      },
+      "dark-text-2": {
+        "role": "neutral",
+        "displayName": "Slate Ink (dark)",
+        "canonical": "#c5c8cf",
+        "theme": "dark",
+        "cssVar": "--text-2",
+        "tonalRamp": [
+          "oklch(15% 0.010 267)",
+          "oklch(26% 0.010 267)",
+          "oklch(38% 0.010 267)",
+          "oklch(49% 0.010 267)",
+          "oklch(61% 0.010 267)",
+          "oklch(72% 0.010 267)",
+          "oklch(84% 0.010 267)",
+          "oklch(95% 0.010 267)"
+        ]
+      },
+      "dark-text-3": {
+        "role": "neutral",
+        "displayName": "Muted Slate (dark)",
+        "canonical": "#a0a4ad",
+        "theme": "dark",
+        "cssVar": "--text-3",
+        "tonalRamp": [
+          "oklch(15% 0.014 267)",
+          "oklch(26% 0.014 267)",
+          "oklch(38% 0.014 267)",
+          "oklch(49% 0.014 267)",
+          "oklch(61% 0.014 267)",
+          "oklch(72% 0.014 267)",
+          "oklch(84% 0.014 267)",
+          "oklch(95% 0.014 267)"
+        ]
+      },
+      "dark-text-4": {
+        "role": "neutral",
+        "displayName": "Icon Grey (dark)",
+        "canonical": "#868a94",
+        "theme": "dark",
+        "cssVar": "--text-4",
+        "tonalRamp": [
+          "oklch(15% 0.016 268)",
+          "oklch(26% 0.016 268)",
+          "oklch(38% 0.016 268)",
+          "oklch(49% 0.016 268)",
+          "oklch(61% 0.016 268)",
+          "oklch(72% 0.016 268)",
+          "oklch(84% 0.016 268)",
+          "oklch(95% 0.016 268)"
+        ]
+      },
+      "dark-accent": {
+        "role": "primary",
+        "displayName": "Civic Blue (dark)",
+        "canonical": "#2563eb",
+        "theme": "dark",
+        "cssVar": "--accent",
+        "tonalRamp": [
+          "oklch(15% 0.121 263)",
+          "oklch(26% 0.148 263)",
+          "oklch(38% 0.175 263)",
+          "oklch(49% 0.202 263)",
+          "oklch(61% 0.202 263)",
+          "oklch(72% 0.175 263)",
+          "oklch(84% 0.148 263)",
+          "oklch(95% 0.121 263)"
+        ]
+      },
+      "dark-accent-hover": {
+        "role": "primary",
+        "displayName": "Pressed Blue (dark)",
+        "canonical": "#1e55d6",
+        "theme": "dark",
+        "cssVar": "--accent-hover",
+        "tonalRamp": [
+          "oklch(15% 0.116 263)",
+          "oklch(26% 0.142 263)",
+          "oklch(38% 0.168 263)",
+          "oklch(49% 0.194 263)",
+          "oklch(61% 0.194 263)",
+          "oklch(72% 0.168 263)",
+          "oklch(84% 0.142 263)",
+          "oklch(95% 0.116 263)"
+        ]
+      },
+      "dark-accent-soft": {
+        "role": "primary",
+        "displayName": "Selection Wash (dark)",
+        "canonical": "#172238",
+        "theme": "dark",
+        "cssVar": "--accent-soft",
+        "tonalRamp": [
+          "oklch(15% 0.025 263)",
+          "oklch(26% 0.031 263)",
+          "oklch(38% 0.036 263)",
+          "oklch(49% 0.042 263)",
+          "oklch(61% 0.042 263)",
+          "oklch(72% 0.036 263)",
+          "oklch(84% 0.031 263)",
+          "oklch(95% 0.025 263)"
+        ]
+      },
+      "dark-accent-border": {
+        "role": "primary",
+        "displayName": "Selection Edge (dark)",
+        "canonical": "#2c4a85",
+        "theme": "dark",
+        "cssVar": "--accent-border",
+        "tonalRamp": [
+          "oklch(15% 0.059 262)",
+          "oklch(26% 0.072 262)",
+          "oklch(38% 0.085 262)",
+          "oklch(49% 0.098 262)",
+          "oklch(61% 0.098 262)",
+          "oklch(72% 0.085 262)",
+          "oklch(84% 0.072 262)",
+          "oklch(95% 0.059 262)"
+        ]
+      },
+      "dark-accent-text": {
+        "role": "primary",
+        "displayName": "Link Blue (dark)",
+        "canonical": "#82aaff",
+        "theme": "dark",
+        "cssVar": "--accent-text",
+        "tonalRamp": [
+          "oklch(15% 0.074 264)",
+          "oklch(26% 0.090 264)",
+          "oklch(38% 0.107 264)",
+          "oklch(49% 0.123 264)",
+          "oklch(61% 0.123 264)",
+          "oklch(72% 0.107 264)",
+          "oklch(84% 0.090 264)",
+          "oklch(95% 0.074 264)"
+        ]
+      },
+      "dark-danger": {
+        "role": "status",
+        "displayName": "Alert Red (dark)",
+        "canonical": "#e5484d",
+        "theme": "dark",
+        "cssVar": "--danger",
+        "tonalRamp": [
+          "oklch(15% 0.109 23)",
+          "oklch(26% 0.133 23)",
+          "oklch(38% 0.157 23)",
+          "oklch(49% 0.181 23)",
+          "oklch(61% 0.181 23)",
+          "oklch(72% 0.157 23)",
+          "oklch(84% 0.133 23)",
+          "oklch(95% 0.109 23)"
+        ]
+      },
+      "dark-danger-soft": {
+        "role": "status",
+        "displayName": "Alert Wash (dark)",
+        "canonical": "#2b1618",
+        "theme": "dark",
+        "cssVar": "--danger-soft",
+        "tonalRamp": [
+          "oklch(15% 0.019 14)",
+          "oklch(26% 0.024 14)",
+          "oklch(38% 0.028 14)",
+          "oklch(49% 0.032 14)",
+          "oklch(61% 0.032 14)",
+          "oklch(72% 0.028 14)",
+          "oklch(84% 0.024 14)",
+          "oklch(95% 0.019 14)"
+        ]
+      },
+      "dark-danger-border": {
+        "role": "status",
+        "displayName": "Alert Edge (dark)",
+        "canonical": "#5e2529",
+        "theme": "dark",
+        "cssVar": "--danger-border",
+        "tonalRamp": [
+          "oklch(15% 0.047 18)",
+          "oklch(26% 0.057 18)",
+          "oklch(38% 0.068 18)",
+          "oklch(49% 0.078 18)",
+          "oklch(61% 0.078 18)",
+          "oklch(72% 0.068 18)",
+          "oklch(84% 0.057 18)",
+          "oklch(95% 0.047 18)"
+        ]
+      },
+      "dark-danger-text": {
+        "role": "status",
+        "displayName": "Alert Ink (dark)",
+        "canonical": "#ff8a8d",
+        "theme": "dark",
+        "cssVar": "--danger-text",
+        "tonalRamp": [
+          "oklch(15% 0.080 19)",
+          "oklch(26% 0.098 19)",
+          "oklch(38% 0.115 19)",
+          "oklch(49% 0.133 19)",
+          "oklch(61% 0.133 19)",
+          "oklch(72% 0.115 19)",
+          "oklch(84% 0.098 19)",
+          "oklch(95% 0.080 19)"
+        ]
+      },
+      "dark-warning": {
+        "role": "status",
+        "displayName": "Caution Amber (dark)",
+        "canonical": "#f5a524",
+        "theme": "dark",
+        "cssVar": "--warning",
+        "tonalRamp": [
+          "oklch(15% 0.089 72)",
+          "oklch(26% 0.109 72)",
+          "oklch(38% 0.129 72)",
+          "oklch(49% 0.149 72)",
+          "oklch(61% 0.149 72)",
+          "oklch(72% 0.129 72)",
+          "oklch(84% 0.109 72)",
+          "oklch(95% 0.089 72)"
+        ]
+      },
+      "dark-warning-soft": {
+        "role": "status",
+        "displayName": "Caution Wash (dark)",
+        "canonical": "#2a2110",
+        "theme": "dark",
+        "cssVar": "--warning-soft",
+        "tonalRamp": [
+          "oklch(15% 0.018 82)",
+          "oklch(26% 0.022 82)",
+          "oklch(38% 0.026 82)",
+          "oklch(49% 0.030 82)",
+          "oklch(61% 0.030 82)",
+          "oklch(72% 0.026 82)",
+          "oklch(84% 0.022 82)",
+          "oklch(95% 0.018 82)"
+        ]
+      },
+      "dark-warning-border": {
+        "role": "status",
+        "displayName": "Caution Edge (dark)",
+        "canonical": "#5b4416",
+        "theme": "dark",
+        "cssVar": "--warning-border",
+        "tonalRamp": [
+          "oklch(15% 0.039 82)",
+          "oklch(26% 0.048 82)",
+          "oklch(38% 0.056 82)",
+          "oklch(49% 0.065 82)",
+          "oklch(61% 0.065 82)",
+          "oklch(72% 0.056 82)",
+          "oklch(84% 0.048 82)",
+          "oklch(95% 0.039 82)"
+        ]
+      },
+      "dark-warning-text": {
+        "role": "status",
+        "displayName": "Caution Ink (dark)",
+        "canonical": "#f7c065",
+        "theme": "dark",
+        "cssVar": "--warning-text",
+        "tonalRamp": [
+          "oklch(15% 0.071 78)",
+          "oklch(26% 0.086 78)",
+          "oklch(38% 0.102 78)",
+          "oklch(49% 0.118 78)",
+          "oklch(61% 0.118 78)",
+          "oklch(72% 0.102 78)",
+          "oklch(84% 0.086 78)",
+          "oklch(95% 0.071 78)"
+        ]
+      },
+      "dark-success": {
+        "role": "status",
+        "displayName": "Crew Green (dark)",
+        "canonical": "#12a777",
+        "theme": "dark",
+        "cssVar": "--success",
+        "tonalRamp": [
+          "oklch(15% 0.076 164)",
+          "oklch(26% 0.093 164)",
+          "oklch(38% 0.110 164)",
+          "oklch(49% 0.127 164)",
+          "oklch(61% 0.127 164)",
+          "oklch(72% 0.110 164)",
+          "oklch(84% 0.093 164)",
+          "oklch(95% 0.076 164)"
+        ]
+      },
+      "dark-success-soft": {
+        "role": "status",
+        "displayName": "Crew Wash (dark)",
+        "canonical": "#10261f",
+        "theme": "dark",
+        "cssVar": "--success-soft",
+        "tonalRamp": [
+          "oklch(15% 0.018 171)",
+          "oklch(26% 0.022 171)",
+          "oklch(38% 0.026 171)",
+          "oklch(49% 0.029 171)",
+          "oklch(61% 0.029 171)",
+          "oklch(72% 0.026 171)",
+          "oklch(84% 0.022 171)",
+          "oklch(95% 0.018 171)"
+        ]
+      },
+      "dark-success-border": {
+        "role": "status",
+        "displayName": "Crew Edge (dark)",
+        "canonical": "#1e5242",
+        "theme": "dark",
+        "cssVar": "--success-border",
+        "tonalRamp": [
+          "oklch(15% 0.035 170)",
+          "oklch(26% 0.043 170)",
+          "oklch(38% 0.050 170)",
+          "oklch(49% 0.058 170)",
+          "oklch(61% 0.058 170)",
+          "oklch(72% 0.050 170)",
+          "oklch(84% 0.043 170)",
+          "oklch(95% 0.035 170)"
+        ]
+      },
+      "dark-success-text": {
+        "role": "status",
+        "displayName": "Crew Ink (dark)",
+        "canonical": "#4fd1a1",
+        "theme": "dark",
+        "cssVar": "--success-text",
+        "tonalRamp": [
+          "oklch(15% 0.076 165)",
+          "oklch(26% 0.092 165)",
+          "oklch(38% 0.109 165)",
+          "oklch(49% 0.126 165)",
+          "oklch(61% 0.126 165)",
+          "oklch(72% 0.109 165)",
+          "oklch(84% 0.092 165)",
+          "oklch(95% 0.076 165)"
+        ]
+      },
+      "dark-purple": {
+        "role": "status",
+        "displayName": "Asset Violet (dark)",
+        "canonical": "#8b5cf6",
+        "theme": "dark",
+        "cssVar": "--purple",
+        "tonalRamp": [
+          "oklch(15% 0.123 293)",
+          "oklch(26% 0.151 293)",
+          "oklch(38% 0.178 293)",
+          "oklch(49% 0.205 293)",
+          "oklch(61% 0.205 293)",
+          "oklch(72% 0.178 293)",
+          "oklch(84% 0.151 293)",
+          "oklch(95% 0.123 293)"
+        ]
+      },
+      "dark-purple-soft": {
+        "role": "status",
+        "displayName": "Asset Wash (dark)",
+        "canonical": "#1f1a33",
+        "theme": "dark",
+        "cssVar": "--purple-soft",
+        "tonalRamp": [
+          "oklch(15% 0.027 292)",
+          "oklch(26% 0.033 292)",
+          "oklch(38% 0.038 292)",
+          "oklch(49% 0.044 292)",
+          "oklch(61% 0.044 292)",
+          "oklch(72% 0.038 292)",
+          "oklch(84% 0.033 292)",
+          "oklch(95% 0.027 292)"
+        ]
+      },
+      "dark-purple-border": {
+        "role": "status",
+        "displayName": "Asset Edge (dark)",
+        "canonical": "#40336f",
+        "theme": "dark",
+        "cssVar": "--purple-border",
+        "tonalRamp": [
+          "oklch(15% 0.056 291)",
+          "oklch(26% 0.069 291)",
+          "oklch(38% 0.081 291)",
+          "oklch(49% 0.094 291)",
+          "oklch(61% 0.094 291)",
+          "oklch(72% 0.081 291)",
+          "oklch(84% 0.069 291)",
+          "oklch(95% 0.056 291)"
+        ]
+      },
+      "dark-purple-text": {
+        "role": "status",
+        "displayName": "Asset Ink (dark)",
+        "canonical": "#b39dfa",
+        "theme": "dark",
+        "cssVar": "--purple-text",
+        "tonalRamp": [
+          "oklch(15% 0.075 294)",
+          "oklch(26% 0.091 294)",
+          "oklch(38% 0.108 294)",
+          "oklch(49% 0.124 294)",
+          "oklch(61% 0.124 294)",
+          "oklch(72% 0.108 294)",
+          "oklch(84% 0.091 294)",
+          "oklch(95% 0.075 294)"
+        ]
+      },
+      "dark-on-accent": {
+        "role": "neutral",
+        "displayName": "On-Blue White (dark)",
+        "canonical": "#ffffff",
+        "theme": "dark",
+        "cssVar": "--on-accent",
+        "tonalRamp": [
+          "oklch(15% 0.000 90)",
+          "oklch(26% 0.000 90)",
+          "oklch(38% 0.000 90)",
+          "oklch(49% 0.000 90)",
+          "oklch(61% 0.000 90)",
+          "oklch(72% 0.000 90)",
+          "oklch(84% 0.000 90)",
+          "oklch(95% 0.000 90)"
+        ]
+      },
+      "dark-on-color": {
+        "role": "neutral",
+        "displayName": "On-Colour Ink (dark)",
+        "canonical": "#111827",
+        "theme": "dark",
+        "cssVar": "--on-color",
+        "tonalRamp": [
+          "oklch(15% 0.018 265)",
+          "oklch(26% 0.022 265)",
+          "oklch(38% 0.026 265)",
+          "oklch(49% 0.030 265)",
+          "oklch(61% 0.030 265)",
+          "oklch(72% 0.026 265)",
+          "oklch(84% 0.022 265)",
+          "oklch(95% 0.018 265)"
+        ]
+      },
+      "dark-on-danger": {
+        "role": "neutral",
+        "displayName": "On-Red Ink (dark)",
+        "canonical": "#1a0b0c",
+        "theme": "dark",
+        "cssVar": "--on-danger",
+        "tonalRamp": [
+          "oklch(15% 0.015 16)",
+          "oklch(26% 0.018 16)",
+          "oklch(38% 0.021 16)",
+          "oklch(49% 0.025 16)",
+          "oklch(61% 0.025 16)",
+          "oklch(72% 0.021 16)",
+          "oklch(84% 0.018 16)",
+          "oklch(95% 0.015 16)"
+        ]
+      },
+      "dark-overlay": {
+        "role": "neutral",
+        "displayName": "Scrim (dark)",
+        "canonical": "rgb(0 0 0 / .6)",
+        "theme": "dark",
+        "cssVar": "--overlay"
+      },
+      "category-pothole": {
+        "role": "category",
+        "displayName": "Pothole",
+        "canonical": "#dc2626",
+        "theme": "both",
+        "cssVar": null,
+        "tonalRamp": [
+          "oklch(15% 0.121 27)",
+          "oklch(26% 0.148 27)",
+          "oklch(38% 0.175 27)",
+          "oklch(49% 0.202 27)",
+          "oklch(61% 0.202 27)",
+          "oklch(72% 0.175 27)",
+          "oklch(84% 0.148 27)",
+          "oklch(95% 0.121 27)"
+        ]
+      },
+      "category-sidewalk-damage": {
+        "role": "category",
+        "displayName": "Sidewalk Damage",
+        "canonical": "#d97706",
+        "theme": "both",
+        "cssVar": null,
+        "tonalRamp": [
+          "oklch(15% 0.089 58)",
+          "oklch(26% 0.108 58)",
+          "oklch(38% 0.128 58)",
+          "oklch(49% 0.148 58)",
+          "oklch(61% 0.148 58)",
+          "oklch(72% 0.128 58)",
+          "oklch(84% 0.108 58)",
+          "oklch(95% 0.089 58)"
+        ]
+      },
+      "category-graffiti": {
+        "role": "category",
+        "displayName": "Graffiti",
+        "canonical": "#7c3aed",
+        "theme": "both",
+        "cssVar": null,
+        "tonalRamp": [
+          "oklch(15% 0.139 293)",
+          "oklch(26% 0.170 293)",
+          "oklch(38% 0.200 293)",
+          "oklch(49% 0.231 293)",
+          "oklch(61% 0.231 293)",
+          "oklch(72% 0.200 293)",
+          "oklch(84% 0.170 293)",
+          "oklch(95% 0.139 293)"
+        ]
+      },
+      "category-litter": {
+        "role": "category",
+        "displayName": "Litter",
+        "canonical": "#059669",
+        "theme": "both",
+        "cssVar": null,
+        "tonalRamp": [
+          "oklch(15% 0.072 163)",
+          "oklch(26% 0.088 163)",
+          "oklch(38% 0.104 163)",
+          "oklch(49% 0.119 163)",
+          "oklch(61% 0.119 163)",
+          "oklch(72% 0.104 163)",
+          "oklch(84% 0.088 163)",
+          "oklch(95% 0.072 163)"
+        ]
+      },
+      "category-flooding": {
+        "role": "category",
+        "displayName": "Flooding",
+        "canonical": "#2563eb",
+        "theme": "both",
+        "cssVar": null,
+        "tonalRamp": [
+          "oklch(15% 0.121 263)",
+          "oklch(26% 0.148 263)",
+          "oklch(38% 0.175 263)",
+          "oklch(49% 0.202 263)",
+          "oklch(61% 0.202 263)",
+          "oklch(72% 0.175 263)",
+          "oklch(84% 0.148 263)",
+          "oklch(95% 0.121 263)"
+        ]
+      },
+      "category-other": {
+        "role": "category",
+        "displayName": "Other",
+        "canonical": "#6b7280",
+        "theme": "both",
+        "cssVar": null,
+        "tonalRamp": [
+          "oklch(15% 0.013 264)",
+          "oklch(26% 0.016 264)",
+          "oklch(38% 0.019 264)",
+          "oklch(49% 0.022 264)",
+          "oklch(61% 0.022 264)",
+          "oklch(72% 0.019 264)",
+          "oklch(84% 0.016 264)",
+          "oklch(95% 0.013 264)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "brand": {
+        "displayName": "Brand",
+        "purpose": "The sidebar wordmark; 36px on the loading screen."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles; the Map Explorer title steps down to 17px."
+      },
+      "stat": {
+        "displayName": "Stat",
+        "purpose": "KPI numbers in the dashboard strip."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings (h2); issue detail title 20px, panel heading 16px."
+      },
+      "subtitle": {
+        "displayName": "Subtitle",
+        "purpose": "Subsection headings (h3)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraphs in text-3, line-height 1.65."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Buttons, selects, search, segments, legend and map count; 12px at 650px and below."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Meta line under a heading, sidebar labels, badges."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 2px rgb(16 24 40 / .06), 0 1px 3px rgb(16 24 40 / .08)",
+        "purpose": "The one elevation (light): buttons, map controls, filter fields, segmented control, issue panel, dialogs, menus, hover preview, sticky table header."
+      },
+      {
+        "name": "shadow-sm-dark",
+        "value": "0 1px 2px rgb(0 0 0 / .4)",
+        "purpose": "The same role in the dark theme."
+      },
+      {
+        "name": "pin-shadow",
+        "value": "drop-shadow(0 1px 1.5px rgb(16 24 40 / .35))",
+        "purpose": "filter on map pins so the shadow follows the teardrop."
+      },
+      {
+        "name": "pin-shadow-hover",
+        "value": "drop-shadow(0 2px 3px rgb(16 24 40 / .45))",
+        "purpose": "filter on a hovered pin."
+      },
+      {
+        "name": "focus-outline",
+        "value": "2px solid var(--accent); outline-offset: 3px",
+        "purpose": "Keyboard focus on buttons and links (an outline, not a shadow). Fields show an accent border plus shadow-sm."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state",
+        "value": "180ms",
+        "purpose": "Background, border, colour and shadow changes on buttons, map controls, segments and nav items (150ms on base buttons)."
+      },
+      {
+        "name": "press",
+        "value": "transform: scale(.96) over 160ms",
+        "purpose": "Pressed buttons and map controls."
+      },
+      {
+        "name": "panel-push",
+        "value": "right 240ms cubic-bezier(.2,.8,.2,1)",
+        "purpose": "Floating map controls sliding clear of the issue panel."
+      },
+      {
+        "name": "dialog-in",
+        "value": "modal-in .15s ease-out (translateY 9px to 0, fade in)",
+        "purpose": "Dialogs entering."
+      },
+      {
+        "name": "workspace-reveal",
+        "value": "220ms ease-out (translateY 6px to 0, fade in)",
+        "purpose": "Non-map pages entering; 140ms for search suggestions, 110ms for the pin hover preview."
+      },
+      {
+        "name": "route-flow",
+        "value": "1.4s linear infinite",
+        "purpose": "The dashed crew-route line flowing along its path."
+      },
+      {
+        "name": "splash-draw",
+        "value": ".65s cubic-bezier(.6,0,.2,1)",
+        "purpose": "The lens rings drawing themselves on the loading screen."
+      },
+      {
+        "name": "splash-pop",
+        "value": "cubic-bezier(.3,1.6,.5,1)",
+        "purpose": "The lens core and category dots popping in on the loading screen."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce",
+        "purpose": "Removes every transition and animation; the splash shows the finished mark."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone-narrow",
+        "value": "420px"
+      },
+      {
+        "name": "phone",
+        "value": "650px"
+      },
+      {
+        "name": "tablet",
+        "value": "950px"
+      },
+      {
+        "name": "laptop",
+        "value": "1200px"
+      },
+      {
+        "name": "laptop-wide",
+        "value": "1360px"
+      },
+      {
+        "name": "desktop-wide",
+        "value": "1600px"
+      }
+    ],
+    "themes": {
+      "default": "light",
+      "switch": ":root[data-theme=\"dark\"]",
+      "themeColor": {
+        "light": "#f5f6f8",
+        "dark": "#0e0f11"
+      },
+      "contrastTest": "tests/theme.test.mjs"
+    },
+    "map": {
+      "heatRamp": [
+        {
+          "stop": 0,
+          "color": "rgba(37,99,235,0)"
+        },
+        {
+          "stop": 0.12,
+          "color": "rgba(37,99,235,.32)"
+        },
+        {
+          "stop": 0.35,
+          "color": "rgba(37,99,235,.55)"
+        },
+        {
+          "stop": 0.6,
+          "color": "rgba(217,119,6,.72)"
+        },
+        {
+          "stop": 0.85,
+          "color": "rgba(220,38,38,.82)"
+        },
+        {
+          "stop": 1,
+          "color": "rgba(185,28,28,.9)"
+        }
+      ],
+      "densityLegend": "linear-gradient(90deg,rgba(37,99,235,.35),rgba(37,99,235,.6) 30%,rgba(217,119,6,.75) 62%,rgba(220,38,38,.85))",
+      "tileFilter": {
+        "light": "grayscale(.6) brightness(1.04) contrast(.92)",
+        "dark": "invert(1) hue-rotate(180deg) grayscale(1) brightness(.78) contrast(.9)"
+      },
+      "categories": {
+        "Pothole": "#dc2626",
+        "Sidewalk damage": "#d97706",
+        "Graffiti": "#7c3aed",
+        "Litter": "#059669",
+        "Flooding": "#2563eb",
+        "Other": "#6b7280"
+      },
+      "wardOutline": {
+        "rest": "fill accent at .05, stroke accent at .45, 1.2px",
+        "active": "fill accent at .12, stroke accent at .95, 2.2px"
+      },
+      "route": {
+        "path": "stroke var(--success), 3.5px, dasharray 12 9, route-flow 1.4s linear",
+        "casing": "stroke var(--border), 8px, opacity .55"
+      },
+      "uncertainty": "background rgb(37 99 235 / .08); border 1.5px dashed var(--accent); border-radius 50%"
+    }
+  },
+  "components": [
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "White button with the control edge and the soft lift; the everyday action.",
+      "html": "<button class=\"ds-btn\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m12 2 10 6-10 6L2 8l10-6zM2 12l10 6 10-6M2 16l10 6 10-6\"/></svg> Show route</button>",
+      "css": ".ds-btn { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 15px; background: var(--surface, #ffffff); color: var(--text, #111827); border: 1px solid var(--border-strong, #cfd4da); border-radius: 7px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-sm, 0 1px 2px rgb(16 24 40 / .06), 0 1px 3px rgb(16 24 40 / .08)); cursor: pointer; transition: background 180ms, border-color 180ms, color 180ms, box-shadow 180ms, transform 160ms; } .ds-btn:hover { background: var(--surface-2, #f8f9fb); } .ds-btn:active { transform: scale(.96); } .ds-btn:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 3px; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Civic Blue fill with white text for the main action of a region, such as Upload new issue.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg> Upload new issue</button>",
+      "css": ".ds-btn-primary { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 15px; background: var(--accent, #2563eb); color: var(--on-accent, #ffffff); border: 1px solid var(--accent, #2563eb); border-radius: 7px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-sm, 0 1px 2px rgb(16 24 40 / .06), 0 1px 3px rgb(16 24 40 / .08)); cursor: pointer; transition: background 180ms, border-color 180ms, transform 160ms; } .ds-btn-primary:hover { background: var(--accent-hover, #1d4ed8); border-color: var(--accent-hover, #1d4ed8); } .ds-btn-primary:active { transform: scale(.96); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 3px; }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "White 32px field with a control edge; the border turns Civic Blue and the icon Link Blue on focus.",
+      "html": "<label class=\"ds-search\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm6-2 6 6\"/></svg><input type=\"search\" placeholder=\"Search issues, places or IDs...\" aria-label=\"Search issues\"></label>",
+      "css": ".ds-search { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; gap: 9px; height: 32px; padding: 0 11px; width: 300px; background: var(--surface, #ffffff); border: 1px solid var(--border-strong, #cfd4da); border-radius: 7px; color: var(--text-3, #545b67); transition: border-color 180ms, box-shadow 180ms; } .ds-search input { border: 0; background: none; outline: none; width: 100%; min-width: 0; padding: 0; font: inherit; font-size: 13px; color: var(--text, #111827); } .ds-search input::placeholder { color: var(--text-3, #545b67); } .ds-search:hover { border-color: var(--border-strong, #cfd4da); } .ds-search:focus-within { border-color: var(--accent, #2563eb); box-shadow: var(--shadow-sm, 0 1px 2px rgb(16 24 40 / .06), 0 1px 3px rgb(16 24 40 / .08)); color: var(--accent-text, #1d4ed8); }"
+    },
+    {
+      "name": "Filter Select",
+      "kind": "input",
+      "refersTo": "filter-select",
+      "description": "White select shell with a leading icon; the select sizes to its current label.",
+      "html": "<label class=\"ds-filter\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 6h18M7 3v6M3 12h18m-6-3v6M3 18h18m-12-3v6\"/></svg><select aria-label=\"Issue type\"><option>All issue types</option><option>Pothole</option><option>Sidewalk damage</option></select></label>",
+      "css": ".ds-filter { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; background: var(--surface, #ffffff); border: 1px solid var(--border-strong, #cfd4da); border-radius: 7px; color: var(--text-3, #545b67); box-shadow: var(--shadow-sm, 0 1px 2px rgb(16 24 40 / .06), 0 1px 3px rgb(16 24 40 / .08)); } .ds-filter select { field-sizing: content; width: auto; max-width: 100%; height: 30px; padding: 0 3px; border: 0; background: transparent; outline: none; font: inherit; font-size: 13px; color: var(--text-2, #374151); cursor: pointer; } .ds-filter:hover { background: var(--surface-2, #f8f9fb); } .ds-filter:focus-within { border-color: var(--accent, #2563eb); }"
+    },
+    {
+      "name": "Status Badges",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Severity, status and verification chips: tinted wash, matching edge, text-level tone; 12px text.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-badge-high\">High</span><span class=\"ds-badge ds-badge-open\">Open</span><span class=\"ds-badge ds-badge-review\">In review</span><span class=\"ds-badge ds-badge-verified\">Verified</span><span class=\"ds-badge\">Medium</span></div>",
+      "css": ".ds-badges { display: flex; gap: 7px; flex-wrap: wrap; } .ds-badge { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: inline-flex; align-items: center; white-space: nowrap; border-radius: 5px; font-size: 12px; line-height: 1; padding: 5px 8px; border: 1px solid var(--border-strong, #cfd4da); color: var(--text-2, #374151); background: var(--surface-3, #eef0f3); } .ds-badge-high { background: var(--danger-soft, #fef2f2); border-color: var(--danger-border, #fcc9c9); color: var(--danger-text, #b91c1c); } .ds-badge-open { background: var(--accent-soft, #eef3ff); border-color: var(--accent-border, #bfd2fd); color: var(--accent-text, #1d4ed8); } .ds-badge-review { color: var(--warning-text, #a8520a); } .ds-badge-verified { border-color: var(--success-border, #a7f0cf); color: var(--success-text, #047857); }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "An applied filter: Selection Wash, control edge at rest, Civic Blue edge on hover, removable.",
+      "html": "<button class=\"ds-filter-chip\"><span>Pothole</span><svg width=\"10\" height=\"10\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6 6 12 12M6 18 18 6\"/></svg></button>",
+      "css": ".ds-filter-chip { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: inline-flex; align-items: center; gap: 7px; padding: 4px 7px; background: var(--accent-soft, #eef3ff); border: 1px solid var(--border-strong, #cfd4da); border-radius: 5px; color: var(--accent-text, #1d4ed8); font-size: 12px; cursor: pointer; transition: border-color 180ms; } .ds-filter-chip:hover { border-color: var(--accent, #2563eb); } .ds-filter-chip:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 3px; }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "White sidebar nav: Muted Slate items, Faint Mist hover, Selection Wash and Link Blue when active.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item active\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2V5zm6-2v16m6-14v16\"/></svg> Map Explorer</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 5c0 2-4 3-9 3S3 7 3 5s4-3 9-3 9 1 9 3zm0 0v14c0 2-4 3-9 3s-9-1-9-3V5m0 7c0 2 4 3 9 3s9-1 9-3\"/></svg> Data Explorer</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 20V10h4v10m4 0V4h4v16m4 0V8h3v12M2 20h22\"/></svg> Dashboard</a></nav>",
+      "css": ".ds-nav { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; gap: 6px; width: 198px; padding: 12px; background: var(--surface, #ffffff); border-right: 1px solid var(--border, #e4e7eb); } .ds-nav-item { display: flex; align-items: center; gap: 13px; min-height: 45px; padding: 13px 14px; border-radius: 7px; color: var(--text-3, #545b67); font-size: 13px; font-weight: 500; text-decoration: none; transition: background 180ms, color 180ms; } .ds-nav-item:hover { background: var(--surface-2, #f8f9fb); color: var(--text, #111827); } .ds-nav-item.active { background: var(--accent-soft, #eef3ff); color: var(--accent-text, #1d4ed8); } .ds-nav-item:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 3px; }"
+    },
+    {
+      "name": "Map Controls",
+      "kind": "custom",
+      "refersTo": "map-control",
+      "description": "Pins/Density segmented control and 37px floating map tools; active states use Selection Wash and Link Blue.",
+      "html": "<div class=\"ds-map-tools\"><div class=\"ds-segment\"><button class=\"active\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0zm-5 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0z\"/></svg> Pins</button><button><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m12 2 10 6-10 6L2 8l10-6zM2 12l10 6 10-6M2 16l10 6 10-6\"/></svg> Density</button></div><button class=\"ds-map-control active\" aria-label=\"Pan map\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2V5zm6-2v16m6-14v16\"/></svg></button><button class=\"ds-map-control\" aria-label=\"Layers\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m12 2 10 6-10 6L2 8l10-6zM2 12l10 6 10-6M2 16l10 6 10-6\"/></svg></button></div>",
+      "css": ".ds-map-tools { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: center; gap: 8px; } .ds-segment { display: flex; padding: 3px; background: var(--surface, #ffffff); border: 1px solid var(--border-strong, #cfd4da); border-radius: 7px; box-shadow: var(--shadow-sm, 0 1px 2px rgb(16 24 40 / .06), 0 1px 3px rgb(16 24 40 / .08)); } .ds-segment button { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border: 0; border-radius: 4px; background: none; color: var(--text-3, #545b67); font: inherit; font-size: 13px; cursor: pointer; transition: background 180ms, color 180ms; } .ds-segment button:hover { color: var(--text, #111827); } .ds-segment button.active { background: var(--accent-soft, #eef3ff); color: var(--accent-text, #1d4ed8); } .ds-map-control { display: grid; place-items: center; width: 37px; height: 37px; padding: 0; background: var(--surface, #ffffff); border: 1px solid var(--border-strong, #cfd4da); border-radius: 6px; color: var(--text-2, #374151); box-shadow: var(--shadow-sm, 0 1px 2px rgb(16 24 40 / .06), 0 1px 3px rgb(16 24 40 / .08)); cursor: pointer; transition: background 180ms, border-color 180ms, transform 160ms; } .ds-map-control:hover { background: var(--surface-2, #f8f9fb); } .ds-map-control:active { transform: scale(.96); } .ds-map-control.active { background: var(--accent-soft, #eef3ff); color: var(--accent-text, #1d4ed8); border-color: var(--accent, #2563eb); } .ds-segment button:focus-visible, .ds-map-control:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 3px; }"
+    },
+    {
+      "name": "Map Pins and Cluster",
+      "kind": "custom",
+      "refersTo": "map-pin",
+      "description": "Signature: teardrop pins in category colours with a white rim and white icon, a high-severity \"!\" badge, and a Civic Blue numbered cluster.",
+      "html": "<div class=\"ds-pins\"><button class=\"ds-pin\" style=\"--pin:#dc2626\" aria-label=\"Pothole, high severity\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3 2 21h20L12 3zm0 6v5m0 3h.01\"/></svg><i>!</i></button><button class=\"ds-pin\" style=\"--pin:#2563eb\" aria-label=\"Flooding\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 6c4-6 5 6 10 0s6 5 10 0M2 12c4-6 5 6 10 0s6 5 10 0M2 18c4-6 5 6 10 0s6 5 10 0\"/></svg></button><button class=\"ds-pin\" style=\"--pin:#059669\" aria-label=\"Litter\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0zm-5 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0z\"/></svg></button><button class=\"ds-cluster\" aria-label=\"12 issues\">12</button></div>",
+      "css": ".ds-pins { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; align-items: flex-end; gap: 22px; padding: 18px 16px 8px; background: #e9ebee; border-radius: 8px; } .ds-pin { position: relative; width: 30px; height: 31px; padding: 0; border: 0; background: none; cursor: pointer; filter: drop-shadow(0 1px 1.5px rgb(16 24 40 / .35)); transition: filter 180ms, transform 180ms; transform-origin: 50% 100%; } .ds-pin::before { content: \"\"; position: absolute; left: 4px; top: 1px; width: 22px; height: 22px; background: var(--pin); border: 2px solid #fff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-sizing: border-box; } .ds-pin svg { position: absolute; left: 8px; top: 5px; } .ds-pin i { position: absolute; top: -4px; right: -3px; width: 14px; height: 14px; border-radius: 50%; background: var(--danger, #dc2626); color: var(--on-danger, #ffffff); border: 1.5px solid #fff; font: 700 10px/11px Inter, system-ui, sans-serif; font-style: normal; text-align: center; box-sizing: border-box; } .ds-pin:hover { filter: drop-shadow(0 2px 3px rgb(16 24 40 / .45)); } .ds-pin:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 3px; } .ds-pin:active { transform: scale(1.25); } .ds-cluster { width: 34px; height: 34px; padding: 0; border: 2px solid #fff; border-radius: 50%; background: var(--accent, #2563eb); color: #fff; font: 600 13px/30px Inter, system-ui, sans-serif; text-align: center; cursor: pointer; filter: drop-shadow(0 1px 1.5px rgb(16 24 40 / .35)); } .ds-cluster:hover { background: var(--accent-hover, #1d4ed8); } .ds-cluster:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 3px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "White card with a hairline border and 10px corners, flat at rest; header 18px, quiet 12px title with an icon.",
+      "html": "<section class=\"ds-card\"><header><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 20V10h4v10m4 0V4h4v16m4 0V8h3v12M2 20h22\"/></svg><h2>Issues by type</h2><span>Last 30 days</span></header><p>Potholes lead this month, mostly in Wards 10 and 13.</p></section>",
+      "css": ".ds-card { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; width: 320px; background: var(--surface, #ffffff); border: 1px solid var(--border, #e4e7eb); border-radius: 10px; overflow: hidden; transition: border-color 180ms, box-shadow 180ms; } .ds-card:hover { box-shadow: var(--shadow-sm, 0 1px 2px rgb(16 24 40 / .06), 0 1px 3px rgb(16 24 40 / .08)); } .ds-card header { display: flex; align-items: center; gap: 9px; padding: 18px 18px 16px; color: var(--text-4, #6b7280); } .ds-card h2 { margin: 0; font-size: 12px; font-weight: 500; color: var(--text, #111827); } .ds-card header span { margin-left: auto; font-size: 12px; color: var(--text-3, #545b67); } .ds-card p { margin: 0; padding: 0 18px 18px; font-size: 13px; line-height: 1.65; color: var(--text-3, #545b67); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Civic Map",
+    "overview": "CivicLens is the familiar civic map-and-data tool, built with care rather than novelty. White working surfaces sit on a cool grey ground, one blue carries every action and selection, Inter sets everything, and the map and the data do the talking. The bar is the category's best: Google Maps for the map, Linear and Stripe for panels and tables, city open-data portals and 311 tools for the civic register, Mapbox and Felt for overlays.\n\nThe density is that of a working tool. Controls read at 13px, filter fields are 32px tall, borders are neutral hairlines, and a single soft shadow lifts whatever floats over the map. Saturated colour belongs to the data: category pins on a muted basemap, tinted chips for severity, status and verification, and a blue-to-red density ramp. Light is the default theme; dark is the same system in neutral graphite.\n\nThe world was chosen against the dark neon command-centre look the app used to have. It carries no glows, no cyan halos, no gradient sheen, no backdrop blur and no gradient text, and nothing in it should read as AI-generated.",
+    "keyCharacteristics": [
+      "White surfaces on a cool grey ground, separated by neutral hairline borders.",
+      "One blue for actions, selection, links and status chips; never for plain text.",
+      "Inter only: 13px controls, and nothing a reader must read below 12px.",
+      "Teardrop pins in category colours on a desaturated basemap; blue numbered clusters.",
+      "One soft shadow for things that float; everything else is flat.",
+      "Light by default; dark is neutral graphite, never navy."
+    ],
+    "rules": [
+      {
+        "name": "The One Blue Rule",
+        "body": "Civic Blue (accent, accent-text) is only for actions, selection, links and status chips. Plain text uses the neutral ink ladder: text, text-2, text-3 and text-4.",
+        "section": "colors"
+      },
+      {
+        "name": "The Neutral Line Rule",
+        "body": "Containers take the hairline (border), controls take the control edge (border-strong). An accent border appears only on an active or selected state.",
+        "section": "colors"
+      },
+      {
+        "name": "The White-on-Grey Rule",
+        "body": "Cards, dialogs, inputs and filters are white (surface) on the grey ground (bg). Faint Mist and Quiet Fill are tone steps inside them: headers, zebra rows, legends, callouts.",
+        "section": "colors"
+      },
+      {
+        "name": "The Graphite Night Rule",
+        "body": "Dark is neutral graphite with no navy and no glow. Blue fills stay put; only text-level blue lifts.",
+        "section": "colors"
+      },
+      {
+        "name": "The Data Owns Colour Rule",
+        "body": "Saturated colour belongs to the data: category pins, status chips, the density ramp. Chrome stays neutral.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Face Rule",
+        "body": "Inter is the single typeface, pinned by the user. Never add a display or mono family.",
+        "section": "typography"
+      },
+      {
+        "name": "The Twelve-Pixel Floor Rule",
+        "body": "Controls read at 13px (12px on phones). Nothing a reader must read sits below 12px.",
+        "section": "typography"
+      },
+      {
+        "name": "The Heading-First Rule",
+        "body": "A heading comes first; its ID, type or date goes underneath as a 12px meta line in Muted Slate, 4px below. Never a kicker above it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sideways Filter Rule",
+        "body": "Selects size to their label. When the map is narrow its filter row scrolls sideways; labels are never clipped.",
+        "section": "layout"
+      },
+      {
+        "name": "The Clear Map Rule",
+        "body": "Map controls hug the canvas edges and slide aside when the issue panel opens, so the panel never covers a control.",
+        "section": "layout"
+      },
+      {
+        "name": "The One Shadow Rule",
+        "body": "One soft shadow lifts whatever floats. No glows, no blur, no stacked elevations.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Teardrop Rule",
+        "body": "An issue is a teardrop pin in its category colour with a white rim; a group of issues is a Civic Blue numbered circle. Severity is marked with the \"!\" badge, never by colour alone.",
+        "section": "components"
+      },
+      {
+        "name": "The Muted Basemap Rule",
+        "body": "The basemap stays desaturated so the pins carry the colour.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** keep Civic Blue (accent, accent-text) for actions, selection, links and status chips, and set plain text in text, text-2, text-3 and text-4.",
+      "**Do** border containers with the hairline (border) and controls with the control edge (border-strong); use an accent border only on an active or selected state.",
+      "**Do** make cards, dialogs, inputs and filters white (surface) on the grey ground (bg).",
+      "**Do** set controls at 13px (12px at 650px and below) and keep anything a reader must read at 12px or larger.",
+      "**Do** put the heading first and its ID, type or date underneath as a 12px meta line in text-3.",
+      "**Do** draw issues as category-coloured teardrop pins with a white rim, clusters as Civic Blue numbered circles, and mark high severity with the \"!\" badge.",
+      "**Do** let selects size to their label (`field-sizing: content`) and let the map's filter row scroll sideways when it is narrow.",
+      "**Do** lift floating controls, panels and dialogs with the one soft shadow (--shadow-sm) and keep the basemap muted with --tile-filter.",
+      "**Do** add every new colour token to both palettes and keep tests/theme.test.mjs passing at 4.5:1 for each text pair in both themes.",
+      "**Do** keep light as the default theme and make dark neutral graphite."
+    ],
+    "donts": [
+      "**Don't** use blue for headings, body copy or labels that are not links, selections or status chips.",
+      "**Don't** put coloured side-accent stripes on cards, rows, callouts or alerts.",
+      "**Don't** use glows, neon halos, backdrop blur, gradient text or decorative gradient sheen; the density ramp is a data encoding, not decoration.",
+      "**Don't** nest a card inside a card.",
+      "**Don't** put a kicker or eyebrow above a heading.",
+      "**Don't** add a second typeface; Inter is pinned.",
+      "**Don't** tint the dark theme navy or let anything glow in it.",
+      "**Don't** let colour alone carry severity or status.",
+      "**Don't** clip or wrap the map's filter labels; scroll the row instead."
+    ]
+  }
+}
