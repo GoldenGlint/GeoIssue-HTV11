@@ -29,35 +29,37 @@ OUT = HERE / "results" / "agent"
 UNVERIFIED_RADIUS_M = 1000
 UNVERIFIED_MAX_CONFIDENCE = 0.3
 
+# Kept deliberately neutral: no site types, place names or tag examples drawn from the test photos, so any
+# conclusion the model reaches is deduced from the photo and tool output, not suggested by the prompt.
 SYSTEM = """You are an OSINT geolocation analyst for CivicLens. The photo was taken somewhere in the City of Toronto.
 Goal: find where the camera was, ideally within 10 m. Locate the place, never the people in it.
 
-You have tools. They are the only trustworthy source of coordinates: do not invent coordinates.
-Suggested workflow:
-1. Study the photo: legible text, street or business names, transit (TTC streetcars, stops), distinctive buildings
-   (e.g. a campus, a parking garage), street furniture, terrain, and whether it was taken from a window.
-2. Turn names into coordinates with search_places (text only: it cannot search by location) or
-   find_intersection. To see what is around a coordinate, use nearby_places.
-3. If there are no names, generate candidates with find_features_near (OSM tags, e.g. railway=tram near
-   amenity=parking, or parking=multi-storey near building=university) or search_assets (City street
-   furniture). Think about which kinds of sites have the structures you see: multi-storey garages are common
-   at university campuses, hospitals, transit stations, malls and offices.
-4. Verify the best 1-4 candidates with match_street_images. Only a result with accepted=true (>= 75 verified
-   inliers) counts as visual confirmation.
-5. If a match is accepted, call estimate_pose with its match_id for a metre-level position and heading.
-6. Call final_answer. If nothing was verified, still answer with your best candidate, a wide radius and low
-   confidence, and say what evidence is missing.
-Be efficient: you have a fixed time budget, and image matching takes about 1-2 minutes per call."""
+Work deductively from what is visible. Do not assume a type of place in advance and do not pick a place from
+memory: coordinates must come from tool results.
+1. Observe: list legible text, transit, structures, street furniture, vegetation, terrain, and the viewpoint
+   (street level, elevated, indoors).
+2. Hypothesise: state several distinct explanations of what kind of site this could be, with the visual
+   evidence for and against each.
+3. Generate candidates for each hypothesis with tools, citywide: search_places (text only) and
+   find_intersection for names; find_features_near for combinations of mapped features; search_assets for
+   City street furniture; nearby_places to inspect what is around a coordinate.
+4. Verify candidates with match_street_images and compare the reference images you are shown with the photo.
+   Only an accepted match (>= 75 verified points) confirms a place. When a hypothesis fails, move on to the
+   next one instead of refining the same guess.
+5. If a match is accepted, call estimate_pose with its match_id, then final_answer.
+6. An unverified final_answer is only accepted in the last 2 minutes of the budget; until then keep testing
+   other hypotheses. Then give a wide radius and say what evidence is missing.
+Image matching takes about 1-2 minutes per call, so choose what to verify carefully."""
 
 TOOLS = [
     {"type": "function", "function": {
-        "name": "search_places", "description": "Fuzzy text search of named places in Toronto (buildings, businesses, "
-        "streets, stations, campuses). Text only: coordinates in the query are ignored; use nearby_places for that.",
+        "name": "search_places", "description": "Fuzzy text search of any named OpenStreetMap feature in Toronto. "
+        "Text only: coordinates in the query are ignored; use nearby_places for that.",
         "parameters": {"type": "object", "properties": {"query": {"type": "string"},
                        "limit": {"type": "integer", "description": "default 8"}}, "required": ["query"]}}},
     {"type": "function", "function": {
         "name": "nearby_places", "description": "Named places within radius_m of a coordinate, nearest first. "
-        "Optional category filter on OSM tags, e.g. 'parking', 'university', 'hospital', 'station', 'park'.",
+        "Optional category filter: text matched against the place's OpenStreetMap key=value tag.",
         "parameters": {"type": "object", "properties": {
             "lat": {"type": "number"}, "lon": {"type": "number"},
             "radius_m": {"type": "number", "description": "default 500, max 3000"},
@@ -68,8 +70,9 @@ TOOLS = [
                        "required": ["street_a", "street_b"]}}},
     {"type": "function", "function": {
         "name": "find_features_near", "description": "Bellingcat-style OpenStreetMap search: every place in Toronto "
-        "where a feature with tag B lies within N metres of a feature with tag A. Tags are key=value, e.g. "
-        "railway=tram, amenity=parking, parking=multi-storey, building=university, leisure=park.",
+        "where a feature with tag B lies within N metres of a feature with tag A. Tags are OpenStreetMap key=value "
+        "pairs (keys include amenity, building, highway, railway, leisure, landuse, shop, tourism, office, "
+        "public_transport, natural, man_made), or a bare key to match any value.",
         "parameters": {"type": "object", "properties": {
             "a": {"type": "string"}, "b": {"type": "string"}, "within_m": {"type": "number"},
             "b_min_area_m2": {"type": "number", "description": "minimum area of B polygons, default 0"}},
@@ -256,6 +259,12 @@ class Agent:
         return {k: data.get(k) for k in ("ok", "method", "lat", "lon", "heading_deg", "radius_m", "n_inliers")}
 
     def tool_final_answer(self, lat, lon, radius_m, confidence, evidence, place_description=""):
+        verified = any(m.get("accepted") for m in self.matches.values())
+        if not verified and self.remaining() > 120:
+            # verification-gated: an unverified answer only ends the run in the last 2 minutes
+            self.log("final_rejected", reason="unverified", minutes_left=round(self.remaining() / 60, 1))
+            return (f"Not accepted: no candidate has been visually verified and {self.remaining() / 60:.0f} "
+                    "minutes remain. Test a different hypothesis (another kind of site or another area).")
         self.final = {"lat": float(lat), "lon": float(lon), "radius_m": float(radius_m),
                       "confidence": float(confidence), "place_description": place_description, "evidence": evidence}
         # the model's own radius is not trusted: without an accepted image match (>= 75 verified points) the
