@@ -10,7 +10,7 @@ import { render, nav, toggleSave, setRole } from './app.js';
 import { getMap, openIssue, frameIssues, renderPanel } from './views/map-view.js';
 import { apiStatus, triagePhoto } from './api.js';
 import { blurPhoto } from './blur.js';
-import { geolocationAvailable, geolocationModel, locatePhoto, cancelJob, onJobs, findJob, isActive, jobCoords, jobHeadline, lastStep, zoomFor } from './geolocate.js';
+import { geolocationAvailable, geolocationModel, locatePhoto, cancelJob, cancelButton, onJobs, findJob, isActive, jobCoords, jobHeadline, lastStep, zoomFor } from './geolocate.js';
 
 // photos: { file, url (original), blurredUrl, boxes (from Gemini), manualBoxes, status, result, error, showOriginal }
 // geoJob: the Claude geolocation job for the first photo; geoApplied: the answer the pin was moved to
@@ -60,8 +60,8 @@ function renderGeo() {
   }
   if (isActive(job)) {
     const step = lastStep(job);
-    el.innerHTML = `<div class="ai-card loading" data-geo-job="${job.id}"><span class="spinner"></span><span><strong>Claude is locating your photo · ${esc(jobHeadline(job).replace(/^Locating · /, ''))}</strong>${step ? esc(step.label) : 'Starting Claude Code…'}<small>Runs in the background: keep filling in the form, or close this dialog. It stays listed under Photo locations in the page header.</small></span><div class="geo-card-actions"><button type="button" class="button small" id="geo-cancel">${icon('close')} Cancel</button></div></div>`;
-    $('#geo-cancel').onclick = e => { e.currentTarget.disabled = true; cancelJob(job.id); };
+    el.innerHTML = `<div class="ai-card loading" data-geo-job="${job.id}"><span class="spinner"></span><span><strong>Claude is locating your photo · ${esc(jobHeadline(job).replace(/^Locating · /, ''))}</strong>${step ? esc(step.label) : 'Starting Claude Code…'}<small>Runs in the background: keep filling in the form, or close this dialog. It stays listed under Photo locations in the page header.</small></span><div class="geo-card-actions">${cancelButton(job.id, 'id="geo-cancel"')}</div></div>`;
+    $('#geo-cancel').onclick = () => cancelJob(job.id);
     return;
   }
   const coords = jobCoords(job);

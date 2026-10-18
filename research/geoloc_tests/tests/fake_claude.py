@@ -3,6 +3,7 @@ would, and writes result.json where geoloc_mcp.py would. FAKE_CLAUDE_MODE picks 
   ok (default)  one search, then a verified final answer
   slow          an init event, then 60 s of nothing (for cancel and timeout tests)
   fail          exits 2 with a message on stderr and no result
+  limit         ends with an error result, the way usage limits and login problems arrive
 FAKE_CLAUDE_STEP_S waits that many seconds between events, to watch progress in the app.
 """
 import json
@@ -30,6 +31,9 @@ def main():
           "mcp_servers": [{"name": "civiclens", "status": "connected"}]})
     if mode == "slow":
         time.sleep(60)
+        return
+    if mode == "limit":
+        emit({"type": "result", "subtype": "success", "is_error": True, "result": "Claude usage limit reached"})
         return
     emit({"type": "assistant", "message": {"content": [
         {"type": "tool_use", "id": "t1", "name": "mcp__civiclens__search_places", "input": {"query": "Highland Hall"}}]}})

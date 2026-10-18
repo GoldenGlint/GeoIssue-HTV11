@@ -13,7 +13,8 @@ import { getMap } from './views/map-view.js';
 
 const FINAL = ['done', 'no_answer', 'failed', 'cancelled'];
 const POLL_MS = 3000;
-let jobs = [], timer = null, service = null;
+let jobs = [], timer = null, service = null, failures = 0;
+const cancelling = new Set(); // asked to stop, still running: their Cancel buttons stay disabled across polls
 let seen = new Set(read('geoSeen', [])); // finished jobs already looked at, so the header stops announcing them
 const listeners = new Set();
 
@@ -50,8 +51,16 @@ export async function initGeolocation() {
 
 async function refresh() {
   clearTimeout(timer);
+  const latest = await geolocationJobs();
+  if (!latest) { // server unreachable (restarting?): keep what we know, and try again more slowly
+    failures++;
+    timer = jobs.some(isActive) ? setTimeout(refresh, Math.min(30000, POLL_MS * 2 ** failures)) : null;
+    return;
+  }
+  failures = 0;
   const before = new Map(jobs.map(j => [j.id, j.state]));
-  jobs = await geolocationJobs();
+  jobs = latest;
+  for (const id of cancelling) if (!isActive(findJob(id))) cancelling.delete(id);
   for (const job of jobs) {
     const was = before.get(job.id);
     if (was && !FINAL.includes(was) && FINAL.includes(job.state)) announce(job);
@@ -72,8 +81,14 @@ export async function locatePhoto(file) {
   return job;
 }
 
+export const isCancelling = id => cancelling.has(id);
+/** Cancel button markup for a running job; disabled once asked, until the job stops. */
+export const cancelButton = (id, attrs) => `<button type="button" class="button small" ${attrs} ${cancelling.has(id) ? 'disabled' : ''}>${icon('close')} ${cancelling.has(id) ? 'Cancelling…' : 'Cancel'}</button>`;
+
 export async function cancelJob(id) {
-  try { await cancelGeolocation(id); } catch (error) { toast(`Couldn’t cancel: ${error.message}`); }
+  cancelling.add(id);
+  listeners.forEach(fn => fn(jobs));
+  try { await cancelGeolocation(id); } catch (error) { cancelling.delete(id); toast(`Couldn’t cancel: ${error.message}`); }
   refresh();
 }
 
@@ -114,7 +129,7 @@ function jobHtml(job) {
   let body = '', actions = '';
   if (isActive(job)) {
     body = job.steps?.length ? stepsHtml(job.steps.slice(-4), true) : '<p class="geo-place">Starting Claude Code…</p>';
-    actions = `<button class="button small" data-geo-cancel="${job.id}">${icon('close')} Cancel</button>`;
+    actions = cancelButton(job.id, `data-geo-cancel="${job.id}"`);
   } else if (coords) {
     body = resultHtml(job);
     actions = `<button class="button small primary" data-geo-map="${job.id}">${icon('map')} Show on map</button><a class="button small" href="${googleStreetViewUrl(coords)}" target="_blank" rel="noopener">${icon('external')} Street View</a><a class="button small" href="${googleMapsUrl(coords)}" target="_blank" rel="noopener">${icon('map')} Google Maps</a>`;
@@ -135,7 +150,7 @@ function renderJobs(root) {
     const el = cards.get(job.id), html = jobHtml(job), sig = html.match(/data-sig="([^"]*)"/)[1];
     if (el.dataset.sig !== sig || isActive(job)) el.outerHTML = html;
   }
-  root.querySelectorAll('[data-geo-cancel]').forEach(b => b.onclick = () => { b.disabled = true; cancelJob(b.dataset.geoCancel); });
+  root.querySelectorAll('[data-geo-cancel]').forEach(b => b.onclick = () => cancelJob(b.dataset.geoCancel));
   root.querySelectorAll('[data-geo-map]').forEach(b => b.onclick = () => showOnMap(findJob(b.dataset.geoMap)));
   root.querySelectorAll('[data-geo-retry]').forEach(b => b.onclick = () => retry(b.dataset.geoRetry, b));
 }

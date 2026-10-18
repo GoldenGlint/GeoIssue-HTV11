@@ -11,13 +11,14 @@ confidence capped by the harness, not the model. Additions for Claude:
 
 Usage (Claude Code launches it): python geoloc_mcp.py --image PHOTO --out JOB_DIR --minutes 10
 Ground truth never reaches this process: claude_geoloc.py scores the answer after the run.
-Writes JOB_DIR/tools.jsonl (every tool call), JOB_DIR/result.json (the answer and its audit) and the
+Writes JOB_DIR/<job>.jsonl (every tool call), JOB_DIR/result.json (the answer and its audit) and the
 reference contact sheets.
 """
 import argparse
 import base64
 import io
 import json
+import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -228,13 +229,17 @@ def main():
     ap.add_argument("--run-name")
     args = ap.parse_args()
     args.truth = None  # the agent's tools never hold the answer; scoring happens offline
-    proto = sys.stdout.buffer
-    sys.stdout = sys.stderr  # the tools print progress; only JSON-RPC may reach Claude Code's pipe
+    # only JSON-RPC may reach Claude Code's pipe: keep a private copy of it, then point file descriptor 1
+    # (Python prints and anything native, such as a DuckDB progress bar) at stderr
+    proto = os.fdopen(os.dup(sys.stdout.fileno()), "wb")
+    os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
+    sys.stdout = sys.stderr
     host = ToolHost(args)
     try:
         serve(host, io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8"), proto)
     finally:
-        if host.final is None:  # ended without an answer (timeout or cancel): still record what was tried
+        if host.final is None:  # Claude Code closed the pipe without an answer; a kill skips this, but the
+            # runner's status.json still lists every step
             host.write_result()
 
 

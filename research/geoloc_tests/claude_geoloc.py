@@ -17,6 +17,7 @@ Usage (from research/geoloc_tests, with the tools' venv):
 This module only uses the standard library, so the web server can import it on any Python.
 """
 import argparse
+import calendar
 import json
 import os
 import shutil
@@ -30,7 +31,10 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 JOBS = HERE / "results" / "claude_jobs"
+APP_JOBS = HERE.parent.parent / "data" / "geolocate"  # where scripts/serve.py puts the app's jobs
+QUEUE_DIRS = [JOBS, APP_JOBS]  # command-line and app jobs share one GPU, so they queue together
 GRACE_S = 180  # after the tool budget: time to answer, or to finish a match already under way
+HEARTBEAT_S, STALE_S, START_S = 5, 60, 120  # worker heartbeat period; dead after STALE_S silent or START_S unstarted
 WINDOWS = os.name == "nt"
 FINAL_STATES = ("done", "no_answer", "failed", "cancelled")
 
@@ -88,24 +92,30 @@ def write_status(job_dir, status):
     tmp.unlink(missing_ok=True)
 
 
-def pid_alive(pid):
-    if not pid:
-        return False
-    if WINDOWS:
-        import ctypes
-        kernel32 = ctypes.windll.kernel32
-        handle = kernel32.OpenProcess(0x1000, False, int(pid))  # PROCESS_QUERY_LIMITED_INFORMATION
-        if not handle:
-            return False
-        code = ctypes.c_ulong()
-        kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
-        kernel32.CloseHandle(handle)
-        return code.value == 259  # STILL_ACTIVE
+def start_heartbeat(job_dir):
+    """Touch job_dir/heartbeat every few seconds until the returned event is set. A worker that stops beating
+    (crash, kill, reboot) reads as dead, whatever has since taken its process id."""
+    stop, beat = threading.Event(), Path(job_dir) / "heartbeat"
+
+    def run():
+        while not stop.is_set():
+            beat.touch()
+            stop.wait(HEARTBEAT_S)
+
+    threading.Thread(target=run, daemon=True).start()
+    return stop
+
+
+def worker_alive(job_dir, status):
+    beat = Path(job_dir) / "heartbeat"
+    if beat.exists():
+        return time.time() - beat.stat().st_mtime < STALE_S
+    # not beating yet: a worker that was just started gets a moment to come up
     try:
-        os.kill(int(pid), 0)
-        return True
-    except OSError:
+        created = calendar.timegm(time.strptime(status.get("created_at", ""), "%Y-%m-%dT%H:%M:%SZ"))
+    except ValueError:
         return False
+    return time.time() - created < START_S
 
 
 def kill_tree(pid):
@@ -151,32 +161,24 @@ def start_background(job_dir, python=None, max_running=1):
     with open(Path(job_dir) / "worker.log", "ab") as log:
         proc = subprocess.Popen(argv, cwd=HERE, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                                 **detached())
-    # its own file: the worker may already be writing status.json
-    (Path(job_dir) / "worker.pid").write_text(str(proc.pid))
     return proc.pid
-
-
-def worker_pid(job_dir, status):
-    if status.get("worker_pid"):
-        return status["worker_pid"]
-    pid_file = Path(job_dir) / "worker.pid"
-    return int(pid_file.read_text()) if pid_file.exists() else None
 
 
 def request_cancel(job_dir):
     (Path(job_dir) / "cancel").touch()
     status = read_status(job_dir)
-    if status and status["state"] not in FINAL_STATES and not pid_alive(worker_pid(job_dir, status)):
+    # no live heartbeat: nothing else will write the status (a worker that starts later sees the cancel file)
+    beating = (Path(job_dir) / "heartbeat").exists() and worker_alive(job_dir, status or {})
+    if status and status["state"] not in FINAL_STATES and not beating:
         status.update(state="cancelled", finished_at=now_iso())
         write_status(job_dir, status)
     return status
 
 
 def job_status(job_dir):
-    """status.json, with a job whose worker died (crash, reboot) reported as failed instead of running."""
+    """status.json, with a job whose worker stopped beating (crash, kill, reboot) reported as failed."""
     status = read_status(job_dir)
-    pid = status and worker_pid(job_dir, status)
-    if status and status["state"] not in FINAL_STATES and pid and not pid_alive(pid):
+    if status and status["state"] not in FINAL_STATES and not worker_alive(job_dir, status):
         status.update(state="failed", error="the background worker stopped unexpectedly")
     if status:  # the reference contact sheets written so far: m1, m2, ...
         status["references"] = sorted((p.name.split("_")[0] for p in Path(job_dir).glob("m*_references.jpg")),
@@ -283,8 +285,9 @@ class Progress:
             s["usage"] = {"cost_usd": e.get("total_cost_usd"), "turns": e.get("num_turns"),
                           "duration_s": round((e.get("duration_ms") or 0) / 1000, 1)}
             if e.get("is_error") or e.get("subtype") != "success":
-                s["error"] = s.get("error") or f"Claude Code ended with {e.get('subtype')}"
-            if e.get("result"):
+                # usage limits and login problems arrive here, with the message in "result"
+                s["error"] = s.get("error") or str(e.get("result") or f"Claude Code ended with {e.get('subtype')}")[:300]
+            elif e.get("result"):
                 s["note"] = str(e["result"])[:600]
         # a tool call must show while it runs (a match takes minutes); only heartbeats such as
         # thinking-token counts are throttled
@@ -308,17 +311,19 @@ def score(final, truth):
 
 
 def wait_for_turn(job_dir, status, max_running):
-    """Queue behind jobs already running in the same folder, so image matches don't share the GPU. Waiting
-    jobs start in the order they were created. Returns False if the job was cancelled while it waited."""
+    """Queue behind jobs running in the job's folder and in QUEUE_DIRS, so image matches don't share the GPU.
+    Waiting jobs start in the order they were created. Returns False if the job was cancelled while it waited."""
     me = (status.get("created_at", ""), status["id"])
+    folders = {Path(d).resolve() for d in [job_dir.parent, *QUEUE_DIRS] if Path(d).is_dir()}
     while not (job_dir / "cancel").exists():
-        others = [s for s in list_jobs(job_dir.parent, limit=50) if s["id"] != status["id"]]
+        others = [s for d in folders for s in list_jobs(d, limit=50) if s["id"] != status["id"]]
         running = [s for s in others if s["state"] == "running"]
         ahead = [s for s in others if s["state"] == "queued" and (s.get("created_at", ""), s["id"]) < me]
         if len(running) + len(ahead) < max_running:
             return True
-        if status.get("state") != "queued" or not status.get("waiting_for"):
-            status.update(state="queued", waiting_for=[s["id"] for s in running])
+        waiting_for = sorted(s["id"] for s in running + ahead)
+        if status.get("state") != "queued" or status.get("waiting_for") != waiting_for:
+            status.update(state="queued", waiting_for=waiting_for)
             write_status(job_dir, status)
         time.sleep(2)
     return False
@@ -338,6 +343,14 @@ def claude_command(job_dir, model, effort, minutes):
 def run(job_dir, image, minutes=10, model="opus", effort="high", truth=None, max_running=1):
     job_dir = Path(job_dir).resolve()
     job_dir.mkdir(parents=True, exist_ok=True)
+    heartbeat = start_heartbeat(job_dir)
+    try:
+        return run_job(job_dir, image, minutes, model, effort, truth, max_running)
+    finally:
+        heartbeat.set()
+
+
+def run_job(job_dir, image, minutes, model, effort, truth, max_running):
     status = read_status(job_dir) or {"id": job_dir.name, "created_at": now_iso(), "image": str(image),
                                       "minutes": minutes, "model": model, "effort": effort}
     status.update(worker_pid=os.getpid(), steps=[], error=None)
@@ -404,13 +417,15 @@ def run(job_dir, image, minutes=10, model="opus", effort="high", truth=None, max
         status["state"] = "done"
     elif stop["why"] == "cancelled":
         status["state"] = "cancelled"
+    elif stop["why"] == "timeout":
+        status.update(state="no_answer", error=f"no answer within {minutes:g} minutes")
+    elif status.get("error"):  # Claude Code reported it: usage limit, login, tools that didn't start
+        status["state"] = "failed"
+    elif proc.returncode:
+        tail = (job_dir / "claude.err").read_text(encoding="utf-8", errors="replace").strip()[-300:]
+        status.update(state="failed", error=f"Claude Code exited with code {proc.returncode}" + (f": {tail}" if tail else ""))
     else:
-        status["state"] = "failed" if status.get("error") and not result else "no_answer"
-        if stop["why"] == "timeout":
-            status["error"] = f"no answer within {minutes:g} minutes"
-        elif proc.returncode and not status.get("error"):
-            tail = (job_dir / "claude.err").read_text(encoding="utf-8", errors="replace").strip()[-300:]
-            status["error"] = f"Claude Code exited with code {proc.returncode}" + (f": {tail}" if tail else "")
+        status.update(state="no_answer", error="Claude ended without calling final_answer")
     status["finished_at"] = now_iso()
     progress.flush(force=True)
     return status
@@ -425,7 +440,7 @@ def main():
     ap.add_argument("--truth", help="LAT,LON of the true camera position, to score the answer")
     ap.add_argument("--job-dir", help="default: results/claude_jobs/<time>-<photo>")
     ap.add_argument("--max-running", type=int, default=int(os.environ.get("GEOLOC_MAX_RUNNING", 1)),
-                    help="jobs allowed to run at once in the job's parent folder; later ones wait")
+                    help="jobs allowed to run at once across the app's and the command line's job folders")
     args = ap.parse_args()
     job_dir = Path(args.job_dir or JOBS / f"{time.strftime('%Y%m%d-%H%M%S')}-{Path(args.image).stem}")
     status = run(job_dir, args.image, args.minutes, args.model, args.effort, args.truth, args.max_running)

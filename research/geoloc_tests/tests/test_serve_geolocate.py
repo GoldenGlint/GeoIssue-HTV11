@@ -40,10 +40,10 @@ class GeolocateApiTest(unittest.TestCase):
         self.addCleanup(self.server.shutdown)
         self.base = f"http://127.0.0.1:{self.server.server_address[1]}"
 
-    def request(self, path, body=None):
+    def request(self, path, body=None, headers=None):
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(self.base + path, data=data, method="POST" if data else "GET",
-                                     headers={"Content-Type": "application/json"})
+                                     headers={"Content-Type": "application/json", **(headers or {})})
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 raw = resp.read()
@@ -98,6 +98,39 @@ class GeolocateApiTest(unittest.TestCase):
         self.assertEqual((code, status["state"]), (200, "cancelled"))
         self.assertTrue((self.jobs / job["id"] / "cancel").exists())
         self.assertEqual(self.request("/api/geolocate/nope/cancel", {})[0], 404)
+
+
+    def test_other_sites_cannot_use_the_api(self):
+        body = {"image": base64.b64encode(PHOTO).decode(), "mime": "image/jpeg"}
+        self.assertEqual(self.request("/api/geolocate", body, {"Origin": "https://evil.example"})[0], 403)
+        self.assertEqual(self.request("/api/geolocate", body, {"Content-Type": "text/plain"})[0], 403)
+        self.assertEqual(self.request("/api/geolocate", headers={"Host": "rebind.example:5173"})[0], 403)
+        port = self.server.server_address[1]
+        self.assertEqual(self.request("/api/geolocate", body, {"Origin": f"http://localhost:{port}",
+                                                               "Host": f"localhost:{port}"})[0], 200)
+        self.assertEqual(len(self.started), 1)
+
+    def test_job_folders_are_never_served_as_static_files(self):
+        with mock.patch.object(serve, "GEOLOC_JOBS", ROOT / "data" / "geolocate"):
+            for path in ("/data/geolocate/", "/data//geolocate/x/events.jsonl", "/Data/GeoLocate/",
+                         "/data/x/../geolocate/", "/data/geolocate%2Fx"):
+                req = urllib.request.Request(self.base + path)
+                with self.assertRaises(urllib.error.HTTPError, msg=path) as caught:
+                    urllib.request.urlopen(req, timeout=10)
+                self.assertEqual(caught.exception.code, 404, path)
+
+    def test_too_many_active_jobs_are_refused(self):
+        for _ in range(serve.GEOLOC_MAX_ACTIVE):
+            self.assertEqual(self.start()[0], 200)
+        code, body = self.start()
+        self.assertEqual(code, 429)
+        self.assertIn("already being located", body["error"])
+
+    def test_a_worker_that_fails_to_start_leaves_a_failed_job(self):
+        with mock.patch.object(serve.claude_geoloc, "start_background", side_effect=OSError("no python")):
+            code, job = self.start()
+        self.assertEqual((code, job["state"]), (200, "failed"))
+        self.assertIn("no python", job["error"])
 
 
 if __name__ == "__main__":

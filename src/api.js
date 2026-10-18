@@ -37,6 +37,7 @@ export async function startGeolocation(file) {
   const { base64, mime } = await photoForUpload(file, 2048);
   return post('/api/geolocate', { image: base64, mime });
 }
+/** The jobs, newest first, or null when the server can't be reached (it may be restarting). */
 export const geolocationJobs = () => fetch('/api/geolocate', { cache: 'no-store' })
-  .then(r => r.ok ? r.json() : { jobs: [] }).then(d => d.jobs || []).catch(() => []);
+  .then(r => r.ok ? r.json() : null).then(d => d && (d.jobs || [])).catch(() => null);
 export const cancelGeolocation = id => post(`/api/geolocate/${encodeURIComponent(id)}/cancel`, {});

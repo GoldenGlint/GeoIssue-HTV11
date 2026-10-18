@@ -23,7 +23,8 @@ this machine, using the local Claude Code login, so it keeps going if the page o
   POST /api/geolocate/<id>/cancel
 GEOLOC_PYTHON is the Python with the vision tools installed (default: research/geoloc_tests/.venv, then .venv in the repo root);
 GEOLOC_MODEL (default opus), GEOLOC_EFFORT (high), GEOLOC_MINUTES (10) and GEOLOC_MAX_RUNNING (1) tune it.
-Hidden files and folders (.env, .git, …) are never served.
+Hidden files and folders (.env, .git, …) and the job folders are never served as static files. API calls must
+come from this app (Host and Origin are checked, POSTs must be JSON), and at most 5 jobs run or wait at once.
 """
 import argparse
 import base64
@@ -174,6 +175,7 @@ GEOLOC_MODEL = setting("GEOLOC_MODEL", "opus")
 GEOLOC_EFFORT = setting("GEOLOC_EFFORT", "high")
 GEOLOC_MINUTES = float(setting("GEOLOC_MINUTES", 10))
 GEOLOC_MAX_RUNNING = int(setting("GEOLOC_MAX_RUNNING", 1))
+GEOLOC_MAX_ACTIVE = 5  # running or waiting; more are refused, so nothing can pile up Opus runs
 JOB_ID = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{6}$")
 SUFFIX = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
 
@@ -202,9 +204,18 @@ def start_geolocation(body):
     image, mime = body.get("image"), body.get("mime", "image/jpeg")
     if not image or mime not in SUFFIX:
         raise ValueError("send a base64 JPEG, PNG or WebP image")
-    job = claude_geoloc.new_job(GEOLOC_JOBS, base64.b64decode(image, validate=True), SUFFIX[mime],
-                                GEOLOC_MINUTES, GEOLOC_MODEL, GEOLOC_EFFORT)
-    claude_geoloc.start_background(job, python=str(GEOLOC_PYTHON), max_running=GEOLOC_MAX_RUNNING)
+    photo = base64.b64decode(image, validate=True)
+    active = [j for j in claude_geoloc.list_jobs(GEOLOC_JOBS, 50) if j["state"] not in claude_geoloc.FINAL_STATES]
+    if len(active) >= GEOLOC_MAX_ACTIVE:
+        raise OverflowError(f"{len(active)} photos are already being located. Wait for one to finish.")
+    job = claude_geoloc.new_job(GEOLOC_JOBS, photo, SUFFIX[mime], GEOLOC_MINUTES, GEOLOC_MODEL, GEOLOC_EFFORT)
+    try:
+        claude_geoloc.start_background(job, python=str(GEOLOC_PYTHON), max_running=GEOLOC_MAX_RUNNING)
+    except OSError as error:  # the job must not sit "queued" in front of later ones
+        status = claude_geoloc.read_status(job)
+        status.update(state="failed", error=f"couldn't start the background worker: {error}",
+                      finished_at=claude_geoloc.now_iso())
+        claude_geoloc.write_status(job, status)
     return claude_geoloc.job_status(job)
 
 
@@ -214,7 +225,19 @@ class Handler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def hidden(self):
-        return any(part.startswith(".") for part in unquote(urlsplit(self.path).path).split("/") if part)
+        """Dot-files (.env, .git, …), and the geolocation job folders, whose files only the API serves."""
+        if any(part.startswith(".") for part in unquote(urlsplit(self.path).path).split("/") if part):
+            return True
+        # the path the static handler would really open, so //, .., backslashes and case can't get around it
+        return Path(self.translate_path(self.path)).resolve().is_relative_to(GEOLOC_JOBS.resolve())
+
+    def same_origin(self):
+        """API calls must come from this app. The Host check stops DNS rebinding; the Origin check stops other
+        sites posting here (a no-cors POST with a text/plain body needs no preflight)."""
+        port = self.server.server_address[1]
+        hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+        origin = self.headers.get("Origin")
+        return self.headers.get("Host") in hosts and (origin is None or origin in {f"http://{h}" for h in hosts})
 
     def send_json(self, status, payload):
         body = json.dumps(payload).encode()
@@ -252,6 +275,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = urlsplit(self.path).path
+        if path.startswith("/api/") and not self.same_origin():
+            return self.send_json(403, {"error": "requests must come from this app"})
         if path == "/api/status":
             return self.send_json(200, {"gemini": bool(KEY), "model": MODEL, "geolocate": geolocate_status()})
         if path == "/api/geolocate" or path.startswith("/api/geolocate/"):
@@ -267,6 +292,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = urlsplit(self.path).path
+        if not self.same_origin() or not (self.headers.get("Content-Type") or "").startswith("application/json"):
+            return self.send_json(403, {"error": "requests must come from this app, as JSON"})
         cancel = re.fullmatch(r"/api/geolocate/([^/]+)/cancel", path)
         if cancel:
             try:
@@ -286,6 +313,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(200, route(json.loads(self.rfile.read(length))))
         except PermissionError as error:
             return self.send_json(503, {"error": str(error)})
+        except OverflowError as error:
+            return self.send_json(429, {"error": str(error)})
         except (ValueError, KeyError, TypeError) as error:
             return self.send_json(400, {"error": str(error)})
         except urllib.error.HTTPError as error:

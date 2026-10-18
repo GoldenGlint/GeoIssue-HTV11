@@ -6,7 +6,6 @@ Run from the repo root with the tools' Python:
 import io
 import json
 import os
-import subprocess
 import sys
 import tempfile
 import threading
@@ -95,9 +94,10 @@ class RunTest(unittest.TestCase):
         self.tmp = Path(tmp.name)
         self.image = self.tmp / "photo.jpg"
         self.image.write_bytes(b"not really a jpeg")
-        env = mock.patch.dict(os.environ, {"CLAUDE_BIN": fake_claude_bin(self.tmp), "FAKE_CLAUDE_MODE": "ok"})
-        env.start()
-        self.addCleanup(env.stop)
+        for patch in (mock.patch.dict(os.environ, {"CLAUDE_BIN": fake_claude_bin(self.tmp), "FAKE_CLAUDE_MODE": "ok"}),
+                      mock.patch.object(claude_geoloc, "QUEUE_DIRS", [])):  # don't queue behind real jobs
+            patch.start()
+            self.addCleanup(patch.stop)
 
     def run_job(self, name="job", **kwargs):
         return claude_geoloc.run(self.tmp / "jobs" / name, self.image, **{"minutes": 1, **kwargs})
@@ -117,8 +117,13 @@ class RunTest(unittest.TestCase):
     def test_claude_failing_gives_a_failed_job_with_its_message(self):
         os.environ["FAKE_CLAUDE_MODE"] = "fail"
         status = self.run_job()
-        self.assertEqual(status["state"], "no_answer")
+        self.assertEqual(status["state"], "failed")
         self.assertIn("Invalid API key", status["error"])
+
+    def test_an_error_result_such_as_a_usage_limit_is_shown(self):
+        os.environ["FAKE_CLAUDE_MODE"] = "limit"
+        status = self.run_job()
+        self.assertEqual((status["state"], status["error"]), ("failed", "Claude usage limit reached"))
 
     def test_missing_claude_is_a_clear_failure(self):
         os.environ["CLAUDE_BIN"] = str(self.tmp / "nowhere" / "claude")
@@ -146,7 +151,8 @@ class RunTest(unittest.TestCase):
         jobs = self.tmp / "jobs"
         busy = jobs / "a-busy"
         busy.mkdir(parents=True)
-        claude_geoloc.write_status(busy, {"id": "a-busy", "state": "running", "worker_pid": os.getpid(), "steps": []})
+        claude_geoloc.write_status(busy, {"id": "a-busy", "state": "running", "steps": []})
+        (busy / "heartbeat").touch()
         seen = []
         worker = threading.Thread(target=lambda: seen.append(self.run_job("b-next")))
         worker.start()
@@ -160,12 +166,14 @@ class RunTest(unittest.TestCase):
         jobs = self.tmp / "jobs"
         busy = jobs / "a-busy"
         busy.mkdir(parents=True)
-        claude_geoloc.write_status(busy, {"id": "a-busy", "state": "running", "worker_pid": os.getpid(), "steps": []})
+        claude_geoloc.write_status(busy, {"id": "a-busy", "state": "running", "steps": []})
+        (busy / "heartbeat").touch()
         for name in ("b-first", "c-second"):
             (jobs / name).mkdir()
             claude_geoloc.write_status(jobs / name, {"id": name, "created_at": f"2026-10-18T00:00:0{name[0] == 'c'}Z",
                                                      "state": "queued", "minutes": 1, "model": "opus",
                                                      "effort": "high", "image": str(self.image), "steps": []})
+            (jobs / name / "heartbeat").touch()  # as if their workers were already up
         workers = [threading.Thread(target=self.run_job, args=(name,)) for name in ("c-second", "b-first")]
         for w in workers:
             w.start()
@@ -177,14 +185,35 @@ class RunTest(unittest.TestCase):
         self.assertEqual((first["state"], second["state"]), ("done", "done"))
         self.assertLessEqual(first["finished_at"], second["started_at"])
 
-    def test_a_job_whose_worker_died_reads_as_failed(self):
-        job = self.tmp / "jobs" / "dead"
+    def test_liveness_follows_the_heartbeat_not_the_process_id(self):
+        job = self.tmp / "jobs" / "j"
         job.mkdir(parents=True)
-        gone = subprocess.Popen([sys.executable, "-c", "pass"])
-        gone.wait()
-        claude_geoloc.write_status(job, {"id": "dead", "state": "running", "worker_pid": gone.pid, "steps": []})
+        # the pid of a live process (this one) must not keep a silent worker "running": pids get reused
+        claude_geoloc.write_status(job, {"id": "j", "state": "running", "worker_pid": os.getpid(),
+                                         "created_at": "2026-01-01T00:00:00Z", "steps": []})
+        beat = job / "heartbeat"
+        beat.touch()
+        self.assertEqual(claude_geoloc.job_status(job)["state"], "running")
+        old = time.time() - claude_geoloc.STALE_S - 5
+        os.utime(beat, (old, old))
         self.assertEqual(claude_geoloc.job_status(job)["state"], "failed")
         self.assertEqual(claude_geoloc.request_cancel(job)["state"], "cancelled")
+
+    def test_a_job_whose_worker_never_started_reads_as_failed_after_a_while(self):
+        job = self.tmp / "jobs" / "j"
+        job.mkdir(parents=True)
+        claude_geoloc.write_status(job, {"id": "j", "state": "queued", "created_at": claude_geoloc.now_iso(), "steps": []})
+        self.assertEqual(claude_geoloc.job_status(job)["state"], "queued")
+        claude_geoloc.write_status(job, {"id": "j", "state": "queued", "created_at": "2026-01-01T00:00:00Z", "steps": []})
+        self.assertEqual(claude_geoloc.job_status(job)["state"], "failed")
+
+    def test_a_finished_run_stops_its_heartbeat(self):
+        self.run_job()
+        beat = self.tmp / "jobs" / "job" / "heartbeat"
+        time.sleep(0.3)
+        before = beat.stat().st_mtime
+        time.sleep(claude_geoloc.HEARTBEAT_S + 1)
+        self.assertEqual(beat.stat().st_mtime, before)
 
 
 class McpServerTest(unittest.TestCase):
