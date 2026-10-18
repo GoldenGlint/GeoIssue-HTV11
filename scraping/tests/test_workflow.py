@@ -114,6 +114,29 @@ class ExpansionTests(unittest.TestCase):
         self.assertNotIn("contents: write", uncommented)
         self.assertNotIn("handoff/images", uncommented)
 
+    def test_bluesky_max_posts_comes_from_the_source_or_stays_100(self):
+        from scraping.collectors import bluesky
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            data = root / "data"
+            data.mkdir()
+            config = root / "workflow.json"
+            config.write_text(json.dumps({"sources": [
+                {"name": "bluesky-live", "platform": "bluesky", "queries": "bluesky-queries.txt",
+                 "max_posts": 20, "max_images": 20},
+                {"name": "default-bluesky", "platform": "bluesky", "queries": "bluesky-queries.txt"},
+            ]}))
+            seen = []
+
+            def fake_run(**kwargs):
+                seen.append((kwargs["max_posts"], kwargs["max_images"]))
+                raise ValueError("stopped")
+
+            with patch.object(workflow, "DATA", data), patch.object(bluesky, "run", fake_run):
+                with self.assertRaises(ValueError):
+                    workflow.run(output=data / "out", config_path=config)
+            self.assertEqual(seen, [(20, 20), (100, 200)])
+
 
 class PilotTests(unittest.TestCase):
     def test_lost_launch_is_never_retried_and_cap_is_sent(self):

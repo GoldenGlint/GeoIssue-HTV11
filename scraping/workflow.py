@@ -125,7 +125,7 @@ def run(*, output=DATA / "workflow", config_path=CONFIG / "workflow.json",
                     print(f"Collecting {name}...", flush=True)
                     if platform == "bluesky":
                         source_report = bluesky.run(queries=bluesky.load_queries(CONFIG / source["queries"]),
-                            output=batch, days=7, max_posts=100, max_pages=1,
+                            output=batch, days=7, max_posts=source.get("max_posts", 100), max_pages=1,
                             max_images=source.get("max_images", 200), pool="live")
                     elif platform in ("reddit", "mastodon"):
                         collector = reddit if platform == "reddit" else mastodon

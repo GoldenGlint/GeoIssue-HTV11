@@ -1,6 +1,6 @@
 # Run the image workflow on demand
 
-The workflow collects recent photos, deduplicates them, screens for Toronto / visible issues / location clues, groups same-post views, and writes detailed assessments. **X and Flickr are excluded. No daily job is enabled.**
+The workflow collects recent photos, deduplicates them, screens for Toronto / visible issues / location clues, groups same-post views, and writes detailed assessments. **X and Flickr are excluded. No daily job is enabled.** The Vultr package includes a daily timer and leaves it disabled; see below.
 
 ## Run locally
 
@@ -66,6 +66,17 @@ After extracting an artifact, restore its passed/context photos locally (replace
 ```
 
 Restoration fetches the original CDN URLs and checks image fingerprints. Deleted, changed or expired media is omitted and reported; cached metadata does not resurrect removed media.
+
+## Vultr host: daily timer installed, not enabled
+
+[deploy/civiclens-ingest.timer](../../deploy/civiclens-ingest.timer) runs `scripts/ingest.py` once a day. Install the unit with the app and do not enable it. Hosted collection stays manual until someone turns the timer on:
+
+```sh
+sudo systemctl enable --now civiclens-ingest.timer
+sudo systemctl disable --now civiclens-ingest.timer
+```
+
+A missed day is not replayed (`Persistent=false`). Enabling it needs a Gemini quota check and an explicit decision; the GitHub Actions schedule below stays commented out either way. Setup, the first manual run and rollback are in [deploy/README.md](../../deploy/README.md).
 
 ## Enable daily collection later
 

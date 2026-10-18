@@ -1,0 +1,5 @@
+{
+  "sources": [
+    {"name": "bluesky-live", "platform": "bluesky", "queries": "bluesky-queries.txt", "max_images": 20, "max_posts": 20}
+  ]
+}

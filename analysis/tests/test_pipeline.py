@@ -121,6 +121,22 @@ class PipelineTest(unittest.TestCase):
                          ("their-area", "Their area", "99", "THEIRS-1", 88, "1 Their St"))
         self.assertEqual(issue["provenance"]["neighbourhood_id"], "input")
 
+    def test_photo_url_prefix_publishes_a_browser_path(self):
+        from .test_adapter import handoff_group
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "images").mkdir()
+            (folder / "images" / "0.jpg").write_bytes(b"\xff\xd8\xff\xd9")
+            (folder / "post-groups.jsonl").write_text(json.dumps(handoff_group("yes")) + "\n")
+            out = folder / "out"
+            result = run(folder / "post-groups.jsonl", config(), out, NOW, offline=True,
+                         photo_url_prefix="./data/analyzed/")
+            [issue] = result["public"]
+            self.assertTrue(issue["evidence_thumbnail"].startswith("./data/analyzed/photos/"))
+            self.assertFalse(issue["evidence_thumbnail"].startswith("file:"))
+            name = issue["evidence_thumbnail"].rsplit("/", 1)[1]
+            self.assertTrue((out / "photos" / name).is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,7 @@ Start with the [collection package guide](scraping/README.md) for setup, command
 | Photos to map-ready issues: locate, merge, priority, area stats | [analysis/README.md](analysis/README.md) |
 | Issue fields shared by the analysis and the app | [data-contract.md](data-contract.md) |
 | Tiger Data setup, live report activity, simulated replay and benchmarks | [Tiger Data integration](tiger-data-plan.md) |
+| Vultr hosting, on-demand ingestion, deployment and demo checks | [Vultr implementation plan](vultr-plan.md), [deploy guide](deploy/README.md) |
 | Working collectors and review tools | [scraping/README.md](scraping/README.md) |
 | Current collection status, freshness policy, and model handoff | [Collection workflow](scraping/docs/COLLECTION.md) |
 | Automatic Gemini screening (Toronto / issue / locatability) | [Screening](scraping/docs/SCREENING.md) |
