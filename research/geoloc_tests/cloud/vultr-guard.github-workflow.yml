@@ -1,0 +1,19 @@
+# Cloud copy of the Vultr guard: runs every 10 minutes on GitHub's servers, so a forgotten GPU is destroyed
+# even when the laptop is asleep. To enable: copy to .github/workflows/vultr-guard.yml, push, and add the
+# repository secret VULTR_API_KEY. The key's API access control must allow GitHub runner IPs (they vary),
+# so use a sub-user key limited to managing servers rather than the root key.
+name: vultr-guard
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Destroy expired or over-budget CivicLens instances
+        run: python research/geoloc_tests/cloud/vultr_guard.py --budget-usd 10
+        env:
+          VULTR_API_KEY: ${{ secrets.VULTR_API_KEY }}

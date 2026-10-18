@@ -24,3 +24,7 @@ data/analyzed/*
 !data/analyzed/report.json
 !data/analyzed/areas.json
 scraping/data/
+
+# Spike data (scraped posts, images, reference thumbnails) stays local
+spikes/data/
+spikes/results/raw/
