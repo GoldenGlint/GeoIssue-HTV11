@@ -5,10 +5,10 @@
 import { icon } from './icons.js';
 import { esc, plural } from './format.js';
 import { toast, showModal, modalHeader, closeModal } from './ui.js';
-import { apiStatus, startGeolocation, geolocationJobs, cancelGeolocation } from './api.js';
+import { apiStatus, startGeolocation, geolocationJobs, geolocationJob, cancelGeolocation } from './api.js';
 import { formatDecimal, googleStreetViewUrl, googleMapsUrl } from './coordinates.js';
-import { read, persist } from './state.js';
-import { nav } from './app.js';
+import { state, read, persist } from './state.js';
+import { nav, render } from './app.js';
 import { getMap } from './views/map-view.js';
 
 const FINAL = ['done', 'no_answer', 'failed', 'cancelled'];
@@ -65,9 +65,42 @@ async function refresh() {
     const was = before.get(job.id);
     if (was && !FINAL.includes(was) && FINAL.includes(job.state)) announce(job);
   }
+  await resolveSubmissions();
   listeners.forEach(fn => fn(jobs));
   updateIndicator();
   timer = jobs.some(isActive) ? setTimeout(refresh, POLL_MS) : null;
+}
+
+// ---- Submissions sent without a location: Claude's answer becomes their location when the job ends ----
+/** What a finished job gives a submission: coordinates rounded like every local submission (about 100 m),
+ *  and whether street imagery verified them. Null while the job is still running. */
+export function locationFromJob(job) {
+  if (!job || isActive(job)) return null;
+  const f = job.result?.final, base = { job_id: job.id, model: job.model };
+  if (!f) return { coordinates: null, location_status: 'not_found', geolocation: { ...base, error: job.error || 'Claude ended without an answer' } };
+  return {
+    coordinates: [Number(f.lon.toFixed(3)), Number(f.lat.toFixed(3))],
+    location_status: f.verified ? 'located' : 'unverified',
+    geolocation: { ...base, verified: f.verified, radius_m: Math.round(f.radius_m), place_description: f.place_description || '' },
+  };
+}
+
+async function resolveSubmissions() {
+  const waiting = state.pending.filter(p => p.location_status === 'locating' && p.geolocation?.job_id);
+  if (!waiting.length) return;
+  let changed = 0;
+  for (const entry of waiting) {
+    // a job that has dropped off the recent list is fetched on its own
+    const job = findJob(entry.geolocation.job_id) || await geolocationJob(entry.geolocation.job_id);
+    const found = locationFromJob(job);
+    if (!found) continue;
+    Object.assign(entry, found, { address: entry.address || found.geolocation.place_description || '' });
+    changed++;
+  }
+  if (!changed) return;
+  persist('pending', state.pending);
+  toast(changed === 1 ? 'Claude finished locating a submitted photo. Its location is under Saved → Your submissions.' : `Claude finished locating ${changed} submitted photos.`);
+  if (['saved', 'verify'].includes(state.view) && !document.querySelector('.modal')) render();
 }
 
 /** Starts a job for a photo File and returns its first status. */
@@ -159,8 +192,15 @@ export function geoJobsModal() {
   seen = new Set([...seen, ...jobs.filter(j => FINAL.includes(j.state)).map(j => j.id)]);
   persist('geoSeen', [...seen].slice(-200));
   let stop = null;
-  showModal(`${modalHeader('Claude Code on this computer', 'Photo locations')}<div class="modal-body"><p class="modal-intro">Claude reads each photo for signs and landmarks, searches maps and City street furniture, and checks candidate spots against street-level imagery. Only an image match counts as verified; other answers are leads with a wide radius.</p><div id="geo-job-list" class="geo-job-list"></div></div><div class="modal-footer"><span class="subtle-label">Jobs keep running when this dialog or the page is closed</span><button class="button primary" data-close>Done</button></div>`, { wide: true, label: 'Photo locations', onClose: () => stop?.() });
+  showModal(`${modalHeader('Claude Code on this computer', 'Photo locations')}<div class="modal-body"><p class="modal-intro">Claude reads each photo for signs and landmarks, searches maps and City street furniture, and checks candidate spots against street-level imagery. Only an image match counts as verified; other answers are leads with a wide radius.</p><div id="geo-job-list" class="geo-job-list"></div></div><div class="modal-footer"><span class="subtle-label">Jobs keep running when this dialog or the page is closed</span><label class="button">${icon('upload')} Locate a photo<input id="geo-new-photo" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><button class="button primary" data-close>Done</button></div>`, { wide: true, label: 'Photo locations', onClose: () => stop?.() });
   const list = document.querySelector('#geo-job-list');
+  document.querySelector('#geo-new-photo').onchange = async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) { toast('Use a JPEG, PNG or WebP photo smaller than 10 MB.'); return; }
+    try { await locatePhoto(file); list.scrollTop = 0; } catch (error) { toast(`Couldn’t start Claude: ${error.message}`); }
+  };
   renderJobs(list);
   stop = onJobs(() => renderJobs(list));
   updateIndicator();

@@ -10,12 +10,13 @@ import { render, nav, toggleSave, setRole } from './app.js';
 import { getMap, openIssue, frameIssues, renderPanel } from './views/map-view.js';
 import { apiStatus, triagePhoto } from './api.js';
 import { blurPhoto } from './blur.js';
-import { geolocationAvailable, geolocationModel, locatePhoto, cancelJob, cancelButton, onJobs, findJob, isActive, jobCoords, jobHeadline, lastStep, zoomFor } from './geolocate.js';
+import { geolocationAvailable, geolocationModel, locatePhoto, cancelJob, cancelButton, onJobs, findJob, isActive, jobCoords, jobHeadline, lastStep, zoomFor, locationFromJob } from './geolocate.js';
 
 // photos: { file, url (original), blurredUrl, boxes (from Gemini), manualBoxes, status, result, error, showOriginal }
 // geoJob: the Claude geolocation job for the first photo; geoApplied: the answer the pin was moved to
-const freshDraft = () => ({ photos: [], category: '', severity: '', description: '', address: '', confirmed: false, coordinates: null, ai: null, aiFilled: [], geoJob: null, geoApplied: null });
-let uploadDraft = freshDraft(), picker = null, gemini = null, stopGeo = null;
+// locationUnknown: "I don't know where this is", so Claude's answer becomes the location
+const freshDraft = () => ({ photos: [], category: '', severity: '', description: '', address: '', confirmed: false, coordinates: null, ai: null, aiFilled: [], geoJob: null, geoApplied: null, locationUnknown: false });
+let uploadDraft = freshDraft(), picker = null, gemini = null, stopGeo = null, startingGeo = false;
 const NEARBY_M = 150;
 const insideToronto = ([lng, lat]) => lng >= TORONTO_BOUNDS.west && lng <= TORONTO_BOUNDS.east && lat >= TORONTO_BOUNDS.south && lat <= TORONTO_BOUNDS.north;
 const coordinateText = ([lng, lat]) => `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
@@ -46,33 +47,41 @@ function updatePicker() {
 function destroyPicker() { picker?.destroy(); picker = null; }
 
 // ---- "Locate with Claude": a background Claude Code job finds where the first photo was taken ----
-// The pin only moves when the person chooses to; an unverified answer says so.
+// With a known location the pin only moves when the person chooses to. With "I don't know where this is" the
+// pin, address and confirmation drop out: the issue can be submitted at once, and Claude's answer becomes its
+// location when the job ends (src/geolocate.js fills it in, even after a reload). An unverified answer says so.
 const geoPlaced = () => uploadDraft.geoApplied && uploadDraft.coordinates && distanceMetres(uploadDraft.coordinates, uploadDraft.geoApplied.coordinates) < 3;
+const unknownMode = () => uploadDraft.locationUnknown && geolocationAvailable();
 function renderGeo() {
   const el = $('#geo-locate');
   if (!el) return;
   if (!geolocationAvailable()) { el.innerHTML = ''; return; }
-  const job = uploadDraft.geoJob && findJob(uploadDraft.geoJob), photo = uploadDraft.photos[0];
+  const job = uploadDraft.geoJob && findJob(uploadDraft.geoJob), photo = uploadDraft.photos[0], unknown = unknownMode();
   if (!job) {
-    el.innerHTML = `<div class="ai-card geo-card">${icon('locate')}<span><strong>Not sure exactly where it was?</strong> Claude can work it out from the photo: it reads signs and landmarks, then checks candidate spots against street-level imagery. It runs in the background on this computer and usually takes a few minutes.<small>Uses Claude ${esc(geolocationModel())} through Claude Code. The photo is sent to Anthropic.</small></span><div class="geo-card-actions"><button type="button" class="button small" id="geo-start" ${photo ? '' : 'disabled'}>${icon('locate')} ${photo ? 'Locate with Claude' : 'Add a photo first'}</button></div></div>`;
-    $('#geo-start').onclick = startGeo;
+    el.innerHTML = unknown
+      ? `<div class="ai-card geo-card">${icon('locate')}<span><strong>${photo ? 'Claude will find where this was taken' : 'Add a photo and Claude will find where it was taken'}</strong>It reads signs and landmarks, then checks candidate spots against street-level imagery, in the background on this computer. It starts when you choose Locate with Claude or submit the issue, and its answer becomes the location.<small>Uses Claude ${esc(geolocationModel())} through Claude Code. The photo is sent to Anthropic.</small></span><div class="geo-card-actions"><button type="button" class="button small" id="geo-start" ${photo ? '' : 'disabled'}>${icon('locate')} ${photo ? 'Locate with Claude' : 'Add a photo first'}</button></div></div>`
+      : `<div class="ai-card geo-card">${icon('locate')}<span><strong>Not sure exactly where it was?</strong> Claude can work it out from the photo: it reads signs and landmarks, then checks candidate spots against street-level imagery. It runs in the background on this computer and usually takes a few minutes.<small>Uses Claude ${esc(geolocationModel())} through Claude Code. The photo is sent to Anthropic.</small></span><div class="geo-card-actions"><button type="button" class="button small" id="geo-start" ${photo ? '' : 'disabled'}>${icon('locate')} ${photo ? 'Locate with Claude' : 'Add a photo first'}</button></div></div>`;
+    $('#geo-start')?.addEventListener('click', startGeo);
     return;
   }
   if (isActive(job)) {
     const step = lastStep(job);
-    el.innerHTML = `<div class="ai-card loading" data-geo-job="${job.id}"><span class="spinner"></span><span><strong>Claude is locating your photo · ${esc(jobHeadline(job).replace(/^Locating · /, ''))}</strong>${step ? esc(step.label) : 'Starting Claude Code…'}<small>Runs in the background: keep filling in the form, or close this dialog. It stays listed under Photo locations in the page header.</small></span><div class="geo-card-actions">${cancelButton(job.id, 'id="geo-cancel"')}</div></div>`;
+    const note = unknown ? 'You can submit now: the location is added to your submission when Claude finishes, even if you close this page.' : 'Runs in the background: keep filling in the form, or close this dialog. It stays listed under Photo locations in the page header.';
+    el.innerHTML = `<div class="ai-card loading" data-geo-job="${job.id}"><span class="spinner"></span><span><strong>Claude is locating your photo · ${esc(jobHeadline(job).replace(/^Locating · /, ''))}</strong>${step ? esc(step.label) : 'Starting Claude Code…'}<small>${note}</small></span><div class="geo-card-actions">${cancelButton(job.id, 'id="geo-cancel"')}</div></div>`;
     $('#geo-cancel').onclick = () => cancelJob(job.id);
     return;
   }
   const coords = jobCoords(job);
   if (!coords) {
-    el.innerHTML = `<div class="ai-card warn" data-geo-job="${job.id}">${icon('warning')}<span><strong>${esc(jobHeadline(job))}</strong>${esc(job.error || 'Claude ended without an answer.')} Place the pin yourself, or try again.</span><div class="geo-card-actions"><button type="button" class="button small" id="geo-start">${icon('refresh')} Try again</button></div></div>`;
+    el.innerHTML = `<div class="ai-card warn" data-geo-job="${job.id}">${icon('warning')}<span><strong>${esc(jobHeadline(job))}</strong>${esc(job.error || 'Claude ended without an answer.')} ${unknown ? 'Try again, or untick “I don’t know where this is” and place the pin yourself.' : 'Place the pin yourself, or try again.'}</span><div class="geo-card-actions"><button type="button" class="button small" id="geo-start">${icon('refresh')} Try again</button></div></div>`;
     $('#geo-start').onclick = startGeo;
     return;
   }
   const f = job.result.final, placed = geoPlaced() && uploadDraft.geoApplied.job_id === job.id;
-  el.innerHTML = `<div class="ai-card ${f.verified ? '' : 'warn'}" data-geo-job="${job.id}">${icon(f.verified ? 'check' : 'warning')}<span><strong>${f.verified ? `Claude placed it within ${Math.round(f.radius_m)} m` : `Claude’s best guess, within ${Math.round(f.radius_m).toLocaleString()} m`}</strong>${esc(f.place_description || formatDecimal(coords))}<small>${f.verified ? 'Verified by matching your photo against street-level imagery.' : 'Not verified by street-level imagery. Check the spot before you rely on it.'}</small></span><div class="geo-card-actions"><button type="button" class="button small ${placed ? '' : 'primary'}" id="geo-apply" ${placed ? 'disabled' : ''}>${icon('pin')} ${placed ? 'Pin is on Claude’s estimate' : 'Move the pin here'}</button><a class="button small" href="${googleStreetViewUrl(coords)}" target="_blank" rel="noopener">${icon('external')} Check in Street View</a></div></div>`;
-  $('#geo-apply').onclick = () => {
+  const headline = f.verified ? `Claude placed it within ${Math.round(f.radius_m)} m` : `Claude’s best guess, within ${Math.round(f.radius_m).toLocaleString()} m`;
+  const apply = unknown ? '' : `<button type="button" class="button small ${placed ? '' : 'primary'}" id="geo-apply" ${placed ? 'disabled' : ''}>${icon('pin')} ${placed ? 'Pin is on Claude’s estimate' : 'Move the pin here'}</button>`;
+  el.innerHTML = `<div class="ai-card ${f.verified ? '' : 'warn'}" data-geo-job="${job.id}">${icon(f.verified ? 'check' : 'warning')}<span><strong>${headline}</strong>${esc(f.place_description || formatDecimal(coords))}<small>${f.verified ? 'Verified by matching your photo against street-level imagery.' : 'Not verified by street-level imagery. Check the spot before you rely on it.'}${unknown ? ' This becomes the issue’s location.' : ''}</small></span><div class="geo-card-actions">${apply}<a class="button small" href="${googleStreetViewUrl(coords)}" target="_blank" rel="noopener">${icon('external')} Check in Street View</a></div></div>`;
+  if (apply) $('#geo-apply').onclick = () => {
     uploadDraft.geoApplied = { job_id: job.id, coordinates: coords.map(v => Number(v.toFixed(5))), verified: f.verified, radius_m: Math.round(f.radius_m), model: job.model, pinned: false };
     picker?.flyTo(coords, zoomFor(f.radius_m));
     renderGeo();
@@ -80,14 +89,29 @@ function renderGeo() {
 }
 async function startGeo() {
   const photo = uploadDraft.photos[0];
-  if (!photo) return;
-  $('#geo-start').disabled = true;
+  if (!photo || startingGeo) return;
+  startingGeo = true;
+  const button = $('#geo-start');
+  if (button) button.disabled = true;
   try {
     uploadDraft.geoJob = (await locatePhoto(photo.file)).id;
     uploadDraft.geoApplied = null;
   } catch (error) {
     toast(`Couldn’t start Claude: ${error.message}`);
   }
+  startingGeo = false;
+  renderGeo();
+}
+// "I don't know where this is": hide the pin, address and confirmation. Claude is not started here: a run is
+// expensive, so it waits for Locate with Claude or the final Submit.
+// Later: only offer a run once Gemini's triage says the photo shows a real issue and looks locatable.
+function applyLocationMode() {
+  const form = $('#upload-form');
+  if (!form) return;
+  const unknown = unknownMode();
+  form.classList.toggle('location-unknown', unknown);
+  form.address.required = !unknown;
+  form.confirmed.required = !unknown;
   renderGeo();
 }
 
@@ -190,7 +214,7 @@ function renderPhotos() {
     URL.revokeObjectURL(removed.url); if (removed.blurredUrl) URL.revokeObjectURL(removed.blurredUrl);
     if (!uploadDraft.photos.length) uploadDraft.ai = null;
     if (index === 0) { uploadDraft.geoJob = null; uploadDraft.geoApplied = null; } // the job was for that photo
-    $('#photo-input').value = ''; $('#blur-editor').hidden = true; renderPhotos(); renderAi(); renderGeo();
+    $('#photo-input').value = ''; $('#blur-editor').hidden = true; renderPhotos(); renderAi(); applyLocationMode();
   });
   el.querySelectorAll('[data-original]').forEach(b => b.onclick = () => { const p = uploadDraft.photos[Number(b.dataset.original)]; p.showOriginal = !p.showOriginal; renderPhotos(); });
   el.querySelectorAll('[data-blur-photo]').forEach(b => b.onclick = () => openBlurEditor(uploadDraft.photos[Number(b.dataset.blurPhoto)]));
@@ -232,10 +256,10 @@ export async function uploadModal(review = false) {
     <div id="upload-error" class="form-error" role="alert"></div>
     <div class="form-row"><label class="form-label" data-ai-field="category">Issue category <span>*</span><select name="category" required><option value="">Choose a category</option>${Object.keys(categories).map(t => `<option ${uploadDraft.category === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label><label class="form-label" data-ai-field="severity">How serious is it?<select name="severity"><option value="">Not sure</option>${['High', 'Medium', 'Low'].map(s => `<option ${uploadDraft.severity === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label></div>
     <label class="form-label" data-ai-field="description">What did you notice? <span>*</span><textarea name="description" placeholder="Describe the issue and how it affects the public space…" minlength="10" maxlength="1000" required>${esc(uploadDraft.description)}</textarea></label>
-    <div class="picker-field"><span class="form-label">Location <span>*</span></span><div class="picker-map-wrap"><div id="picker-map" class="city-map" aria-label="Drag the map to place the issue pin"></div><span class="picker-pin">${icon('pin')}</span><span id="picker-readout" class="picker-readout"></span></div><small class="picker-hint">Drag the map so the pin sits on the issue. Approximate is fine.</small><div id="geo-locate" class="geo-locate" aria-live="polite"></div></div>
+    <div class="picker-field"><span class="form-label">Location <span>*</span></span>${geolocationAvailable() ? `<label class="checkbox-label location-unknown-toggle"><input id="location-unknown" type="checkbox" ${uploadDraft.locationUnknown ? 'checked' : ''}> I don’t know where this is. Claude finds it from the photo.</label>` : ''}<div class="picker-map-wrap"><div id="picker-map" class="city-map" aria-label="Drag the map to place the issue pin"></div><span class="picker-pin">${icon('pin')}</span><span id="picker-readout" class="picker-readout"></span></div><small class="picker-hint">Drag the map so the pin sits on the issue. Approximate is fine.</small><div id="geo-locate" class="geo-locate" aria-live="polite"></div></div>
     <div id="nearby-reports" class="nearby-reports" hidden></div>
-    <label class="form-label">Nearest address or intersection <span>*</span><div class="input-with-icon">${icon('pin')}<input name="address" placeholder="e.g. King St W & Spadina Ave, Toronto" value="${esc(uploadDraft.address)}" minlength="5" maxlength="200" required></div><small>Helps reviewers find the spot. Address search connects here when geocoding is ready.</small></label>
-    <label class="checkbox-label"><input name="confirmed" type="checkbox" ${uploadDraft.confirmed ? 'checked' : ''} required> I confirm this approximate location is in Toronto.</label>
+    <label class="form-label" data-known-location>Nearest address or intersection <span>*</span><div class="input-with-icon">${icon('pin')}<input name="address" placeholder="e.g. King St W & Spadina Ave, Toronto" value="${esc(uploadDraft.address)}" minlength="5" maxlength="200" required></div><small>Helps reviewers find the spot. Address search connects here when geocoding is ready.</small></label>
+    <label class="checkbox-label" data-known-location><input name="confirmed" type="checkbox" ${uploadDraft.confirmed ? 'checked' : ''} required> I confirm this approximate location is in Toronto.</label>
     <p class="fine-print">Your photos stay on this device in this demo; only blurred versions would be submitted. Please avoid faces, plates, and private interiors.</p>
   </div><div class="modal-footer"><span class="subtle-label">* Required information</span><button class="button primary" type="submit">Review issue ${icon('arrow')}</button></div></form>`, { label: 'Upload new issue', onClose: () => { destroyPicker(); stopGeo?.(); stopGeo = null; } });
   const form = $('#upload-form'), error = $('#upload-error'), input = $('#photo-input');
@@ -254,7 +278,7 @@ export async function uploadModal(review = false) {
     if (message) { e.target.value = ''; return; }
     const added = files.map(file => ({ file, url: URL.createObjectURL(file), blurredUrl: null, boxes: [], manualBoxes: [], status: 'idle', result: null, showOriginal: false }));
     uploadDraft.photos.push(...added);
-    renderPhotos(); renderAi(); renderGeo();
+    renderPhotos(); renderAi(); applyLocationMode();
     added.forEach(analyzePhoto);
   };
   form.onsubmit = e => {
@@ -262,31 +286,53 @@ export async function uploadModal(review = false) {
     if (!uploadDraft.photos.length) { error.textContent = 'Add at least one photo.'; return; }
     if (uploadDraft.photos.some(p => p.status === 'analyzing')) { error.textContent = 'Gemini is still checking your photos. One moment.'; return; }
     if (blocked()) { error.textContent = 'Replace the photo that shows a person or a private space before continuing.'; error.scrollIntoView({ block: 'nearest' }); return; }
-    if (!uploadDraft.coordinates || !insideToronto(uploadDraft.coordinates)) { error.textContent = 'Move the map so the pin is inside Toronto.'; error.scrollIntoView({ block: 'nearest' }); return; }
+    if (unknownMode()) {
+      const job = uploadDraft.geoJob && findJob(uploadDraft.geoJob);
+      if (job && !isActive(job) && !jobCoords(job)) { error.textContent = 'Claude couldn’t locate this photo. Try again, or untick “I don’t know where this is” and place the pin yourself.'; error.scrollIntoView({ block: 'nearest' }); return; }
+    } else if (!uploadDraft.coordinates || !insideToronto(uploadDraft.coordinates)) { error.textContent = 'Move the map so the pin is inside Toronto.'; error.scrollIntoView({ block: 'nearest' }); return; }
     uploadModal(true);
   };
   renderPhotos(); markAiFields(); initPicker();
   stopGeo = onJobs(renderGeo);
+  const toggle = $('#location-unknown');
+  if (toggle) toggle.onchange = () => { uploadDraft.locationUnknown = toggle.checked; error.textContent = ''; applyLocationMode(); };
   gemini = await apiStatus();
-  renderAi(); renderGeo();
+  renderAi(); applyLocationMode();
 }
 
 function uploadReview() {
   const blurred = uploadDraft.photos.reduce((n, p) => n + blurCount(p), 0);
-  const geo = geoPlaced() ? uploadDraft.geoApplied : null;
-  const located = geo ? `located by Claude, ${geo.verified ? `verified by street-level imagery (±${geo.radius_m} m)` : `not verified (±${geo.radius_m.toLocaleString()} m)`} · confirmed by you` : 'approximate location · confirmed by you';
+  const unknown = unknownMode(), geo = !unknown && geoPlaced() ? uploadDraft.geoApplied : null;
+  const byClaude = g => `located by Claude, ${g.verified ? `verified by street-level imagery (±${g.radius_m} m)` : `not verified (±${g.radius_m.toLocaleString()} m)`}`;
+  let where;
+  if (unknown) {
+    const job = uploadDraft.geoJob && findJob(uploadDraft.geoJob), found = locationFromJob(job);
+    where = found?.coordinates ? [found.geolocation.place_description || 'Located by Claude', `${coordinateText(found.coordinates)} · ${byClaude(found.geolocation)}`]
+      : job ? ['Claude is finding the location', 'It is added to your submission when Claude finishes, even if you close this page.']
+        : ['Claude finds the location from the photo', 'Claude starts when you submit, and its answer becomes the location.'];
+  } else where = [uploadDraft.address, `${coordinateText(uploadDraft.coordinates)} · ${geo ? `${byClaude(geo)} · confirmed by you` : 'approximate location · confirmed by you'}`];
   const ai = uploadDraft.ai?.is_civic_issue ? `<p class="fine-print">${icon('sun')} Category, severity and description were suggested by Gemini (${esc(uploadDraft.ai.model)}) and ${uploadDraft.aiFilled.length === 3 ? 'left as suggested' : 'edited by you'}.</p>` : '';
-  showModal(`${modalHeader('', 'Review your issue')}${steps(true)}<div class="modal-body"><div class="review-photos">${uploadDraft.photos.map(p => `<img src="${p.blurredUrl || p.url}" alt="Photo to submit${p.blurredUrl ? ', blurred' : ''}">`).join('')}</div>${blurred ? `<p class="review-blur">${icon('shield')} ${plural(blurred, 'area')} blurred. Only the blurred photos would be submitted.</p>` : ''}<h3>${esc(uploadDraft.category)}${uploadDraft.severity ? ` · ${esc(uploadDraft.severity)} severity` : ''}</h3><p>${esc(uploadDraft.description)}</p><div class="confidence-note">${icon('pin')}<div><strong>${esc(uploadDraft.address)}</strong><span>${coordinateText(uploadDraft.coordinates)} · ${located}</span></div></div>${ai}<div class="notice-banner">${icon('shield')} Avoid personal information and identifiable people. Submissions require privacy processing and verification before publication.</div><p class="fine-print">Prototype mode: only the issue details are stored in this browser, with the pin rounded to about 100 m. Photos are previewed locally and are not uploaded. This does not create a Toronto 311 request.</p></div><div class="modal-footer"><button class="button" id="upload-back">Back to details</button><button class="button primary" id="upload-submit">Submit local demo ${icon('arrow')}</button></div>`, { label: 'Review your issue' });
+  showModal(`${modalHeader('', 'Review your issue')}${steps(true)}<div class="modal-body"><div class="review-photos">${uploadDraft.photos.map(p => `<img src="${p.blurredUrl || p.url}" alt="Photo to submit${p.blurredUrl ? ', blurred' : ''}">`).join('')}</div>${blurred ? `<p class="review-blur">${icon('shield')} ${plural(blurred, 'area')} blurred. Only the blurred photos would be submitted.</p>` : ''}<h3>${esc(uploadDraft.category)}${uploadDraft.severity ? ` · ${esc(uploadDraft.severity)} severity` : ''}</h3><p>${esc(uploadDraft.description)}</p><div class="confidence-note">${icon(unknown ? 'locate' : 'pin')}<div><strong>${esc(where[0])}</strong><span>${esc(where[1])}</span></div></div>${ai}<div class="notice-banner">${icon('shield')} Avoid personal information and identifiable people. Submissions require privacy processing and verification before publication.</div><p class="fine-print">Prototype mode: only the issue details are stored in this browser, with the pin rounded to about 100 m. Photos are previewed locally and are not uploaded. This does not create a Toronto 311 request.</p></div><div class="modal-footer"><button class="button" id="upload-back">Back to details</button><button class="button primary" id="upload-submit">Submit local demo ${icon('arrow')}</button></div>`, { label: 'Review your issue' });
   $('#upload-back').onclick = () => uploadModal();
   $('#upload-submit').onclick = async e => {
-    e.currentTarget.disabled = true;
+    const button = e.currentTarget;
+    button.disabled = true;
+    if (unknown && !uploadDraft.geoJob) { // submitting is the go-ahead for the Claude run
+      try { uploadDraft.geoJob = (await locatePhoto(uploadDraft.photos[0].file)).id; }
+      catch (error) { button.disabled = false; toast(`Couldn’t start Claude: ${error.message}`); return; }
+    }
     try {
       const ai = uploadDraft.ai ? { category: uploadDraft.ai.category, severity: uploadDraft.ai.severity, confidence: uploadDraft.ai.confidence, model: uploadDraft.ai.model, kept: [...uploadDraft.aiFilled] } : null;
-      const result = await issueRepository.submit({ category: uploadDraft.category, severity: uploadDraft.severity || null, description: uploadDraft.description, address: uploadDraft.address, coordinates: uploadDraft.coordinates.map(v => Number(v.toFixed(3))), blurred_areas: blurred, ai_suggestion: ai, geolocation: geo && { job_id: geo.job_id, verified: geo.verified, radius_m: geo.radius_m, model: geo.model }, created_at: new Date().toISOString() });
+      // Unknown location: Claude's answer if it is in, otherwise "locating" until src/geolocate.js fills it in.
+      const job = unknown && findJob(uploadDraft.geoJob);
+      const location = !unknown ? { coordinates: uploadDraft.coordinates.map(v => Number(v.toFixed(3))), geolocation: geo && { job_id: geo.job_id, verified: geo.verified, radius_m: geo.radius_m, model: geo.model } }
+        : locationFromJob(job) || { coordinates: null, location_status: 'locating', geolocation: { job_id: uploadDraft.geoJob, model: job?.model || geolocationModel() } };
+      const address = unknown ? uploadDraft.address || location.geolocation.place_description || '' : uploadDraft.address;
+      const result = await issueRepository.submit({ category: uploadDraft.category, severity: uploadDraft.severity || null, description: uploadDraft.description, address, ...location, blurred_areas: blurred, ai_suggestion: ai, created_at: new Date().toISOString() });
       state.pending.push(result); persist('pending', state.pending);
       for (const p of uploadDraft.photos) { URL.revokeObjectURL(p.url); if (p.blurredUrl) URL.revokeObjectURL(p.blurredUrl); }
       uploadDraft = freshDraft();
-      showModal(`${modalHeader('', 'Thanks for looking out')}<div class="submission-success">${icon('shield')}<h3>Your sample issue is pending review</h3><code>${result.issue_id}</code><p>Details were saved locally and appear under Saved → Your submissions. No photos were uploaded or published. Connect the submission API to send reports to your team.</p>${badge('Pending review')}</div><div class="modal-footer"><button class="button primary" data-close>Back to workspace</button></div>`, { label: 'Submission received' });
+      showModal(`${modalHeader('', 'Thanks for looking out')}<div class="submission-success">${icon('shield')}<h3>Your sample issue is pending review</h3><code>${result.issue_id}</code><p>Details were saved locally and appear under Saved → Your submissions. No photos were uploaded or published. Connect the submission API to send reports to your team.</p>${result.location_status === 'locating' ? `<p>${icon('locate')} Claude is still finding where the photo was taken. The location is added to the submission when it finishes, even if you close this page.</p>` : ''}${badge('Pending review')}</div><div class="modal-footer"><button class="button primary" data-close>Back to workspace</button></div>`, { label: 'Submission received' });
       render();
     } catch {
       $('#upload-submit').disabled = false;

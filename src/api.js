@@ -40,4 +40,7 @@ export async function startGeolocation(file) {
 /** The jobs, newest first, or null when the server can't be reached (it may be restarting). */
 export const geolocationJobs = () => fetch('/api/geolocate', { cache: 'no-store' })
   .then(r => r.ok ? r.json() : null).then(d => d && (d.jobs || [])).catch(() => null);
+/** One job's status, or null when it can't be fetched. */
+export const geolocationJob = id => fetch(`/api/geolocate/${encodeURIComponent(id)}`, { cache: 'no-store' })
+  .then(r => r.ok ? r.json() : null).catch(() => null);
 export const cancelGeolocation = id => post(`/api/geolocate/${encodeURIComponent(id)}/cancel`, {});

@@ -1192,6 +1192,8 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:#13354e;color:#91d7f
 .geo-jobs.running{border-color:#2d5874;color:#cfe9ee}
 .geo-jobs.ready{border-color:#19584b;background:#0b2a27;color:#46d6b7}
 .geo-locate{margin-top:10px}
+.location-unknown-toggle{margin:2px 0 10px}
+.location-unknown .picker-map-wrap,.location-unknown .picker-hint,.location-unknown .nearby-reports,.location-unknown [data-known-location]{display:none}
 .geo-locate .ai-card>.spinner{flex:0 0 14px}
 .geo-locate .ai-card strong{display:block;margin-bottom:2px}
 .geo-locate:empty{display:none}

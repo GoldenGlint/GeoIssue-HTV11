@@ -5,7 +5,15 @@ import { state, filtered, findIssue, isSighting, reviewQueue, persist, applyCorr
 import { emptyHtml, issueRow, toast, correctionSummary } from '../ui.js';
 import { render } from '../app.js';
 
-const where = i => `${esc(i.address)}${i.coordinates ? ` · ${i.coordinates[1].toFixed(3)}, ${i.coordinates[0].toFixed(3)}` : ''}`;
+// Submissions sent without a location get Claude's answer later (src/geolocate.js); say where that stands.
+const where = i => {
+  const g = i.geolocation;
+  if (i.location_status === 'locating') return `${icon('locate')} Claude is finding where this photo was taken…`;
+  if (i.location_status === 'not_found') return `${icon('warning')} Location not found${g?.error ? ` (${esc(g.error)})` : ''}. A reviewer needs to place it.`;
+  const place = `${esc(i.address)}${i.coordinates ? `${i.address ? ' · ' : ''}${i.coordinates[1].toFixed(3)}, ${i.coordinates[0].toFixed(3)}` : ''}`;
+  if (g?.radius_m == null) return place;
+  return `${place} · located by Claude, ${g.verified ? `verified by street-level imagery (±${g.radius_m} m)` : `not verified (±${g.radius_m.toLocaleString()} m), so the location needs a check`}`;
+};
 const pendingCard = i => isSighting(i)
   ? `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · Sighting${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>Added to ${esc(i.joined_issue_id)} · ${esc(i.category)}</h3>${i.description ? `<p>${esc(i.description)}</p>` : ''}<p>${where(i)}</p></div>${badge('Sighting added', 'verified')}<button class="button small" data-issue="${esc(i.joined_issue_id)}">Open issue</button></div>`
   : `<div class="card pending-card"><div><span class="eyebrow">${esc(i.issue_id)} · Local submission${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><h3>${esc(i.category)}${i.severity ? ` · ${esc(i.severity)} severity` : ''}</h3><p>${esc(i.description)}</p><p>${where(i)}</p>${i.ai_suggestion ? `<p class="fine-print">Gemini suggested ${esc(i.ai_suggestion.category)} · ${esc(i.ai_suggestion.severity)} (${Math.round(i.ai_suggestion.confidence * 100)}%)${i.blurred_areas ? ` · ${i.blurred_areas} area${i.blurred_areas === 1 ? '' : 's'} blurred` : ''}</p>` : ''}</div>${badge('Pending review')}<span class="subtle-label">Privacy processing not connected</span></div>`;
