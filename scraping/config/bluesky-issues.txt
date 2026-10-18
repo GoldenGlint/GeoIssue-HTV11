@@ -1,0 +1,51 @@
+# Additional issue and neighbourhood searches; one query per line, at most 50.
+Toronto blocked sidewalk
+Toronto curb ramp
+Toronto wheelchair access
+Toronto pothole
+Toronto sinkhole
+Toronto cracked sidewalk
+Toronto road damage
+Toronto dumped furniture
+Toronto overflowing garbage
+Toronto illegal dumping
+Toronto catch basin
+Toronto standing water
+Toronto clogged drain
+Toronto storm drain
+Toronto broken shelter
+Toronto missing manhole
+Toronto pedestrian detour
+Toronto construction access
+Toronto fallen tree
+Toronto downed wires
+Toronto almost tripped
+Toronto still not fixed
+Toronto reported to 311
+Toronto inaccessible
+Toronto bike lane debris
+Toronto bike lane blocked
+Scarborough sidewalk
+Scarborough dumping
+Scarborough construction
+Etobicoke construction
+Etobicoke garbage
+North York sidewalk
+Danforth sidewalk
+Danforth construction
+Bloor construction
+Yonge construction
+Eglinton sidewalk
+Queen Spadina drain
+Parkdale garbage
+Junction sidewalk
+Toronto broken
+Toronto blocked
+Toronto hazard
+Toronto unsafe
+Toronto debris
+Toronto damage
+Toronto dangerous
+Toronto flooded
+Toronto trash
+Toronto mess

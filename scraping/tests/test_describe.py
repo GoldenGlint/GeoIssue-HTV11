@@ -86,6 +86,24 @@ class DescriptionTests(unittest.TestCase):
             self.assertEqual((report["status"], report["pending_groups"]), ("partial", 1))
             self.assertTrue(read_jsonl(out / "passed.jsonl")[0]["screening"]["passed"])
 
+    def test_one_invalid_answer_leaves_later_groups_describable(self):
+        with tempfile.TemporaryDirectory() as folder, patch("scraping.handoff.DATA", Path(folder)), \
+                patch("scraping.describe.DATA", Path(folder)):
+            root = Path(folder)
+            first, second, out = root / "reddit-one", root / "reddit-two", root / "handoff"
+            save_batch(first, [source_row(0)], [source_row(0)])
+            other = source_row(1, post_id="https://www.reddit.com/r/toronto/comments/other/title/")
+            save_batch(second, [other], [other])
+            handoff.build([first, second], out, now=NOW)
+            groups = read_jsonl(out / "post-groups.jsonl")
+            self.assertEqual(len(groups), 2)
+            bad = details_for(groups[0])
+            bad["issues"][0]["supporting_image_keys"] = ["invented-image"]
+            with patch("scraping.describe.generate_content", side_effect=[bad, details_for(groups[1])]):
+                report = describe.run(out, key="test", model="test", session=MagicMock(), min_interval=0)
+            self.assertEqual((report["requests"], report["described_groups"], report["pending_groups"]), (2, 1, 1))
+            self.assertEqual(len(report["errors"]), 1)
+
     def test_partial_pull_description_is_preserved_as_previous_when_regeneration_cannot_run(self):
         with tempfile.TemporaryDirectory() as folder, patch("scraping.handoff.DATA", Path(folder)), \
                 patch("scraping.describe.DATA", Path(folder)):

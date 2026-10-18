@@ -1,0 +1,11 @@
+{
+  "api": "https://arctic-shift.photon-reddit.com/api",
+  "subreddits": ["urbanplanning", "transit", "bicycling", "fuckcars"],
+  "query": "Toronto",
+  "required_terms": ["Toronto", "TTC", "Bloor", "Spadina"],
+  "days": 7,
+  "max_posts_per_subreddit": 200,
+  "max_images_per_post": 10,
+  "max_images": 100,
+  "pool": "live"
+}

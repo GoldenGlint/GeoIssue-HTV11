@@ -13,7 +13,7 @@ import time
 import requests
 
 from ..media import (MediaRecord, assess_freshness, process_media, redact_text,
-                    write_gallery, write_json, write_jsonl)
+                    has_issue_words, write_gallery, write_json, write_jsonl)
 from ..paths import CONFIG, DATA, REVIEW_TEMPLATE
 
 DEFAULT_CONFIG = CONFIG / "reddit.json"
@@ -30,6 +30,13 @@ def load_config(path=DEFAULT_CONFIG):
     subs = [str(sub).strip().removeprefix("r/") for sub in data.get("subreddits") or []]
     if not subs or len(subs) > 15 or not all(re.fullmatch(r"[A-Za-z0-9_]{2,21}", sub) for sub in subs):
         raise ValueError("Configure 1–15 valid subreddit names.")
+    terms = data.get("required_terms") or []
+    if (not isinstance(terms, list) or len(terms) > 50
+            or any(not isinstance(term, str) or not term.strip() or len(term) > 80 for term in terms)):
+        raise ValueError("Configure at most 50 nonempty local discovery terms.")
+    query = data.get("query")
+    if query is not None and (not isinstance(query, str) or not query.strip() or len(query) > 100):
+        raise ValueError("Use a nonempty subreddit-scoped query of at most 100 characters.")
     return {
         "api": api, "subreddits": subs,
         "days": int(data.get("days") or 7),
@@ -37,6 +44,8 @@ def load_config(path=DEFAULT_CONFIG):
         "max_images_per_post": int(data.get("max_images_per_post") or 6),
         "max_images": int(data.get("max_images") or 300),
         "pool": data.get("pool") or "live",
+        "required_terms": terms,
+        "query": query,
     }
 
 
@@ -54,6 +63,8 @@ def collect(session, config, *, since, until, retry_wait=3):
         while source["posts_returned"] < config["max_posts_per_subreddit"]:
             params = {"subreddit": sub, "limit": 100, "sort": "desc",
                       "after": int(since.timestamp()), "before": before}
+            if config.get("query"):
+                params["query"] = config["query"]
             try:
                 for attempt in range(3):
                     response = session.get(config["api"] + "/posts/search", params=params,
@@ -79,6 +90,8 @@ def collect(session, config, *, since, until, retry_wait=3):
                     found = posts.setdefault(post["id"], post).setdefault("_found_by", [])
                     if f"subreddit:{sub}" not in found:
                         found.append(f"subreddit:{sub}")
+                    if config.get("query") and f"query:{config['query']}" not in found:
+                        found.append(f"query:{config['query']}")
             oldest = min((p.get("created_utc") for p in entries if isinstance(p, dict)
                           and isinstance(p.get("created_utc"), (int, float))), default=None)
             if len(entries) < 100 or oldest is None or int(oldest) >= before:
@@ -92,24 +105,25 @@ def image_urls(post, limit):
         meta = post.get("media_metadata") or {}
         items = (post.get("gallery_data") or {}).get("items") or []
         urls = []
-        for item in items:
+        for index, item in enumerate(items):
             info = meta.get(item.get("media_id")) or {}
             ext = EXTENSIONS.get(info.get("m"))
             media_id = str(info.get("id") or "")
             if (item.get("is_deleted") or info.get("e") != "Image" or info.get("status") != "valid"
                     or not ext or not re.fullmatch(r"[A-Za-z0-9]{5,20}", media_id)):
                 continue
-            urls.append((media_id, f"https://i.redd.it/{media_id}.{ext}"))
+            urls.append((index, media_id, f"https://i.redd.it/{media_id}.{ext}"))
         return urls[:limit]
     url = post.get("url") or ""
     match = re.fullmatch(r"https://i\.redd\.it/([A-Za-z0-9]{5,20})\.(?:jpe?g|png|webp)", url)
     if post.get("post_hint") == "image" and match:
-        return [(match[1], url)]
+        return [(0, match[1], url)]
     return []
 
 
-def normalize(posts, *, since, now, max_images_per_post=6):
+def normalize(posts, *, since, now, max_images_per_post=6, required_terms=()):
     records, stats = [], Counter()
+    local = re.compile(r"\b(?:" + "|".join(re.escape(term) for term in required_terms) + r")\b", re.I) if required_terms else None
     for post in posts:
         stats["posts_inspected"] += 1
         try:
@@ -121,6 +135,9 @@ def normalize(posts, *, since, now, max_images_per_post=6):
                 continue
             if post.get("crosspost_parent"):
                 stats["crossposts_skipped"] += 1
+                continue
+            if local and not local.search(f"{post.get('title') or ''} {post.get('selftext') or ''}"):
+                stats["outside_discovery_area"] += 1
                 continue
             created = datetime.fromtimestamp(int(post["created_utc"]), timezone.utc)
             if created < since:
@@ -138,7 +155,7 @@ def normalize(posts, *, since, now, max_images_per_post=6):
                 raise ValueError("Invalid permalink")
             caption = clean_text("\n\n".join(x for x in (post.get("title"), post.get("selftext")) if x))
             flair = str(post.get("link_flair_text") or "")
-            for index, (media_id, url) in enumerate(urls):
+            for index, media_id, url in urls:
                 records.append(MediaRecord(
                     platform="reddit", collector="arctic-shift-api",
                     post_id="https://www.reddit.com" + permalink, media_index=index,
@@ -173,8 +190,10 @@ def run(*, config_path=DEFAULT_CONFIG, output=DEFAULT_OUTPUT):
         raise ValueError("All subreddit requests failed. " +
                          " ".join(error for source in sources for error in source["errors"]))
     records, normalization = normalize(posts, since=since, now=started,
-                                       max_images_per_post=config["max_images_per_post"])
+                                       max_images_per_post=config["max_images_per_post"],
+                                       required_terms=config["required_terms"])
     records.sort(key=lambda record: record.posted_at or "", reverse=True)
+    records.sort(key=lambda record: not has_issue_words({"caption": record.caption, "alt_text": record.alt_text}))
     if len(records) > config["max_images"]:
         records = records[:config["max_images"]]
         normalization["images_capped"] = True

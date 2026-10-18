@@ -60,7 +60,8 @@ def probe_reddit(config, *, since, now):
             posts, sources = reddit.collect(session, {**config, "subreddits": [sub]},
                                             since=since, until=now)
             records, _ = reddit.normalize(posts, since=since, now=now,
-                                          max_images_per_post=config["max_images_per_post"])
+                                          max_images_per_post=config["max_images_per_post"],
+                                          required_terms=config.get("required_terms", ()))
             results.append({"source": f"r/{sub}", "posts": len(posts),
                             "errors": sources[0]["errors"], **score(records)})
     return results
@@ -73,6 +74,8 @@ def main():
     parser.add_argument("--query-file", type=Path, default=CONFIG / "bluesky-queries.txt")
     parser.add_argument("--config", type=Path, help="Mastodon or Reddit config JSON.")
     parser.add_argument("--days", type=int, default=7)
+    parser.add_argument("--output", type=Path, default=RESULTS,
+                        help="Save a separate probe report without replacing the baseline.")
     args = parser.parse_args()
     if not 1 <= args.days <= 30:
         parser.exit(1, "Use 1–30 days.\n")
@@ -93,9 +96,10 @@ def main():
     except (ValueError, OSError, requests.RequestException) as exc:
         parser.exit(1, f"Probe stopped: {exc}\n")
     results.sort(key=lambda row: (-row["issue_word_images"], -row["images"]))
-    previous = json.loads(RESULTS.read_text(encoding="utf-8")) if RESULTS.is_file() else {}
+    previous = json.loads(args.output.read_text(encoding="utf-8")) if args.output.is_file() else {}
     previous[args.platform] = {"probed_at": now.isoformat(), "days": args.days, "results": results}
-    write_json(RESULTS, previous)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    write_json(args.output, previous)
     print(f"{'source':45} {'posts':>5} {'photos':>6} {'images':>6} {'issue imgs':>10}")
     for row in results:
         flag = "  ERROR" if row["errors"] else ""

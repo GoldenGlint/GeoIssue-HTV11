@@ -1,0 +1,74 @@
+{
+  "evaluated_on": "2026-10-17",
+  "collector": "apify/instagram-scraper",
+  "discovery": {
+    "kind": "hashtag",
+    "tags": [
+      "BikeTO",
+      "TorontoConstruction"
+    ],
+    "posting_window_days": 7,
+    "requested_posts_total": 10
+  },
+  "budget": {
+    "plan_verified": "FREE",
+    "run_cap_usd": 0.05,
+    "observed_free_credit_used_usd": 0.027,
+    "out_of_pocket_usd": 0
+  },
+  "normalization": {
+    "source_items": 10,
+    "video_items_skipped": 0,
+    "non_media_items": 0,
+    "source_errors": 0,
+    "invalid_items": 0,
+    "incomplete_carousels": 0
+  },
+  "photo_posts": 10,
+  "image_records": 19,
+  "downloaded_images": 19,
+  "download_failures": 0,
+  "known_capture_times": 0,
+  "screening": {
+    "status": "ok",
+    "model": "gemini-3.5-flash-lite",
+    "requests": 18,
+    "cache_hits": 0,
+    "prefiltered": 1,
+    "unscreened": 0,
+    "screened": 18,
+    "kept": 6,
+    "passed": 1,
+    "pass_blockers": {
+      "no_issue": 17,
+      "not_kept": 12,
+      "not_locatable": 13,
+      "prefiltered": 1
+    },
+    "errors": []
+  },
+  "candidate_note": "One street-work / bike-lane-removal photo passed the initial screener, which labelled it damaged_transit_or_shelter. The detailed assessment returned issue_supported=no: routine roadway work with no clear visible defect. The handoff retains the disagreement as Needs review; no supported new issue example was added.",
+  "discovery_note": "Visual spot check found cycling infographics and contractor advertisements among the returned photos. Prefer inspected public feeds or known photo URLs for the next Instagram collection.",
+  "local_batch": "scraping/data/instagram-apify-live-20261017",
+  "expanded_handoff": "scraping/data/handoff-expanded-20261017",
+  "privacy_note": "Raw posts, image URLs, images, account identifiers, credentials and run IDs are excluded from this sanitized summary.",
+  "detailed_assessment": {
+    "new_post_groups": 1,
+    "issue_support_counts": {
+      "no": 1
+    },
+    "supported_new_issues": 0
+  },
+  "expanded_handoff_counts": {
+    "passed_images": 35,
+    "post_groups": 27,
+    "context_images": 10,
+    "described_groups": 27,
+    "by_platform": {
+      "bluesky": 14,
+      "mastodon": 7,
+      "reddit": 13,
+      "instagram": 1
+    }
+  }
+}
