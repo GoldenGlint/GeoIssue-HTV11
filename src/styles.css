@@ -1187,7 +1187,7 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 /* Dragging the map must never select its text (that turns the next drag into a native text drag). */
 .city-map{user-select:none;-webkit-user-select:none}
 .ai-card{flex-wrap:wrap}
-.ai-card>span:not(.ai-privacy){flex:1 1 0;min-width:0}
+.ai-card>span:not(.ai-privacy):not(.spinner){flex:1 1 0;min-width:0}
 .ai-card .ai-privacy{flex-basis:100%;margin-left:26px}
 /* Round 8: layout fixes from end-to-end testing. */
 .search-suggestions{min-width:min(380px,calc(100vw - 32px))}
@@ -1352,7 +1352,6 @@ input[type=checkbox]:disabled{opacity:.45;cursor:default}
 .geo-jobs.ready{border-color:var(--success-border);background:var(--success-soft);color:var(--success-text)}
 .geo-locate{margin-top:10px}
 .geo-locate:empty{display:none}
-.geo-locate .ai-card>.spinner{flex:0 0 14px}
 .geo-locate .ai-card strong{display:block;margin-bottom:2px}
 .location-unknown-toggle{margin:2px 0 10px}
 .location-unknown .picker-map-wrap,.location-unknown .picker-hint,.location-unknown .nearby-reports,.location-unknown [data-known-location]{display:none}
