@@ -14,7 +14,8 @@ const contrast = (a, b) => {
 };
 
 test('generated light theme matches styles.css', () => {
-  assert.equal(readFileSync(new URL('../src/theme-light.css', import.meta.url), 'utf8'), build(),
+  // Git may check the file out with CRLF line endings on Windows.
+  assert.equal(readFileSync(new URL('../src/theme-light.css', import.meta.url), 'utf8').replace(/\r\n/g, '\n'), build(),
     'Run `npm run theme` after editing src/styles.css.');
 });
 

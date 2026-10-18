@@ -13,7 +13,9 @@ const SCOPE = ':root[data-theme="light"]';
 const MANUAL = `${SCOPE}{color-scheme:light}
 ${SCOPE} .tile-layer img{filter:grayscale(.6) brightness(1.03) contrast(.94)}
 ${SCOPE} .map-pin{color:color-mix(in srgb,var(--pin),#000 30%)}
-${SCOPE} .map-pin.cluster{color:#0d4f7a}`;
+${SCOPE} .map-pin.cluster{color:#0d4f7a}
+${SCOPE} .route-bar i{background:#e08a12}
+${SCOPE} .route-bar.faded i{background:#efd2a6}`;
 
 // Dark-theme OKLab lightness → light-theme lightness. The darkest page background becomes a pale
 // grey, raised panels become whiter, borders mid-light, and light text/accents become dark.

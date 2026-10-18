@@ -7,6 +7,13 @@ const round = v => Number(v.toFixed(6));
 
 export const googleStreetViewUrl = ([lng, lat]) => `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat.toFixed(6)},${lng.toFixed(6)}`;
 export const googleMapsUrl = ([lng, lat]) => `https://www.google.com/maps/search/?api=1&query=${lat.toFixed(6)},${lng.toFixed(6)}`;
+/** Driving directions through the points in order. Maps URLs allow 9 waypoints, so 11 points at most. */
+export const DIRECTIONS_MAX_POINTS = 11;
+export function googleDirectionsUrl(points) {
+  const at = ([lng, lat]) => `${lat.toFixed(6)},${lng.toFixed(6)}`, used = points.slice(0, DIRECTIONS_MAX_POINTS);
+  const waypoints = used.slice(1, -1).map(at).join('|');
+  return `https://www.google.com/maps/dir/?api=1&origin=${at(used[0])}&destination=${at(used.at(-1))}${waypoints ? `&waypoints=${encodeURIComponent(waypoints)}` : ''}&travelmode=driving`;
+}
 
 /** 43.645512, -79.395312 → 43°38′43.8″N 79°23′43.1″W */
 export function formatDms([lng, lat]) {

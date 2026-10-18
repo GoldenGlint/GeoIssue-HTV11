@@ -3,7 +3,9 @@ import { CivicMap } from '../map.js';
 import { attachSearch } from '../search.js';
 import { categories, infrastructure, wardBoundaries, TORONTO_CENTER } from '../data.js';
 import { icon } from '../icons.js';
-import { typeIcon, typeColor } from '../format.js';
+import { esc, typeIcon, typeColor, issueName } from '../format.js';
+import { planRoute, ROUTE_ASSUMPTIONS, MAX_STOPS } from '../route.js';
+import { googleDirectionsUrl, DIRECTIONS_MAX_POINTS, distanceMetres } from '../coordinates.js';
 import { searchSuggestions } from '../issues.js';
 import { state, filtered, findIssue, remember, sampleWord } from '../state.js';
 import { toast, detailHtml, issueRow, emptyHtml, bindEvidence } from '../ui.js';
@@ -158,9 +160,49 @@ export function setHeat(on) {
   document.querySelectorAll('.map-segment button').forEach(b => b.classList.toggle('active', b.dataset.action === (on ? 'heat' : 'pins')));
 }
 
+const km = v => `${v < 10 ? v.toFixed(1) : Math.round(v)} km`;
+const kg = v => `${v >= 10 ? Math.round(v) : v >= 1 ? v.toFixed(1) : Number(v.toPrecision(2))} kg`;
+const duration = minutes => minutes < 60 ? `${Math.max(1, Math.round(minutes))} min` : `${Math.floor(minutes / 60)} h ${Math.round(minutes % 60)} min`;
+
+/** The crew route panel: the planned order on the map, its distance and CO₂ in a gas or electric van, and the stops. */
+function routeHtml(plan) {
+  const a = ROUTE_ASSUMPTIONS, { stops } = plan;
+  const savedKm = plan.reportedKm - plan.km, savedShare = plan.reportedKm ? savedKm / plan.reportedKm : 0;
+  const avoided = plan.reportedGasKg - plan.planned.evKg, avoidedShare = plan.reportedGasKg ? avoided / plan.reportedGasKg : 0;
+  const bars = [['Gas van, order reported', plan.reportedGasKg, 'gas faded'], ['Gas van, this route', plan.planned.gasKg, 'gas'], ['Electric van, this route', plan.planned.evKg, 'ev']];
+  const most = Math.max(...bars.map(b => b[1])) || 1;
+  const rows = stops.map((issue, n) => {
+    const legKm = n ? distanceMetres(stops[n - 1].geometry.coordinates, issue.geometry.coordinates) / 1000 * a.detourFactor : 0;
+    const leg = !n ? ' · start' : legKm < 0.05 ? ` · same spot as stop ${n}` : ` · ${km(legKm)} from stop ${n}`;
+    return `<li><button class="route-stop-row" data-issue="${esc(issue.issue_id)}"><span class="route-num">${n + 1}</span><span><strong>${esc(issueName(issue))}</strong><small>${esc(issue.address)}${leg}</small></span>${icon('arrow')}</button></li>`;
+  }).join('');
+  const directions = stops.length > DIRECTIONS_MAX_POINTS ? `Directions for the first ${DIRECTIONS_MAX_POINTS} stops` : 'Directions in Google Maps';
+  return `<div class="panel-heading"><button class="text-button" data-action="panel-back">${icon('back')} Back to selection</button><button class="icon-button" data-action="close-panel" aria-label="Close route">${icon('close')}</button></div>
+    <div class="detail-body route-body">
+      <div class="route-title"><span class="route-orb">${icon('route')}</span><div><span class="eyebrow">Crew route · estimate</span><h2>${stops.length} stops · ${km(plan.km)}</h2></div></div>
+      <p class="route-lede">About ${duration(plan.minutes)} of driving. ${savedShare >= 0.005 ? `Visiting in this order instead of the order they were reported saves <strong>${km(savedKm)}</strong> (${Math.floor(savedShare * 100)}%).` : 'The order they were reported is already about as short.'}</p>
+      <div class="route-bars">${bars.map(([label, value, kind]) => `<div class="route-bar ${kind}"><span>${label}</span><strong>${kg(value)} CO₂</strong><i style="width:${Math.max(1.5, value / most * 100).toFixed(1)}%"></i></div>`).join('')}</div>
+      <p class="route-callout">${icon('leaf')}<span>Planned and driven electric, this trip emits <strong>${kg(avoided)} CO₂ less</strong> than a gas van taking the issues in the order reported, ${Math.floor(avoidedShare * 100)}% less.</span></p>
+      <h3 class="route-subhead">Stops in order</h3>
+      <ol class="route-stops">${rows}</ol>
+      ${plan.left ? `<p class="fine-print">${plan.left} more selected ${plan.left === 1 ? 'issue was' : 'issues were'} left out: routes plan up to ${MAX_STOPS} stops, highest priority first.</p>` : ''}
+      <details class="route-assumptions"><summary>How this is estimated</summary><ul>
+        <li>The order: the shortest of the nearest-next routes from every stop, then improved by reversing any stretch that shortens it.</li>
+        <li>Road distance is ${a.detourFactor} × the straight line between stops, driven at ${a.speedKmh} km/h. Work time at each stop isn't included.</li>
+        <li>Gas van: ${a.gasLitresPer100Km} L per 100 km × ${a.gasKgCo2PerLitre} kg CO₂ per litre of gasoline.</li>
+        <li>Electric van: ${a.evKwhPerKm} kWh per km × about ${a.gridKgCo2PerKwh * 1000} g CO₂e per kWh on Ontario's mostly nuclear and hydro grid.</li>
+        <li>Issue positions are approximate (public ones are rounded to a 250 m grid), so the stops are too.</li>
+      </ul></details>
+    </div>
+    <div class="panel-footer"><a class="button primary" href="${googleDirectionsUrl(stops.map(i => i.geometry.coordinates))}" target="_blank" rel="noopener">${icon('external')} ${directions}</a><button class="button" data-action="route-fit">${icon('fit')} Show route</button></div>`;
+}
+
 export function renderPanel() {
   const el = document.querySelector('#issue-panel');
   if (!el) return;
+  // The route stays drawn while one of its stops is open from the route panel.
+  const routePanel = state.panel?.mode === 'route' ? state.panel : state.panel?.back?.mode === 'route' ? state.panel.back : null;
+  map?.setRoute(routePanel ? routePanel.plan.stops.map(i => i.geometry.coordinates) : null);
   const slide = isMobile() ? 'translateY(18px)' : 'translateX(22px)';
   document.querySelector('.map-workspace').classList.toggle('panel-open', !!state.panel);
   if (!state.panel) {
@@ -174,16 +216,21 @@ export function renderPanel() {
   const p = state.panel;
   if (p.mode === 'issue') {
     const i = findIssue(p.id);
-    el.innerHTML = `<div class="panel-heading"><button class="text-button" data-action="panel-back">${icon('back')} ${p.back ? 'Back to results' : 'Issue details'}</button><button class="icon-button" data-action="close-panel" aria-label="Close issue details">${icon('close')}</button></div>${detailHtml(i)}<div class="panel-footer"><button class="button" data-action="save-issue">${icon('bookmark')} ${state.saved.includes(i.issue_id) ? 'Saved' : 'Save'}</button><button class="button" data-action="share-issue">${icon('external')} Share</button><button class="button" data-action="correct-issue">${icon('edit')} Suggest correction</button></div>`;
+    el.innerHTML = `<div class="panel-heading"><button class="text-button" data-action="panel-back">${icon('back')} ${p.back ? `Back to ${p.back.mode === 'route' ? 'route' : 'results'}` : 'Issue details'}</button><button class="icon-button" data-action="close-panel" aria-label="Close issue details">${icon('close')}</button></div>${detailHtml(i)}<div class="panel-footer"><button class="button" data-action="save-issue">${icon('bookmark')} ${state.saved.includes(i.issue_id) ? 'Saved' : 'Save'}</button><button class="button" data-action="share-issue">${icon('external')} Share</button><button class="button" data-action="correct-issue">${icon('edit')} Suggest correction</button></div>`;
     el.querySelector('[data-action="save-issue"]').onclick = () => toggleSave([i.issue_id]);
     el.querySelector('[data-action="correct-issue"]').onclick = () => correctionModal(i);
     el.querySelector('[data-action="share-issue"]').onclick = () => shareIssue(i);
     bindEvidence(el);
     el.querySelector('[data-action="panel-back"]').onclick = () => { if (p.back) { state.panel = p.back; renderPanel(); } else clearSelection(); };
+  } else if (p.mode === 'route') {
+    el.innerHTML = routeHtml(p.plan);
+    el.querySelectorAll('[data-issue]').forEach(b => b.onclick = () => openIssue(b.dataset.issue, p));
+    el.querySelector('[data-action="panel-back"]').onclick = () => { state.panel = p.back; renderPanel(); };
+    el.querySelector('[data-action="route-fit"]').onclick = () => frameIssues(p.plan.stops);
   } else {
     const issues = p.ids.map(findIssue).filter(Boolean), cluster = p.mode === 'cluster';
     const high = issues.filter(i => i.severity === 'High').length, verified = issues.filter(i => i.verification_status === 'Verified').length;
-    el.innerHTML = `<div class="panel-heading"><div><h2>${issues.length} ${issues.length === 1 ? 'issue' : 'issues'} ${cluster ? 'in this cluster' : 'selected'}</h2></div><button class="icon-button" data-action="close-panel" aria-label="Close selection">${icon('close')}</button></div><div class="panel-info">${cluster ? 'Grouped at this zoom level. These may be separate incidents.' : 'Shift + click markers to add or remove issues.'}</div><div class="panel-list-controls"><input id="panel-search" placeholder="Filter these issues…" aria-label="Filter these issues"><select id="panel-sort" aria-label="Sort issues"><option value="date">Newest first</option><option value="severity">Severity</option><option value="type">Issue type</option></select></div><div class="selection-summary">${high} high priority <span>·</span> ${verified} verified</div><div id="panel-results" class="panel-results"></div><div class="panel-footer wrap"><button class="button primary" data-action="selection-table">${icon('database')} View as table</button>${cluster ? `<button class="button" data-action="cluster-zoom">${icon('fit')} Zoom in</button>` : ''}<button class="button" data-action="save-selection">${icon('bookmark')} Save selection</button></div>`;
+    el.innerHTML = `<div class="panel-heading"><div><h2>${issues.length} ${issues.length === 1 ? 'issue' : 'issues'} ${cluster ? 'in this cluster' : 'selected'}</h2></div><button class="icon-button" data-action="close-panel" aria-label="Close selection">${icon('close')}</button></div><div class="panel-info">${cluster ? 'Grouped at this zoom level. These may be separate incidents.' : 'Shift + click markers to add or remove issues.'}</div><div class="panel-list-controls"><input id="panel-search" placeholder="Filter these issues…" aria-label="Filter these issues"><select id="panel-sort" aria-label="Sort issues"><option value="date">Newest first</option><option value="severity">Severity</option><option value="type">Issue type</option></select></div><div class="selection-summary">${high} high priority <span>·</span> ${verified} verified</div><div id="panel-results" class="panel-results"></div><div class="panel-footer wrap"><button class="button primary" data-action="selection-table">${icon('database')} View as table</button>${cluster ? `<button class="button" data-action="cluster-zoom">${icon('fit')} Zoom in</button>` : ''}<button class="button" data-action="save-selection">${icon('bookmark')} Save selection</button>${issues.length > 1 ? `<button class="button" data-action="plan-route">${icon('route')} Plan crew route</button>` : ''}</div>`;
     const severityRank = ['High', 'Medium', 'Low'];
     const updateList = () => {
       const query = el.querySelector('#panel-search').value.toLowerCase(), sort = el.querySelector('#panel-sort').value;
@@ -198,6 +245,11 @@ export function renderPanel() {
     el.querySelector('[data-action="save-selection"]').onclick = () => toggleSave(p.ids);
     const zoom = el.querySelector('[data-action="cluster-zoom"]');
     if (zoom) zoom.onclick = () => frameIssues(issues, Math.min(18, Math.round(map.zoom) + 2));
+    const route = el.querySelector('[data-action="plan-route"]');
+    if (route) route.onclick = () => {
+      state.panel = { mode: 'route', ids: p.ids, plan: planRoute(issues), back: p };
+      renderPanel(); frameIssues(state.panel.plan.stops);
+    };
   }
   el.querySelector('[data-action="close-panel"]').onclick = clearSelection;
 }

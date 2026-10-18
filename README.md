@@ -63,6 +63,7 @@ The app opens in dark mode; the header sun/moon button or Preferences → Appear
 - **Methodology** (sidebar → Help & methodology): data sources and licences, how an issue reaches the map (what is live, sample or in progress), the priority rules, privacy, and what the data can't tell you.
 - Saved bookmarks, recents, preferences, and pending submission metadata persist in this browser. The demo role selector (sidebar, or Settings on a phone) shows a sample volunteer review queue. Review decisions last for the session. It is **not authentication**. The person icon opens Google Street View in a new tab: click it for the map centre, or drag it onto the map. CivicLens links to Street View but never copies its imagery; an in-app Mapillary viewer is still future work.
 - **Density** replaces the pins with a heat surface weighted by sightings, with its own scale. Click a hot spot to list the issues under it.
+- **Crew routes** (climate action): select issues (box select, Shift + click, a cluster or *View area issues*) → *Plan crew route*. The app orders the stops to keep driving short (nearest-next from every stop, then 2-opt), draws the route on the map, and estimates distance, driving time and CO₂ for a gas van versus an electric van, compared with visiting the issues in the order they were reported. *Directions in Google Maps* opens the first 11 stops. The assumptions are listed in the panel and in `src/route.js`; distances are straight lines × 1.3, so treat the figures as planning estimates.
 - **Corrections**: *Suggest correction* on any issue reports a wrong location, wrong issue type, a fix, or "not a public issue". A location can be set by dragging the map under a pin, pasting a Google Maps link, or typing coordinates in decimal degrees, degrees-minutes or degrees-minutes-seconds (`src/coordinates.js`, tested by `npm test`). Corrections appear under Saved and in the volunteer Verify queue; accepting one updates the issue and its location trace.
 - On phones the sidebar becomes a bottom tab bar, and the map supports pinch zoom.
 
@@ -81,7 +82,8 @@ The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSO
 | `src/views/workspace-view.js` | Saved, Recents, Verify |
 | `src/views/methodology-view.js` | Methodology page |
 | `src/modals.js` | Upload (Gemini suggestions, blurring, nearby reports), correction, Street View, infrastructure, export, settings, help, share and issue dialogs |
-| `src/coordinates.js`, `src/search.js` | Reading Google Maps links and decimal / DMS coordinates; the search box and its suggestions |
+| `src/coordinates.js`, `src/search.js` | Reading Google Maps links and decimal / DMS coordinates, directions links; the search box and its suggestions |
+| `src/route.js` | Crew route planning and its distance and CO₂ estimates (`npm test` covers it) |
 | `src/api.js`, `src/blur.js` | Calls to the local Gemini API; face/plate pixelation on a canvas |
 | `src/state.js` | Shared UI state, browser persistence, local sightings |
 | `src/issues.js`, `src/priority.js` | Filter, sort and search logic; priority score and reasons |

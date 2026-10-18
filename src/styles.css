@@ -1211,3 +1211,37 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:#13354e;color:#91d7f
   .map-top-left,.map-top-right{top:122px}
   .map-floating-filters .filter-select{flex:1 0 132px}
 }
+/* Crew routes: the planned order drawn under the pins, numbered stops, and the route panel. */
+.route-line{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.route-line polyline{fill:none;stroke-linejoin:round;stroke-linecap:round}
+.route-line .casing{stroke:#04101c;stroke-width:8;stroke-opacity:.55}
+.route-line .path{stroke:#25d5ac;stroke-width:3.5;stroke-dasharray:12 9;animation:route-flow 1.4s linear infinite}
+@keyframes route-flow{to{stroke-dashoffset:-21}}
+.route-stop{position:absolute;transform:translate(6px,-31px);min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:#25d5ac;color:#032119;font:750 11px/19px Manrope,system-ui,sans-serif;text-align:center;pointer-events:none;box-shadow:0 1px 5px #0007;z-index:2}
+.route-title{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.route-title h2{font-size:18px;margin-top:3px}
+.route-orb{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#0d2b2a;border:1px solid #1e5a4d;color:#25d5ac;flex-shrink:0}
+.route-lede{font-size:13px;line-height:1.6;color:#b9cadb;margin:0 0 14px}
+.route-lede strong,.route-callout strong{color:#e8eef7}
+.route-bars{display:grid;gap:10px;margin-bottom:14px}
+.route-bar{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:12px;color:#a8bdd2}
+.route-bar strong{font-size:12px;color:#e8eef7;font-weight:650}
+.route-bar i{grid-column:1/-1;height:8px;border-radius:4px;background:#ffb452}
+.route-bar.faded i{background:#7a6240}
+.route-bar.ev i{background:#25d5ac}
+.route-callout{display:flex;gap:10px;align-items:flex-start;border:1px solid #1e5a4d;background:#0b2425;border-radius:8px;padding:11px 12px;font-size:12px;line-height:1.6;color:#b9d6cf;margin:0 0 18px}
+.route-callout svg{flex-shrink:0;color:#25d5ac;width:16px;height:16px;margin-top:2px}
+.route-subhead{font-size:12px;color:#8fa7c0;font-weight:600;margin:0 0 6px}
+.route-stops{list-style:none;margin:0 0 14px;padding:0;border-top:1px solid #1d3044}
+.route-stop-row{display:flex;align-items:center;gap:11px;width:100%;padding:11px 2px;background:transparent;border-bottom:1px solid #1d3044;text-align:left;color:#dce8f5}
+.route-stop-row:hover{background:#0f2236}
+.route-stop-row>span:nth-child(2){flex:1;min-width:0;display:grid;gap:3px}
+.route-stop-row strong{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.route-stop-row small{font-size:11px;color:#869db5}
+.route-stop-row>svg{width:15px;height:15px;color:#6f88a3;flex-shrink:0}
+.route-num{display:grid;place-items:center;min-width:24px;height:24px;border-radius:50%;background:#0d2b2a;border:1px solid #1e5a4d;color:#25d5ac;font:750 11px Manrope,system-ui,sans-serif;flex-shrink:0}
+.route-assumptions{font-size:12px;color:#a8bdd2;border:1px solid #23374d;border-radius:8px;padding:10px 12px}
+.route-assumptions summary{cursor:pointer;color:#c9d9ea;font-weight:600}
+.route-assumptions ul{margin:8px 0 0;padding-left:17px;line-height:1.65}
+a.button{color:inherit;text-decoration:none}
+@media(prefers-reduced-motion:reduce){.route-line .path{animation:none}}
