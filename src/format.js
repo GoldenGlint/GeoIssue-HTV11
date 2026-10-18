@@ -8,6 +8,8 @@ export const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;'
 export const issueName = i => i.title || i.issue_type;
 export const typeColor = type => categories[type]?.color || '#2563eb';
 export const typeIcon = type => icon(categories[type]?.icon || 'pin');
+/** Issue categories as dropdown options (src/select.js), each with its map pin's icon and colour. */
+export const categoryOptions = (types = Object.keys(categories)) => types.map(t => ({ value: t, icon: categories[t].icon, color: categories[t].color }));
 export const badge = (text, kind = '') => `<span class="badge ${kind || String(text).toLowerCase().replaceAll(' ', '-')}">${esc(text)}</span>`;
 export const date = (value, options = {}) => new Date(value).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: 'America/Toronto', ...options });
 export const age = issue => Math.max(0, Math.floor((Date.parse(REFERENCE_DATE) - Date.parse(issue.first_seen_at)) / DAY));

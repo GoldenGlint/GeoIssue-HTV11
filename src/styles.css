@@ -63,7 +63,7 @@ input::placeholder,textarea::placeholder{color:var(--text-3)}
 .account{display:flex;align-items:center;gap:10px;border-top:1px solid var(--border);margin-top:18px;padding:19px 7px 0}
 .avatar{width:34px;height:34px;background:var(--surface-3);border:1px solid var(--border);border-radius:50%;color:var(--text-2);font-size:12px;display:grid;place-items:center}
 .account strong{font-size:12px;font-weight:600;display:block}
-.account select{padding:3px 12px 0 0;font-size:12px;color:var(--text-2);background:transparent;border:0;max-width:120px}
+.account .select{max-width:130px;margin-top:2px}
 .account-dots{margin-left:auto;color:var(--text-3)}
 .main{margin-left:var(--sidebar);min-height:100vh;padding:28px 28px 0;background:var(--bg)}
 .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:15px}
@@ -72,10 +72,6 @@ input::placeholder,textarea::placeholder{color:var(--text-3)}
 .search-field{border:1px solid var(--border-strong);background:var(--surface);border-radius:7px;display:flex;align-items:center;gap:9px;padding:0 11px;flex:1.4;min-width:170px}
 .search-field>.icon{width:17px;height:17px;color:var(--text-3)}
 .search-field input{border:0;background:none;color:var(--text);width:100%;min-width:0;font-size:12px;padding:12px 0}
-.filter-select{display:flex;align-items:center;gap:8px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);padding:0 10px;flex:1;min-width:115px}
-.filter-select>.icon{width:15px;height:15px;color:var(--text-3)}
-.filter-select select{background:transparent;border:0;min-width:0;width:100%;font-size:12px;color:var(--text-2);height:39px;padding:0 3px;cursor:pointer}
-.filter-select:last-of-type{flex:1.25}
 .reset-button{display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;color:var(--text-3);background:transparent;font-size:12px}
 .reset-button .icon{width:16px;height:16px}
 .filter-context{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:47px;font-size:12px;color:var(--text-3)}
@@ -145,7 +141,7 @@ input::placeholder,textarea::placeholder{color:var(--text-3)}
 .panel-info{font-size:12px;color:var(--text-3);padding:14px 18px 0;line-height:1.6}
 .panel-list-controls{display:flex;gap:7px;padding:13px 18px}
 .panel-list-controls input{width:100%;min-width:0;background:var(--surface);border:1px solid var(--border-strong);border-radius:5px;padding:8px;font-size:12px}
-.panel-list-controls select{font-size:12px;max-width:112px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:5px}
+.panel-list-controls .select{flex:none}
 .selection-summary{font-size:12px;color:var(--text-3);padding:0 18px 13px;border-bottom:1px solid var(--border)}
 .selection-summary span{margin:0 8px}
 .panel-results{flex:1;overflow:auto}
@@ -234,7 +230,7 @@ th:first-child,td:first-child{width:30px;padding-left:14px;padding-right:0}
 .table-pagination{padding:14px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-3);border-top:1px solid var(--border-strong);gap:10px}
 .table-pagination strong{font-weight:400;color:var(--text-2)}
 .table-pagination>div{display:flex;align-items:center;gap:7px}
-.table-pagination select{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:5px;padding:7px;font-size:12px;color:var(--text-2);margin-right:8px}
+.table-pagination .select{margin-right:8px}
 .page-number{display:grid;place-items:center;width:28px;height:28px;border-radius:5px;background:var(--accent);color:var(--on-accent)}
 .table-pagination .icon-button{width:28px;height:28px;border:1px solid var(--border-strong)}
 .table-pagination .icon{width:15px;height:15px}
@@ -377,7 +373,7 @@ th:first-child,td:first-child{width:30px;padding-left:14px;padding-right:0}
 .photo-previews button{position:absolute;top:3px;right:3px;width:19px;height:19px;display:grid;place-items:center;border-radius:50%;background:var(--surface);color:white;font-size:15px;padding:0}
 .form-label{display:block;margin:18px 0 0;font-size:12px;color:var(--text-2);line-height:1.6}
 .form-label>span{color:var(--text-3)}
-.form-label select,.form-label textarea,.share-input{display:block;width:100%;background:var(--surface);color:var(--text-2);border:1px solid var(--border-strong);border-radius:6px;font-size:12px;padding:11px;margin-top:7px}
+.form-label textarea,.share-input{display:block;width:100%;background:var(--surface);color:var(--text-2);border:1px solid var(--border-strong);border-radius:6px;font-size:12px;padding:11px;margin-top:7px}
 .form-label textarea{resize:vertical;min-height:94px;max-height:220px}
 .form-label small{font-size:12px;color:var(--text-3);display:block;margin-top:5px}
 .input-with-icon{display:flex;align-items:center;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface);padding:0 10px;gap:8px;margin-top:7px;color:var(--text-4)}
@@ -430,7 +426,6 @@ to{opacity:1;transform:translateY(0)}
 .page-header{margin-bottom:27px}
 h1{font-size:31px}
 .filterbar{min-height:46px}
-.filter-select select{height:44px;font-size:12px}
 .search-field input{font-size:12px}
 .filter-context{min-height:54px}
 .stat-card{padding:24px}
@@ -473,9 +468,6 @@ td{height:55px;font-size:12px}
 .main{padding:24px 20px 0}
 .map-page{padding-bottom:18px}
 .filterbar{gap:6px}
-.filter-select{min-width:95px;padding:0 7px;gap:4px}
-.filter-select>.icon{width:13px;height:13px}
-.filter-select select{font-size:12px}
 .search-field{min-width:150px;flex:1.2}
 .search-field kbd{display:none}
 .reset-button span{display:none}
@@ -523,8 +515,6 @@ td{height:55px;font-size:12px}
 .account{justify-content:center;padding:18px 0 0;margin-top:10px}
 .filterbar{flex-wrap:wrap}
 .search-field{flex:2;min-width:220px}
-.filter-select{flex:1;min-width:100px}
-.filter-select:last-of-type{flex:1}
 .main{padding-left:18px;padding-right:18px}
 .page-header{margin-bottom:18px}
 .map-page{min-height:0}
@@ -536,7 +526,6 @@ td{height:55px;font-size:12px}
 .panel-open .map-summary{max-width:100%}
 .panel-open .map-summary .text-button{display:none}
 .collection-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-.filterbar .filter-select select{font-size:12px}
 .stat-card{min-height:105px}
 .stat-grid{gap:9px}
 .stat-card small{line-height:1.7}
@@ -572,9 +561,6 @@ h1{font-size:22px}
 .header-right .icon-button{display:none}
 .filterbar{gap:6px}
 .search-field{flex:1 1 calc(100% - 35px);min-width:180px}
-.filter-select{flex:1 1 40%;min-width:95px}
-.filter-select select{height:30px;font-size:12px}
-.filter-select:last-of-type{flex:1 1 40%}
 .reset-button{width:25px;order:-1}
 .search-field{order:-2}
 .search-field input{font-size:12px;padding:10px 0}
@@ -622,7 +608,6 @@ h1{font-size:22px}
 .table-actions .scope-chip{font-size:12px;margin-right:auto}
 .table-pagination{padding:12px 10px;align-items:flex-start;flex-direction:column}
 .table-pagination>div{align-self:flex-end}
-.table-pagination select{font-size:12px}
 .data-bottom{padding:17px 0}
 .integration-note p{font-size:12px}
 .integration-note strong{font-size:12px}
@@ -653,7 +638,7 @@ h1{font-size:22px}
 .step-indicator>span{font-size:12px}
 .form-row{gap:9px}
 .form-label{font-size:12px}
-.form-label input,.form-label select,.form-label textarea{font-size:12px}
+.form-label input,.form-label textarea{font-size:12px}
 .modal-footer .button{font-size:12px}
 .upload-zone{padding:22px 10px}
 .upload-zone>span{font-size:12px}
@@ -685,9 +670,6 @@ h1{font-size:22px}
 .map-filter-row{display:flex;flex:2;gap:7px;min-width:0;pointer-events:auto}
 .map-floating-filters .search-field{min-width:0;min-height:40px;flex:1;background:var(--surface);box-shadow:var(--shadow-sm);border-color:var(--border-strong)}
 .map-floating-filters .search-field input{font-size:12px;padding:11px 0}
-.map-floating-filters .filter-select{flex:1;min-width:0;max-width:none;height:40px;background:var(--surface);box-shadow:var(--shadow-sm);border-color:var(--border-strong);padding:0 9px;gap:5px}
-.map-floating-filters .filter-select select{font-size:12px;height:30px}
-.map-floating-filters .filter-select .icon{width:14px;height:14px}
 .map-floating-filters .reset-button{order:0;width:36px;height:40px;padding:0;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;box-shadow:var(--shadow-sm)}
 .map-floating-filters .reset-button span{display:none}
 .map-floating-filters .filter-context{min-height:0;padding:8px 2px 0;gap:8px;pointer-events:none;font-size:12px}
@@ -715,16 +697,12 @@ h1{font-size:22px}
 .panel-open .map-floating-filters{right:377px}
 .panel-open .map-floating-filters .filterbar{flex-wrap:wrap;gap:7px}
 .panel-open .map-search-row,.panel-open .map-filter-row{flex:1 1 100%;min-width:0}
-.panel-open .map-floating-filters .filter-select{padding:0 5px}
-.panel-open .map-floating-filters .filter-select>.icon{display:none}
 .panel-open .map-top-left,.panel-open .map-top-right{top:141px}
 @media(min-width:1600px){.panel-open .map-floating-filters{right:407px}.map-page{padding:15px 20px 18px}}
 @media(max-width:1200px){
   .map-floating-filters .filterbar{flex-wrap:wrap;gap:7px}
   .map-search-row{flex:1 1 100%}
   .map-filter-row{flex:1 1 100%}
-  .map-floating-filters .filter-select{height:33px}
-  .map-floating-filters .filter-select select{height:31px}
   .map-top-left,.map-top-right{top:135px}
   .map-floating-filters .context-divider,.map-floating-filters .context-actions>span:last-child{display:none}
 }
@@ -734,7 +712,6 @@ h1{font-size:22px}
   .map-top-left,.map-top-right{top:131px}
   .panel-open .map-floating-filters{right:373px}
   .panel-open .map-filter-row{overflow-x:auto;scrollbar-width:none}
-  .panel-open .map-floating-filters .filter-select{flex:0 0 100px}
 }
 @media(max-width:650px){
   .map-page{padding:9px 9px 10px;gap:8px}
@@ -745,9 +722,6 @@ h1{font-size:22px}
   .map-floating-filters .search-field input{font-size:12px;padding:9px 0}
   .map-floating-filters .reset-button{height:36px;width:33px}
   .map-filter-row{gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:1px}
-  .map-floating-filters .filter-select{height:31px;padding:0 6px;flex:1 0 90px}
-  .map-floating-filters .filter-select select{height:30px;font-size:12px;padding:0}
-  .map-floating-filters .filter-select .icon{width:12px;height:12px}
   .map-floating-filters .filter-context{padding-top:5px}
   .map-floating-filters .context-actions{padding:4px 6px}
   .map-floating-filters .context-actions .text-button{font-size:12px}
@@ -756,14 +730,12 @@ h1{font-size:22px}
   .map-top-right{right:10px}
   .map-top-right .map-control{width:29px;height:30px}
   .panel-open .map-floating-filters{right:10px}
-  .panel-open .map-floating-filters .filter-select{flex:1 0 90px;padding:0 6px}
-  .panel-open .map-floating-filters .filter-select>.icon{display:block}
   .panel-open .map-top-left,.panel-open .map-top-right{top:121px}
   .issue-panel{top:161px}
   .map-bottom-right{bottom:38px}
   .map-bottom-left{bottom:28px;max-width:calc(100% - 61px)}
 }
-@media(max-width:420px){.map-floating-filters .filter-context{justify-content:flex-end}.map-filter-row .filter-select{flex:0 0 109px}}
+@media(max-width:420px){.map-floating-filters .filter-context{justify-content:flex-end}}
 @media(prefers-reduced-motion:reduce){.map-floating-filters,.map-top-right,.map-bottom-right,.map-pin,.map-transition-backdrop{transition:none!important}.map-control:hover,.button:hover,.map-control:active,.button:active{transform:none}}
 .map-scene{z-index:1}
 .map-transition-backdrop{z-index:0}
@@ -814,12 +786,7 @@ h1{font-size:22px}
 .table-selection-bar[hidden]{display:none}
 /* Column picker: a popover in the top layer, placed under its button by placeColumnMenu() in data-view.js. */
 .columns-count{color:var(--text-3);font-weight:400}
-.columns-menu{position:fixed;inset:auto;margin:0;width:220px;padding:6px;overflow:auto;background:var(--surface);color:var(--text-2);border:1px solid var(--border);border-radius:9px;box-shadow:var(--shadow-sm)}
-.columns-menu-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 8px 8px;margin-bottom:4px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-3)}
-.columns-option{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;font-size:13px;cursor:pointer}
-.columns-option:hover{background:var(--surface-2)}
-.columns-option:has(:disabled){color:var(--text-3);cursor:default}
-.columns-option:has(:disabled):hover{background:none}
+.columns-menu{width:220px}
 .table-scroll{max-height:65dvh;scrollbar-gutter:stable}
 thead{position:sticky;top:0;z-index:2;box-shadow:var(--shadow-sm)}
 th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);color:var(--accent-text)}
@@ -952,7 +919,7 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 .stat-card.red .stat-sparkline{color:var(--danger-text)}
 .stat-sparkline polyline{fill:none;stroke:currentColor;stroke-width:1.6;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 .dashboard-civic{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-top:18px}
-.ward-select{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;color:var(--text-2);font-size:12px;padding:7px 9px;max-width:280px;min-width:0}
+.ward-select{max-width:280px}
 .digest-body{padding:0 18px 18px}
 .election-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--warning-text);background:var(--surface-3);border:1px solid var(--warning-border);border-radius:20px;padding:4px 10px 4px 8px}
 .election-chip .icon{width:13px;height:13px}
@@ -1017,7 +984,6 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 .filterbar{min-height:0;gap:8px}
 .search-field,.filter-select,.reset-button{height:32px}
 .search-field input{font-size:12px;padding:0}
-.filter-select select{height:30px;font-size:12px}
 .filter-selects{display:contents}
 .filter-context{min-height:36px;font-size:12px;justify-content:flex-end}
 .filter-status:empty{display:none}
@@ -1095,10 +1061,8 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
   .main:not(.map-page) .filterbar{flex-wrap:wrap}
   .main:not(.map-page) .search-field{flex:1 1 calc(100% - 40px)}
   .filter-selects{display:flex;flex:1 1 100%;gap:6px;overflow-x:auto;scrollbar-width:none;order:1}
-  .filter-selects .filter-select{flex:0 0 132px}
-  .filter-select select{font-size:12px}
   .map-floating-filters .search-field{height:34px;min-height:34px}
-  .map-floating-filters .filter-select{height:32px;flex:1 0 118px}
+  .map-floating-filters .filter-select{height:32px}
   .map-floating-filters .reset-button{height:34px}
   .map-top-left,.map-top-right{top:114px}
   .panel-open .map-top-left,.panel-open .map-top-right{top:56px}
@@ -1126,8 +1090,6 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 /* P0: data switch, priority, upload AI and blurring, nearby reports, ward outlines, written digests, methodology. */
 .data-source{display:flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:5px 11px;color:var(--text-2);font-size:12px;white-space:nowrap}
 .data-source .icon{width:14px;height:14px}
-.data-source select{background:transparent;border:0;color:var(--text);font-size:12px;padding:2px 0;cursor:pointer}
-.data-source select option{background:var(--surface-2)}
 .priority-pill{display:inline-flex;align-items:center;justify-content:center;min-width:34px;padding:4px 7px;border-radius:20px;font-size:12px;font-weight:650;border:1px solid}
 .priority-pill.high{color:var(--danger-text);background:var(--danger-soft);border-color:var(--danger-border)}
 .priority-pill.medium{color:var(--warning-text);background:var(--surface-3);border-color:var(--border-strong)}
@@ -1157,7 +1119,7 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 .ai-privacy .icon{color:var(--success-text)}
 .spinner{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:spin .8s linear infinite;flex-shrink:0;margin-top:3px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.ai-filled select,.ai-filled textarea{border-color:var(--accent)!important;box-shadow:var(--shadow-sm)}
+.ai-filled .select,.ai-filled textarea{border-color:var(--accent)!important;box-shadow:var(--shadow-sm)}
 .ai-filled:after{content:'Suggested by Gemini';display:inline-block;margin-left:8px;font-size:12px;color:var(--accent-text)}
 .photo-previews .photo-card{position:relative;width:150px;height:auto}
 .photo-card img{width:150px;height:105px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:block}
@@ -1224,7 +1186,7 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 .method-limits h3{font-size:13px;margin-bottom:6px}
 .method-limits p{font-size:12px;line-height:1.7;color:var(--text-2)}
 @media(max-width:950px){.method-limits{grid-template-columns:1fr 1fr}.method-sources div{grid-template-columns:1fr;gap:4px}}
-@media(max-width:650px){.method-limits{grid-template-columns:1fr}.data-source{font-size:12px;padding:4px 8px}.data-source select{font-size:12px;max-width:130px}.nearby-row{flex-wrap:wrap}.photo-previews .photo-card,.photo-card img{width:130px}}
+@media(max-width:650px){.method-limits{grid-template-columns:1fr}.data-source{font-size:12px;padding:4px 8px}.nearby-row{flex-wrap:wrap}.photo-previews .photo-card,.photo-card img{width:130px}}
 .photo-actions button{position:static;width:auto;height:auto;display:inline-block;border-radius:5px}
 /* Dragging the map must never select its text (that turns the next drag into a native text drag). */
 .city-map{user-select:none;-webkit-user-select:none}
@@ -1241,7 +1203,6 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 .header-right{flex-shrink:0}
 @media(max-width:650px){
   .map-top-left,.map-top-right{top:122px}
-  .map-floating-filters .filter-select{flex:1 0 132px}
 }
 /* Crew routes: the planned order drawn under the pins, numbered stops, and the route panel. */
 .route-line{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
@@ -1316,20 +1277,19 @@ a.button{color:inherit;text-decoration:none}
 .insight>div>span{color:var(--text-3)}
 .route-bar.faded i{background:var(--warning);opacity:.35}
 /* Readable control text (finish review): 13px controls, 12px badges and phone controls. */
-.search-field input,.filter-select select,.map-segment button,.map-route-button,.map-legend button,.map-summary,.panel-footer .button,.modal-footer .button,.table-actions .button,.issue-row-copy strong,.issue-row-copy>span{font-size:13px}
+.search-field input,.map-segment button,.map-route-button,.map-legend button,.map-summary,.panel-footer .button,.modal-footer .button,.table-actions .button,.issue-row-copy strong,.issue-row-copy>span{font-size:13px}
 .issue-row-copy small,.badge{font-size:12px}
-@media(max-width:650px){.search-field input,.filter-select select,.map-segment button,.map-route-button,.map-legend button,.map-summary,.panel-footer .button,.modal-footer .button,.table-actions .button{font-size:12px}}
+@media(max-width:650px){.search-field input,.map-segment button,.map-route-button,.map-legend button,.map-summary,.panel-footer .button,.modal-footer .button,.table-actions .button{font-size:12px}}
 /* Context under a heading (an ID, a type, a date) rather than an eyebrow above it. */
 h2+.eyebrow,h3+.eyebrow{display:block;margin-top:4px}
-@media(max-width:650px){.page-header .theme-toggle{display:none}.data-source select{max-width:104px;text-overflow:ellipsis}.page-title h1{font-size:20px}}
+@media(max-width:650px){.page-header .theme-toggle{display:none}.page-title h1{font-size:20px}}
 /* Finish review, round 2. Selects size to their current label (Chromium) so none is clipped; the search field takes
    the remaining room. The map's floating controls read at 13px like the rest. Footers keep their actions on one row. */
 .filter-select{flex:0 1 auto}
-.filter-select select{field-sizing:content;width:auto;max-width:100%}
 .filterbar .search-field,.map-floating-filters .search-field{flex:1 1 220px}
-.map-floating-filters .search-field input,.map-floating-filters .filter-select select{font-size:13px}
+.map-floating-filters .search-field input{font-size:13px}
 .panel-footer .button{padding:9px 11px;gap:6px}
-@media(max-width:650px){.map-floating-filters .search-field input,.map-floating-filters .filter-select select{font-size:12px}}
+@media(max-width:650px){.map-floating-filters .search-field input{font-size:12px}}
 .button.icon-only{padding:9px;flex:0 0 auto}
 .button.icon-only .icon{width:18px;height:18px}
 /* The map's filters scroll sideways when the map is narrow (a panel open on a laptop) instead of clipping labels. */
@@ -1342,8 +1302,6 @@ h2+.eyebrow,h3+.eyebrow{display:block;margin-top:4px}
 @media(min-width:1201px) and (max-width:1360px){
   .map-floating-filters .filterbar{flex-wrap:wrap;gap:7px}
   .map-search-row,.map-filter-row{flex:1 1 100%}
-  .map-floating-filters .filter-select{height:33px}
-  .map-floating-filters .filter-select select{height:31px}
   .map-top-left,.map-top-right{top:135px}
   .map-floating-filters .context-divider,.map-floating-filters .context-actions>span:last-child{display:none}
 }
@@ -1430,3 +1388,80 @@ input[type=checkbox]:disabled{opacity:.45;cursor:default}
 .geo-job-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
 .geo-job-actions:empty{display:none}
 @media(max-width:650px){.geo-jobs>span:not(.spinner){display:none}.geo-job{grid-template-columns:1fr}.geo-job-photo{width:100%;height:150px}.geo-card-actions{margin-left:0}}
+
+/* Dropdown select (src/select.js). The .select box is the control and its button fills it; the native <select> sits
+   invisibly under the button, so form validation still points here. Variants: block (a form field), pill (the header
+   data switch), quiet (bare text in the sidebar). */
+.select{position:relative;display:inline-flex;min-width:0;height:32px;background:var(--surface);border:1px solid var(--border-strong);border-radius:7px;color:var(--text-2);transition:background .15s,border-color .15s}
+.select:has(>.select-trigger:enabled:hover){background:var(--surface-2)}
+.select:has(>[aria-expanded="true"]){border-color:var(--accent)}
+.select:has(>.select-trigger:focus-visible),.select:has(>.select-native:focus){outline:2px solid var(--accent);outline-offset:2px}
+.select:has(>.select-trigger:disabled){opacity:.5}
+.select:has(>.select-native:user-invalid){border-color:var(--danger)}
+.select-trigger{display:flex;align-items:center;gap:8px;width:100%;min-width:0;height:100%;padding:0 10px;background:none;border-radius:inherit;color:inherit;font-size:13px;font-weight:500;line-height:1.2;text-align:left;white-space:nowrap}
+.select-trigger:focus-visible{outline:none}
+.select-trigger:disabled{opacity:1}
+.select-lead{display:flex;flex-shrink:0;color:var(--text-3)}
+.select-lead .icon{width:15px;height:15px}
+.select-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.is-placeholder .select-value{color:var(--text-3);font-weight:400}
+.select-chevron{width:14px;height:14px;margin-right:-2px;color:var(--text-4);transition:transform .15s ease-out}
+[aria-expanded="true"]>.select-chevron{transform:rotate(180deg)}
+.select .select-native{position:absolute;inset:0;z-index:-1;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;pointer-events:none}
+.select.block{display:flex;width:100%;height:40px;margin-top:7px;border-radius:6px}
+.select.block .select-trigger{padding:0 11px;font-size:12px;font-weight:400}
+.select.pill{height:auto;border-radius:20px;background:var(--surface-2)}
+.select.pill:has(>.select-trigger:hover){background:var(--surface-3)}
+.select.pill .select-trigger{gap:7px;padding:5px 11px;color:var(--text);font-size:12px;font-weight:400}
+.select.pill .select-lead .icon{width:14px;height:14px}
+.select.quiet{height:auto;border:0;border-radius:4px;background:none}
+.select.quiet:has(>.select-trigger:hover){background:none;color:var(--text)}
+.select.quiet .select-trigger{gap:4px;padding:1px 0;font-size:12px;font-weight:400}
+.select.quiet .select-chevron{width:13px;height:13px}
+
+/* Filter dropdowns: the data pages' filter bar and the map's floating filters. Each sizes to its label; a row that
+   runs out of room scrolls sideways. */
+.map-floating-filters .filter-select{box-shadow:var(--shadow-sm)}
+.map-floating-filters .filter-select .select-trigger{gap:6px;padding:0 9px}
+.map-floating-filters .select-lead .icon{width:14px;height:14px}
+.panel-open .map-floating-filters .filter-select .select-trigger{padding:0 8px}
+.panel-open .map-floating-filters .filter-select .select-lead{display:none}
+@media(max-width:1200px){.filter-select .select-trigger{gap:6px;padding:0 8px}}
+@media(max-width:650px){
+  .select-trigger{font-size:12px}
+  .select-lead .icon,.map-floating-filters .select-lead .icon{width:13px;height:13px}
+  .map-floating-filters .filter-select .select-trigger{padding:0 7px}
+  .panel-open .map-floating-filters .filter-select .select-lead{display:flex}
+  .select.pill .select-trigger{padding:4px 8px}
+  .select.pill .select-value{max-width:104px}
+}
+
+/* Menus: the dropdown list and the table's column picker. Both open in the top layer, placed by placeMenu() in
+   src/select.js, on the same floating surface as the search suggestions. */
+.menu{position:fixed;inset:auto;margin:0;padding:5px;min-width:160px;max-width:min(360px,calc(100vw - 16px));max-height:var(--menu-room,none);overflow:auto;overscroll-behavior:contain;background:var(--surface);color:var(--text-2);border:1px solid var(--border-strong);border-radius:9px;box-shadow:var(--shadow-sm);font-size:13px;transition:opacity .12s ease-out,transform .12s ease-out}
+@starting-style{.menu:popover-open{opacity:0;transform:translateY(-3px)}}
+.select-menu:popover-open{display:flex;flex-direction:column;overflow:hidden;max-height:min(var(--menu-room,340px),340px)}
+.menu-list{position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.menu-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 8px 8px;margin-bottom:4px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-3)}
+.menu-label{padding:9px 9px 4px;font-size:12px;font-weight:600;color:var(--text-3)}
+[role="group"]+[role="group"]{margin-top:4px}
+.menu-item{display:flex;align-items:center;gap:9px;min-height:32px;padding:6px 9px;border-radius:6px;color:var(--text-2);cursor:pointer;user-select:none}
+.menu-item[hidden]{display:none}
+.menu-item.active,label.menu-item:hover{background:var(--accent-soft);color:var(--text)}
+.menu-item[aria-selected="true"]{color:var(--text);font-weight:500}
+.menu-item[aria-disabled="true"],.menu-item:has(:disabled){background:none;color:var(--text-4);cursor:default}
+.menu-item>span:not(.menu-item-icon){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu-item-icon{display:flex;flex-shrink:0}
+.menu-item-icon .icon{width:16px;height:16px}
+.menu-item-check{width:15px;height:15px;flex-shrink:0;margin-left:6px;color:var(--accent-text);visibility:hidden}
+.menu-item[aria-selected="true"] .menu-item-check{visibility:visible}
+.menu-search{display:flex;align-items:center;gap:8px;flex-shrink:0;margin:-5px -5px 5px;padding:0 12px;border-bottom:1px solid var(--border);color:var(--text-4)}
+.menu-search .icon{width:15px;height:15px}
+.menu-search input{flex:1;min-width:0;height:38px;padding:0;border:0;background:none;color:var(--text);font-size:13px}
+.menu-search input::placeholder{color:var(--text-3)}
+.menu-search input:focus-visible{box-shadow:none}
+.menu-empty{margin:0;padding:8px 9px;font-size:12px;color:var(--text-3)}
+.menu-empty[hidden]{display:none}
+.columns-menu .menu-item{gap:10px}
+/* Phones get thumb-sized rows, and 16px in the search field so iOS doesn't zoom in when it takes focus. */
+@media(pointer:coarse){.menu-item{min-height:40px}.menu-search input{font-size:16px}}

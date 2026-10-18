@@ -2,9 +2,10 @@
 // Each page lives in src/views/; dialogs live in src/modals.js.
 import { categories, issueRepository, wards, neighbourhoods, TORONTO_CENTER, DEMO_DATE, REFERENCE_DATE, setReferenceDate } from './data.js';
 import { icon } from './icons.js';
-import { esc, date } from './format.js';
+import { esc, date, categoryOptions } from './format.js';
 import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel, applyCorrection, reviewQueue, applyLocalSightings } from './state.js';
 import { toast, closeModal } from './ui.js';
+import { selectHtml } from './select.js';
 import { mapHtml, initMap, destroyMap, getMap, renderPanel, clearSelection, selectMap, openIssue, frameIssues, refreshMapFilters, setMapMode, setHeat, visibleIssues, planCrewRoute } from './views/map-view.js';
 import { dataHtml, bindData, clearTableSelection } from './views/data-view.js';
 import { dashboardHtml, bindDashboard } from './views/dashboard-view.js';
@@ -35,21 +36,23 @@ function filterChips() {
 export function bindFilterChips(root = app) {
   root.querySelectorAll('[data-clear-filter]').forEach(b => b.onclick = () => { state.filters[b.dataset.clearFilter] = DEFAULT_FILTERS[b.dataset.clearFilter]; updateFilteredView(); });
 }
-function selectHtml(key, label, values, glyph) {
-  const options = values.map(v => { const [value, text] = Array.isArray(v) ? v : [v, v]; return `<option value="${esc(value)}" ${state.filters[key] === String(value) ? 'selected' : ''}>${esc(text)}</option>`; }).join('');
-  return `<label class="filter-select">${icon(glyph)}<select data-filter="${key}" aria-label="${label}"><option value="">${label}</option>${options}</select></label>`;
+// The first option, value '', clears the filter; `extra` passes options such as a search field to selectHtml().
+function filterSelectHtml(key, allLabel, values, glyph, extra = {}) {
+  return selectHtml({ label: filterLabels[key], icon: glyph, value: state.filters[key], options: [['', allLabel], ...values], className: 'filter-select', attrs: `data-filter="${key}"`, ...extra });
 }
 function areaSelectHtml() {
   const used = new Set(state.issues.map(i => i.neighbourhood_id));
-  const option = (value, text) => `<option value="${esc(value)}" ${state.filters.area === value ? 'selected' : ''}>${esc(text)}</option>`;
-  return `<label class="filter-select">${icon('pin')}<select data-filter="area" aria-label="Area"><option value="">All areas</option><optgroup label="Wards">${Object.entries(wards).map(([id, name]) => option(`ward:${id}`, `Ward ${id} · ${name}`)).join('')}</optgroup><optgroup label="Neighbourhoods">${neighbourhoods.filter(n => used.has(n.id)).map(n => option(n.id, n.name)).join('')}</optgroup></select></label>`;
+  return filterSelectHtml('area', 'All areas', [
+    { group: 'Wards', options: Object.entries(wards).map(([id, name]) => [`ward:${id}`, `Ward ${id} · ${name}`]) },
+    { group: 'Neighbourhoods', options: neighbourhoods.filter(n => used.has(n.id)).map(n => [n.id, n.name]) },
+  ], 'pin', { search: 'Search wards and neighbourhoods' });
 }
 export function filtersHtml() {
   const search = `<label class="search-field">${icon('search')}<input id="global-search" placeholder="Search issues, places or IDs&hellip;" value="${esc(state.filters.query)}" aria-label="Search issues, places, wards or IDs"><kbd>/</kbd></label>`;
-  const filters = selectHtml('type', 'All issue types', Object.keys(categories), 'tag')
-    + selectHtml('severity', 'All severities', ['High', 'Medium', 'Low'], 'warning')
-    + selectHtml('status', 'All statuses', ['Open', 'In review', 'Resolved'], 'check')
-    + selectHtml('days', 'Any time', [[7, 'Last 7 days'], [30, 'Last 30 days'], [90, 'Last 90 days']], 'clock')
+  const filters = filterSelectHtml('type', 'All issue types', categoryOptions(), 'tag')
+    + filterSelectHtml('severity', 'All severities', ['High', 'Medium', 'Low'], 'warning')
+    + filterSelectHtml('status', 'All statuses', ['Open', 'In review', 'Resolved'], 'check')
+    + filterSelectHtml('days', 'Any time', [[7, 'Last 7 days'], [30, 'Last 30 days'], [90, 'Last 90 days']], 'clock')
     + areaSelectHtml();
   const reset = `<button class="reset-button" data-action="reset" title="Reset all filters">${icon('refresh')}<span>Reset</span></button>`;
   return state.view === 'map' ? `<div class="map-search-row">${search}${reset}</div><div class="map-filter-row">${filters}</div>` : `${search}<div class="filter-selects">${filters}</div>${reset}`;
@@ -72,7 +75,7 @@ function navItem(view, glyph, title, count) {
 function sidebarHtml() {
   const roles = ['Public', 'Volunteer', 'City Staff'];
   const reviewCount = reviewQueue().length + state.corrections.filter(c => c.status === 'Pending review').length + state.issues.filter(i => i.verification_status === 'Needs review').length;
-  return `<aside class="sidebar"><a class="brand" href="#map" data-nav="map" aria-label="GeoIssue home"><span class="brand-mark"><i></i></span><span>Geo<span class="cyan">Issue</span></span></a><div class="workspace-label">Toronto</div><nav aria-label="Main navigation">${navItem('map', 'map', 'Map Explorer')}${navItem('data', 'database', 'Data Explorer')}${navItem('dashboard', 'chart', 'Dashboard')}<div class="nav-divider"></div><span class="nav-section">Your workspace</span>${navItem('saved', 'bookmark', 'Saved', state.saved.length)}${navItem('recents', 'clock', 'Recents')}${state.role !== 'Public' ? navItem('verify', 'shield', 'Verify', reviewCount) : ''}</nav><button class="button primary upload-button" data-action="upload" title="Upload new issue" aria-label="Upload new issue">${icon('plus')}<span>Upload new issue</span></button><div class="sidebar-bottom"><button class="nav-item" data-action="settings" title="Settings" aria-label="Settings">${icon('settings')}<span>Settings</span></button><button class="nav-item ${state.view === 'methodology' ? 'active' : ''}" data-nav="methodology" title="Help and methodology" aria-label="Help and methodology">${icon('help')}<span>Help & methodology</span></button><div class="account"><span class="avatar">JD</span><div><strong>Jamie Davis</strong><select id="role-select" aria-label="Demo account type">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div><span class="account-dots">···</span></div></div></aside>`;
+  return `<aside class="sidebar"><a class="brand" href="#map" data-nav="map" aria-label="GeoIssue home"><span class="brand-mark"><i></i></span><span>Geo<span class="cyan">Issue</span></span></a><div class="workspace-label">Toronto</div><nav aria-label="Main navigation">${navItem('map', 'map', 'Map Explorer')}${navItem('data', 'database', 'Data Explorer')}${navItem('dashboard', 'chart', 'Dashboard')}<div class="nav-divider"></div><span class="nav-section">Your workspace</span>${navItem('saved', 'bookmark', 'Saved', state.saved.length)}${navItem('recents', 'clock', 'Recents')}${state.role !== 'Public' ? navItem('verify', 'shield', 'Verify', reviewCount) : ''}</nav><button class="button primary upload-button" data-action="upload" title="Upload new issue" aria-label="Upload new issue">${icon('plus')}<span>Upload new issue</span></button><div class="sidebar-bottom"><button class="nav-item" data-action="settings" title="Settings" aria-label="Settings">${icon('settings')}<span>Settings</span></button><button class="nav-item ${state.view === 'methodology' ? 'active' : ''}" data-nav="methodology" title="Help and methodology" aria-label="Help and methodology">${icon('help')}<span>Help & methodology</span></button><div class="account"><span class="avatar">JD</span><div><strong>Jamie Davis</strong>${selectHtml({ id: 'role-select', label: 'Demo account type', options: roles, value: state.role, variant: 'quiet' })}</div><span class="account-dots">···</span></div></div></aside>`;
 }
 function pageHtml() {
   switch (state.view) {
@@ -91,7 +94,7 @@ function dataSourceHtml() {
   // Phones get short labels so the count stays visible beside the page title.
   const short = matchMedia('(max-width:650px)').matches, collected = issueRepository.backend('pipeline').type === 'tiger';
   const options = [['sample', short ? 'Sample' : 'Sample data', sample], ['pipeline', collected ? (short ? 'Collected' : 'Collected data') : (short ? 'Snapshot' : 'File snapshot'), pipeline], ['replay', short ? 'Replay' : 'Simulated replay', replay]];
-  return `<label class="data-source" title="${esc(state.dataBackend.warning || '')}">${icon('database')}<select id="data-source" aria-label="Data shown">${options.filter(([, , count]) => count).map(([value, label, count]) => `<option value="${value}" ${state.dataSource === value ? 'selected' : ''}>${label} · ${count}</option>`).join('')}</select></label>`;
+  return selectHtml({ id: 'data-source', label: 'Data shown', icon: 'database', variant: 'pill', title: state.dataBackend.warning || '', value: state.dataSource, options: options.filter(([, , count]) => count).map(([value, label, count]) => [value, `${label} · ${count}`]) });
 }
 function footerHtml() {
   const generated = state.pipeline.report?.generated_at;
@@ -269,7 +272,7 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === '/' && !modal && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); document.querySelector('#global-search')?.focus(); }
   if (e.key === 'Tab' && modal) {
-    const els = [...modal.querySelectorAll('button,input,textarea,select,a[href]')].filter(el => !el.disabled && el.offsetParent !== null), first = els[0], last = els.at(-1);
+    const els = [...modal.querySelectorAll('button,input,textarea,select,a[href]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.offsetParent !== null), first = els[0], last = els.at(-1);
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
   }

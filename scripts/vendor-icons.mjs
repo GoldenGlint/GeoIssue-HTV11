@@ -12,7 +12,7 @@ const names = {
   search: 'search', tag: 'tag', funnel: 'funnel', refresh: 'rotate-ccw', upload: 'upload', download: 'download',
   close: 'x', arrow: 'arrow-right', back: 'arrow-left', external: 'external-link', share: 'share-2', copy: 'copy',
   edit: 'pencil', check: 'check', code: 'code', image: 'image', sparkles: 'sparkles', info: 'info', lightbulb: 'lightbulb',
-  columns: 'columns-3',
+  columns: 'columns-3', chevron: 'chevron-down',
   // Map tools
   pin: 'map-pin', density: 'flame', layers: 'layers', hand: 'hand', select: 'square-dashed-mouse-pointer', fit: 'maximize',
   home: 'house', target: 'crosshair', locate: 'locate-fixed', person: 'person-standing', route: 'route', leaf: 'leaf',

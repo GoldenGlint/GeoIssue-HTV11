@@ -4,6 +4,7 @@ import { icon } from '../icons.js';
 import { DAY, esc, date, age, typeIcon, percent, countBy, wardLabel, plural } from '../format.js';
 import { state, filtered, previousPeriod, isSampleData, sampleWord } from '../state.js';
 import { statCard, emptyHtml, issueRow } from '../ui.js';
+import { selectHtml } from '../select.js';
 import { nav, updateFilteredView, render } from '../app.js';
 import { apiStatus, writeDigest } from '../api.js';
 import { activityPanelHtml, bindActivity } from '../activity.js';
@@ -70,7 +71,7 @@ function resolutionHtml(rows) {
 function wardDigestHtml(rows, previous) {
   const ward = state.filters.area.startsWith('ward:') ? state.filters.area.slice(5) : '';
   const daysLeft = Math.ceil((Date.parse(ELECTION_DATE) - Date.parse(REFERENCE_DATE)) / DAY);
-  const picker = `<select class="ward-select" id="ward-pick" aria-label="Choose a ward"><option value="">Choose a ward…</option>${Object.entries(wards).map(([id, name]) => `<option value="${id}" ${id === ward ? 'selected' : ''}>Ward ${id} · ${esc(name)}</option>`).join('')}</select>`;
+  const picker = selectHtml({ id: 'ward-pick', label: 'Ward', options: [['', 'All wards'], ...Object.entries(wards).map(([id, name]) => [id, `Ward ${id} · ${name}`])], value: ward, search: 'Search wards', className: 'ward-select' });
   const election = `<span class="election-chip">${icon('ballot')} Municipal election · ${date(ELECTION_DATE)} · ${daysLeft} days away</span>`;
   let body;
   if (!ward) {
