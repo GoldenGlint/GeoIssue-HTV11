@@ -7,49 +7,45 @@ The key is read like the analysis pipeline reads it: GEMINI_API_KEY from the env
 .env or spikes/.env in the repo root. GEMINI_MODEL overrides the model (default: the summaries model in
 analysis/config.toml). GEMINI_API_BASE overrides the endpoint (used by tests).
 
+Static files are an allowlist: the entry page, sw.js, frontend scripts and styles, credited evidence
+assets, and the public analysis snapshot (issues.public.json, report.json, areas.json, photos/).
+When CIVICLENS_PUBLISHED_DIR is set, /data/analyzed/* is read from $CIVICLENS_PUBLISHED_DIR/current
+instead of the repository. Everything else, including raw batches and full-precision JSON, is 404.
+
 Endpoints
-  GET  /api/status  -> {"gemini": bool, "model": str}
+  GET  /api/health  -> {"ok": true} with no upstream calls
+  GET  /api/status  -> {"gemini": bool, "model": str, "tiger": bool, "ingest": object | null}
+  GET  /api/issues, /api/pipeline, /api/activity, /api/tiger -> optional Tiger Data snapshots, history and storage metrics
   POST /api/triage  {"image": base64, "mime": "image/jpeg"}
                     -> suggested category, severity and description, privacy flags, and face/plate boxes
                        ([ymin, xmin, ymax, xmax], 0–1000) for blurring
   POST /api/digest  {"area": {...areas.json-style stats}, "label": "ward"} -> {"text", "method"}
-Hidden files and folders (.env, .git, …) are never served.
 """
 import argparse
 import base64
 import hashlib
 import json
 import os
+import re
 import sys
+import threading
 import tomllib
 import urllib.error
 import urllib.request
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from analysis.stages import summaries  # noqa: E402  (shared key lookup and digest prompt)
+from analysis import tiger
+from analysis.config import setting
 
 CATEGORIES = ["Pothole", "Sidewalk damage", "Graffiti", "Litter", "Flooding", "Other"]
 MAX_BODY = 12 * 1024 * 1024
 ENV_FILES = [".env", "spikes/.env"]
-
-
-def setting(name, default=None):
-    """Environment first, then the .env files, like analysis.stages.summaries.api_key."""
-    if os.environ.get(name):
-        return os.environ[name]
-    for file in ENV_FILES:
-        path = ROOT / file
-        if path.is_file():
-            for line in path.read_text(encoding="utf-8-sig").splitlines():
-                key, sep, value = line.partition("=")
-                if sep and key.strip().removeprefix("export ").strip() == name:
-                    return value.strip().strip("'\"") or default
-    return default
 
 
 def default_model():
@@ -64,6 +60,9 @@ KEY = summaries.api_key(ENV_FILES)
 MODEL = setting("GEMINI_MODEL", default_model())
 API_BASE = setting("GEMINI_API_BASE", "https://generativelanguage.googleapis.com/v1beta").rstrip("/")
 digest_cache = {}
+GEMINI_SLOTS = threading.BoundedSemaphore(4)
+PUBLIC_ANALYSIS = {"issues.public.json", "report.json", "areas.json"}
+INGEST_STAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
 
 TRIAGE_PROMPT = f"""You review photos submitted to CivicLens, a Toronto civic-issue map. Look at the photo and answer in JSON.
 - is_civic_issue: does it clearly show a problem in a public space that a city would fix?
@@ -151,13 +150,108 @@ def digest(body):
     return {"text": digest_cache[key], "method": f"gemini:{MODEL}"}
 
 
+def normalized_path(raw):
+    """Collapse a URL path, rejecting traversal, encoded dots and hidden names."""
+    path = unquote(raw)
+    if "\x00" in path or "\\" in path or not path.startswith("/"):
+        return None
+    parts = []
+    for part in path.split("/"):
+        if part in ("", "."):
+            continue
+        if part == ".." or part.startswith("."):
+            return None
+        parts.append(part)
+    return "/" + "/".join(parts) if parts else "/"
+
+
+def repo_file(path):
+    """Allowlisted repository file, or None. Symlinks must still land on an allowlisted path."""
+    if path in ("/", "/index.html"):
+        relative = "index.html"
+    elif path == "/sw.js":
+        relative = "sw.js"
+    elif path.startswith("/src/") and path.endswith((".js", ".css")):
+        relative = path[1:]
+    elif path.startswith("/assets/evidence/"):
+        relative = path[1:]
+        if relative.count("/") != 2:
+            return None
+    else:
+        return None
+    return contained_file(ROOT, relative)
+
+
+def published_dir():
+    raw = os.environ.get("CIVICLENS_PUBLISHED_DIR")
+    return Path(raw) if raw else None
+
+
+def analysis_file(path):
+    """Public analysis snapshot. A published directory replaces the repository copy."""
+    prefix = "/data/analyzed/"
+    if not path.startswith(prefix):
+        return None
+    relative = path[len(prefix):]
+    if relative not in PUBLIC_ANALYSIS and not (relative.startswith("photos/") and relative.count("/") == 1):
+        return None
+    name = relative.removeprefix("photos/")
+    if relative.startswith("photos/") and (not name or name.startswith(".")):
+        return None
+    root = published_dir()
+    base = root / "current" if root is not None else ROOT / "data" / "analyzed"
+    try:
+        if root is not None and not base.resolve().is_relative_to(root.resolve()):
+            return None
+    except OSError:
+        return None
+    return contained_file(base, relative)
+
+
+def contained_file(root, relative):
+    """Resolve root/relative and accept it only when the real path is still allowlisted."""
+    try:
+        root = root.resolve()
+        target = (root / relative).resolve()
+        landed = target.relative_to(root).as_posix()
+    except (OSError, ValueError):
+        return None
+    if landed in ("index.html", "sw.js") or landed in PUBLIC_ANALYSIS:
+        allowed = True
+    elif landed.startswith("src/") and landed.endswith((".js", ".css")) and not any(part.startswith(".") for part in landed.split("/")):
+        allowed = True
+    elif landed.startswith("assets/evidence/") and landed.count("/") == 2 and not landed.split("/")[-1].startswith("."):
+        allowed = True
+    elif landed.startswith("photos/") and landed.count("/") == 1 and not landed.split("/")[-1].startswith("."):
+        allowed = True
+    else:
+        allowed = False
+    return target if allowed and target.is_file() else None
+
+
+def ingest_status():
+    """Sanitized last success from the published snapshot. Missing or unexpected data is null."""
+    root = published_dir()
+    if root is None:
+        return None
+    try:
+        base = root.resolve()
+        path = (base / "current" / "ingest-status.json").resolve()
+        if not path.is_relative_to(base) or not path.is_file():
+            return None
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+    stamp, status, count = data.get("last_success_at"), data.get("status"), data.get("issue_count")
+    if not (isinstance(stamp, str) and INGEST_STAMP.fullmatch(stamp) and status == "ok" and type(count) is int and count >= 0):
+        return None
+    return {"last_success_at": stamp, "status": "ok", "issue_count": count}
+
+
 class Handler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache")
         super().end_headers()
-
-    def hidden(self):
-        return any(part.startswith(".") for part in unquote(urlsplit(self.path).path).split("/") if part)
 
     def send_json(self, status, payload):
         body = json.dumps(payload).encode()
@@ -165,20 +259,62 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
+    def send_file(self, target):
+        try:
+            body = target.read_bytes()
+        except OSError:
+            return self.send_error(404)
+        self.send_response(200)
+        self.send_header("Content-Type", self.guess_type(str(target)))
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
 
     def do_GET(self):
-        path = urlsplit(self.path).path
-        if path == "/api/status":
-            return self.send_json(200, {"gemini": bool(KEY), "model": MODEL})
-        if self.hidden():
+        url = urlsplit(self.path)
+        path = normalized_path(url.path)
+        if path is None:
             return self.send_error(404)
-        return super().do_GET()
+        if path == "/api/health":
+            return self.send_json(200, {"ok": True})
+        if path == "/api/status":
+            return self.send_json(200, {"gemini": bool(KEY), "model": MODEL,
+                                        "tiger": bool(setting("TIGER_DATABASE_URL")),
+                                        "ingest": ingest_status()})
+        if path in ("/api/issues", "/api/pipeline", "/api/activity", "/api/tiger"):
+            try:
+                query = parse_qs(url.query, keep_blank_values=True, max_num_fields=8)
+                if path == "/api/tiger":
+                    if query:
+                        raise ValueError("Tiger Data service metrics do not accept filters")
+                    data = tiger.database_stats()
+                elif path == "/api/activity":
+                    data = tiger.activity(**tiger.activity_options(query))
+                else:
+                    if set(query) - {"dataset"} or any(len(v) != 1 for v in query.values()):
+                        raise ValueError("Only one dataset filter is supported")
+                    dataset = tiger.dataset_name(query.get("dataset", ["pipeline"])[0])
+                    data = tiger.issues(dataset) if path == "/api/issues" else tiger.pipeline(dataset)
+                return self.send_json(200, data)
+            except ValueError as error:
+                return self.send_json(400, {"error": str(error)})
+            except tiger.Unavailable as error:
+                return self.send_json(503, {"error": str(error)})
+            except Exception:
+                return self.send_json(503, {"error": "Tiger Data is unavailable. Check schema setup and database permissions."})
+        if path.startswith("/api/"):
+            return self.send_json(404, {"error": "Unknown API endpoint"})
+        target = analysis_file(path) if path.startswith("/data/analyzed/") else repo_file(path)
+        if target is None:
+            return self.send_error(404)
+        return self.send_file(target)
 
     def do_HEAD(self):
-        if self.hidden():
-            return self.send_error(404)
-        return super().do_HEAD()
+        return self.do_GET()
 
     def do_POST(self):
         routes = {"/api/triage": triage, "/api/digest": digest}
@@ -190,6 +326,9 @@ class Handler(SimpleHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
         if not 0 < length <= MAX_BODY:
             return self.send_json(413, {"error": "request body missing or too large"})
+        if not GEMINI_SLOTS.acquire(blocking=False):
+            self.rfile.read(length)
+            return self.send_json(429, {"error": "Too many analysis requests. Try again shortly."})
         try:
             return self.send_json(200, route(json.loads(self.rfile.read(length))))
         except (ValueError, KeyError, TypeError) as error:
@@ -198,6 +337,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(502, {"error": f"Gemini returned HTTP {error.code}"})
         except (urllib.error.URLError, TimeoutError) as error:
             return self.send_json(504, {"error": f"Gemini unreachable: {type(error).__name__}"})
+        finally:
+            GEMINI_SLOTS.release()
 
     def log_message(self, format, *args):  # quieter: skip static assets
         if "/api/" in self.path or (args and str(args[1]) >= "400"):

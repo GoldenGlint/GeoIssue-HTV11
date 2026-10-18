@@ -11,6 +11,7 @@ import { themePreference, setTheme } from './theme.js';
 import { getMap, openIssue, frameIssues, renderPanel } from './views/map-view.js';
 import { apiStatus, triagePhoto } from './api.js';
 import { blurPhoto } from './blur.js';
+import { tigerProofHtml } from './activity.js';
 
 // photos: { file, url (original), blurredUrl, boxes (from Gemini), manualBoxes, status, result, error, showOriginal }
 const freshDraft = () => ({ photos: [], category: '', severity: '', description: '', address: '', confirmed: false, coordinates: null, ai: null, aiFilled: [] });
@@ -407,9 +408,24 @@ export function settingsModal() {
   document.querySelector('#clear-pending').onclick = () => { state.pending = []; persist('pending', []); render(); settingsModal(); };
 }
 
+export function tigerModal() {
+  const flow = [
+    ['1', 'Collect & analyse', 'The Python pipeline checks public photos, estimates locations and groups repeat sightings into issues. Gemini can assist with photo analysis.'],
+    ['2', 'Save to Tiger Data', 'Each imported issue has a current record, plus timestamped reports stored in a PostgreSQL hypertable. Multiple photos from one post count once per issue.'],
+    ['3', 'Prepare the trends', 'Continuous Aggregates maintain hourly report totals by ward and category. Recent reports are included alongside those prepared totals.'],
+    ['4', 'Explore in CivicLens', 'The map reads current issues; the activity chart reads report history. The app checks for updates every 15 seconds while visible.'],
+  ];
+  showModal(`${modalHeader('TIGER DATA', 'From photos to report history')}<div class="modal-body help-content"><p>Tiger Data is CivicLens’s shared database. It connects today’s issue map with the history needed to spot changing activity across Toronto.</p><p class="tiger-proof" id="tiger-proof" hidden></p>${flow.map(([n, title, text]) => `<div class="help-step"><span>${n}</span><div><h3>${title}</h3><p>${text}</p></div></div>`).join('')}<div class="tiger-storage">${icon('database')}<div><h3>Keep the history, use less storage</h3><p>Hypercore keeps recent reports ready for new imports and converts older report chunks to compressed column storage. Measured savings from our database appear above.</p></div></div><p class="fine-print">New collection batches enter through an analysis import; polling reads the database. The simulated replay is a separate fictional dataset. Uploads, corrections and review decisions in this prototype stay in this browser.</p></div><div class="modal-footer"><a class="button" href="https://www.tigerdata.com/docs/learn/continuous-aggregates" target="_blank" rel="noopener">Tiger Data docs ${icon('external')}</a><button class="button primary" data-close>Got it</button></div>`, { label: 'How Tiger Data powers CivicLens' });
+  const proof = $('#tiger-proof');
+  fetch('/api/tiger', { cache: 'no-store', signal: AbortSignal.timeout(10000) })
+    .then(response => response.ok ? response.json() : null)
+    .then(data => { if (data && proof.isConnected) { proof.innerHTML = tigerProofHtml(data); proof.hidden = false; } })
+    .catch(() => {});
+}
+
 export function helpModal() {
   const steps = [['1', 'Discover', 'Explore issues on the map, or filter and export the same records in Data Explorer.'], ['2', 'Understand', 'Open a pin to inspect evidence, approximate location, how it was located, and nearby infrastructure.'], ['3', 'Verify', 'A volunteer reviews findings before they become reliable public records.']];
-  showModal(`${modalHeader('', 'How CivicLens works')}<div class="modal-body help-content"><p>CivicLens brings civic issues from public imagery and community reports into a shared Toronto workspace.</p>${steps.map(([n, t, d]) => `<div class="help-step"><span>${n}</span><div><h3>${t}</h3><p>${d}</p></div></div>`).join('')}<h3>Map controls</h3><p>Drag to pan; scroll, pinch or double-click to zoom; Shift + click to select multiple pins. Focus the map and use arrow keys to pan, + / - to zoom, or Home to return to Toronto. Search suggestions support arrow keys and Enter, and include wards. Fit all matching issues brings filtered results into view. Box select (the dashed square) enables a selection rectangle. A cluster opens a list; choose Zoom in to change the viewport. Pins with a “!” badge are high severity. Escape clears selection.</p><div class="notice-banner">${icon('code')} This is a prototype. Sample data is fictional; pipeline output comes from public posts analysed by the photo pipeline. TTC stations, highways and ward boundaries are real open data, and Street View opens Google Maps. Map tiles are provided by OpenStreetMap.</div><p class="fine-print">Accounts, durable submissions and corrections, 311 context and a shared database still need a backend. Gemini suggestions need <code>python scripts/serve.py</code> with a key in <code>.env</code>.</p></div><div class="modal-footer"><button class="button primary" data-close>Got it</button></div>`, { label: 'How CivicLens works' });
+  showModal(`${modalHeader('', 'How CivicLens works')}<div class="modal-body help-content"><p>CivicLens brings civic issues from public imagery and community reports into a shared Toronto workspace.</p>${steps.map(([n, t, d]) => `<div class="help-step"><span>${n}</span><div><h3>${t}</h3><p>${d}</p></div></div>`).join('')}<h3>Map controls</h3><p>Drag to pan; scroll, pinch or double-click to zoom; Shift + click to select multiple pins. Focus the map and use arrow keys to pan, + / - to zoom, or Home to return to Toronto. Search suggestions support arrow keys and Enter, and include wards. Fit all matching issues brings filtered results into view. Box select (the dashed square) enables a selection rectangle. A cluster opens a list; choose Zoom in to change the viewport. Pins with a “!” badge are high severity. Escape clears selection.</p><div class="notice-banner">${icon('code')} This is a prototype. Sample data is fictional; pipeline output comes from public posts analysed by the photo pipeline. TTC stations, highways and ward boundaries are real open data, and Street View opens Google Maps. Map tiles are provided by OpenStreetMap.</div><p class="fine-print">Tiger Data stores imported issue snapshots and report history when connected. Accounts, shared submissions and corrections, and 311 integration remain in progress. Gemini suggestions need the local server with a configured key.</p></div><div class="modal-footer"><button class="button primary" data-close>Got it</button></div>`, { label: 'How CivicLens works' });
 }
 
 export async function shareIssue(i) {

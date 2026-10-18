@@ -6,6 +6,7 @@ import { state, filtered, previousPeriod, isSampleData, sampleWord } from '../st
 import { statCard, emptyHtml, issueRow } from '../ui.js';
 import { nav, updateFilteredView, render } from '../app.js';
 import { apiStatus, writeDigest } from '../api.js';
+import { activityPanelHtml, bindActivity } from '../activity.js';
 
 const SAMPLE_SPAN_DAYS = 90; // the sample data covers the 90 days up to DEMO_DATE
 const statuses = ['Open', 'In review', 'Resolved'], statusColors = ['var(--accent)', 'var(--warning)', 'var(--success)'];
@@ -82,7 +83,7 @@ function wardDigestHtml(rows, previous) {
     const [topPlace, placeCount] = Object.entries(countBy(rows, 'address')).sort((a, b) => b[1] - a[1])[0];
     const high = rows.filter(isHigh).length, resolved = rows.filter(i => i.resolution_status === 'Resolved').length;
     const delta = previous ? previous.length ? ` (${rows.length >= previous.length ? 'up' : 'down'} ${Math.abs(Math.round((rows.length - previous.length) / previous.length * 100))}% from the previous ${state.filters.days} days)` : ' (none in the previous period)' : '';
-    const period = state.filters.days ? `In the last ${state.filters.days} days` : `Across all ${sampleWord()}records`;
+    const period = state.filters.days ? `In the last ${state.filters.days} days${isSampleData() ? ' of sample data' : ''}` : `Across all ${sampleWord()}records`;
     const tiles = [['Open', rows.filter(i => i.resolution_status === 'Open').length], ['In review', rows.filter(i => i.resolution_status === 'In review').length], ['Resolved', resolved], ['Needs verification', rows.filter(i => i.verification_status === 'Needs review').length]];
     body = `<p class="digest-text">${period}, <strong>${esc(wardLabel(ward))}</strong> logged <strong>${plural(rows.length, state.dataSource === 'sample' ? 'sample issue' : 'issue')}</strong>${delta}. The most common type was <strong>${esc(topType)}</strong> (${topCount}). <strong>${high}</strong> ${high === 1 ? 'is' : 'are'} high severity and <strong>${percent(resolved, rows.length)}%</strong> ${resolved === 1 ? 'is' : 'are'} resolved. The busiest location was <strong>${esc(topPlace)}</strong> (${plural(placeCount, 'issue')}).</p>${writtenDigestHtml(ward, rows)}<div class="digest-stats">${tiles.map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join('')}</div>`;
   }
@@ -117,7 +118,7 @@ function writtenDigestHtml(ward, rows) {
 }
 
 function pipelineHtml() {
-  const report = state.dataSource === 'pipeline' ? state.pipeline.report : null, verified = state.issues.filter(i => i.verification_status === 'Verified').length;
+  const report = state.dataSource !== 'sample' ? state.pipeline.report : null, verified = state.issues.filter(i => i.verification_status === 'Verified').length;
   let stages, subtitle, foot, firstNote;
   if (report?.counts) {
     // The analysis run's own counts (data/analyzed/report.json), so every number is measured.
@@ -127,6 +128,12 @@ function pipelineHtml() {
     firstNote = 'From the photo analysis';
     const reasons = Object.entries(countBy(report.dropped || [], 'reason')).map(([reason, n]) => `${n} ${reason}`).join(', ');
     foot = `Counts from the analysis report. Duplicate sightings were merged into unique issues${reasons ? `; dropped: ${reasons}` : ''}. Bars use a log scale.`;
+    if (report.simulated) {
+      stages = [['Simulated reports', c.sightings || 0, true], ['Simulated unique issues', c.issues || 0, true], ['Verified', 0, true]];
+      subtitle = 'Simulated report replay';
+      firstNote = 'Fictional reports';
+      foot = 'All replay records are fictional. No photos were collected or analysed to create these counts. Bars use a log scale.';
+    }
   } else {
     const recent = state.issues.filter(i => age(i) < demoPipeline.window_days);
     stages = [['Posts scanned', demoPipeline.posts_scanned, false], ['With images', demoPipeline.with_images, false], ['Toronto-relevant', demoPipeline.toronto_relevant, false], ['Public scenes', demoPipeline.public_scenes, false],
@@ -145,6 +152,7 @@ export function dashboardHtml() {
   const areas = Object.entries(countBy(rows, i => i.neighbourhood_id)).map(([id, count]) => ({ id, count, name: rows.find(i => i.neighbourhood_id === id).neighbourhood_name })).sort((a, b) => b.count - a.count).slice(0, 5);
   const recent = rows.slice().sort((a, b) => b.first_seen_at.localeCompare(a.first_seen_at)).slice(0, 4);
   return `<div class="dashboard-page">${statsHtml(rows, previous)}
+    ${activityPanelHtml(state.dataBackend, state.dataSource)}
     <div class="dashboard-charts">${timelineHtml(rows)}${breakdownHtml(rows)}${resolutionHtml(rows)}</div>
     <div class="dashboard-civic">${wardDigestHtml(rows, previous)}${pipelineHtml()}</div>
     <div class="dashboard-lower">
@@ -155,6 +163,7 @@ export function dashboardHtml() {
 }
 
 export function bindDashboard() {
+  bindActivity(state.dataSource, state.filters, state.dataBackend, ward => { state.filters.area = `ward:${ward}`; updateFilteredView(); });
   document.querySelectorAll('[data-type-filter]').forEach(b => b.onclick = () => { state.filters.type = b.dataset.typeFilter; nav('data'); });
   document.querySelectorAll('[data-area-filter]').forEach(b => b.onclick = () => { state.filters.area = b.dataset.areaFilter; nav('data'); });
   document.querySelectorAll('[data-ward-filter]').forEach(b => b.onclick = () => { state.filters.area = `ward:${b.dataset.wardFilter}`; updateFilteredView(); });

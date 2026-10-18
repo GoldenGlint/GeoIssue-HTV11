@@ -7,7 +7,7 @@ import { esc, typeIcon, typeColor, issueName } from '../format.js';
 import { planRoute, capStops, roadMatrix, roadPath, ROUTE_ASSUMPTIONS, MAX_STOPS } from '../route.js';
 import { googleDirectionsUrl, DIRECTIONS_MAX_POINTS } from '../coordinates.js';
 import { searchSuggestions } from '../issues.js';
-import { state, filtered, findIssue, remember, sampleWord } from '../state.js';
+import { state, filtered, findIssue, remember, sampleWord, shouldShowMapEmptyNotice, dismissMapEmptyNotice } from '../state.js';
 import { toast, detailHtml, issueRow, emptyHtml, bindEvidence } from '../ui.js';
 import { action, filtersHtml, secondaryFilters, bindFilterChips, updateFilteredView, scopedTable, toggleSave } from '../app.js';
 import { shareIssue, streetModal, correctionModal } from '../modals.js';
@@ -47,13 +47,16 @@ export function updateMapMeta() {
   const hint = document.querySelector('.map-summary .muted'); if (hint) hint.textContent = `/ ${rows.length} matching`;
   const empty = document.querySelector('.map-empty');
   if (empty) {
-    const button = empty.querySelector('button');
-    empty.hidden = visible.length > 0 || !!state.panel;
-    empty.querySelector('h3').textContent = rows.length ? 'Your matches are outside this view' : `No matching ${sampleWord()}issues`;
-    empty.querySelector('p').textContent = rows.length ? `${rows.length} issues match your filters. Bring them into view.` : 'Try a different search or remove a filter.';
+    const button = empty.querySelector('[data-empty-action]');
+    empty.hidden = !shouldShowMapEmptyNotice(visible.length);
+    empty.querySelector('h3').textContent = rows.length ? 'Matches outside this view' : `No matching ${sampleWord()}issues`;
     button.dataset.action = rows.length ? 'fit-results' : 'reset';
-    button.textContent = rows.length ? 'Show matching issues' : 'Reset filters';
+    button.textContent = rows.length ? 'Show matches' : 'Reset filters';
     button.onclick = () => action(button.dataset.action);
+    empty.querySelector('[data-dismiss-map-empty]').onclick = () => {
+      dismissMapEmptyNotice(); empty.hidden = true;
+      map.element.focus({ preventScroll: true });
+    };
   }
   document.querySelector('[data-action="zoom-in"]')?.toggleAttribute('disabled', map.zoom >= 18);
   document.querySelector('[data-action="zoom-out"]')?.toggleAttribute('disabled', map.zoom <= 10);
@@ -91,16 +94,16 @@ export function clearSelection() {
 export function mapHtml() {
   const legend = Object.entries(categories).map(([type, c]) => `<button data-legend="${type}" class="${state.filters.type === type ? 'legend-active' : ''}"><span style="color:${c.color}">${typeIcon(type)}</span>${type}</button>`).join('');
   const hint = state.mapMode === 'box' ? 'Drag a rectangle to select issues' : 'Drag to pan · Scroll to zoom · Shift + click to select';
+  const emptyNotice = `<div class="map-empty" hidden>${icon('search')}<h3>No matching ${sampleWord()}issues</h3><button class="text-button" data-empty-action data-action="reset">Reset filters</button><button class="icon-button" data-dismiss-map-empty aria-label="Dismiss map notice">${icon('close')}</button></div>`;
   return `<div class="map-workspace ${state.heat ? 'density-mode' : ''}">
     <div class="map-floating-filters"><div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}</div>
     <div id="city-map" class="city-map" role="region" aria-label="Interactive Toronto issue map"></div>
     <div class="map-top-left"><div class="map-segment"><button class="${!state.heat ? 'active' : ''}" data-action="pins">${icon('pin')} Pins</button><button class="${state.heat ? 'active' : ''}" data-action="heat">${icon('density')} Density</button></div><button class="map-route-button" data-action="crew-route" aria-label="Plan crew route" title="Plan a low-carbon crew route through the issues in view">${icon('route')}<span class="long">Plan crew route</span><span class="short">Route</span></button></div>
     <div class="map-top-right"><button class="map-control ${state.mapMode === 'pan' ? 'active' : ''}" data-action="pan" title="Pan map" aria-label="Pan map">${icon('hand')}</button><button class="map-control ${state.mapMode === 'box' ? 'active' : ''}" data-action="box" title="Box select" aria-label="Box select">${icon('select')}</button><button class="map-control ${state.layers.length ? 'active' : ''}" data-action="layers" title="Infrastructure layers" aria-label="Infrastructure layers">${icon('layers')}</button></div>
-    <div class="map-bottom-left"><div class="map-summary"><strong class="map-visible-count">Toronto, Ontario</strong> <span class="muted">· ${filtered().length} ${sampleWord()}issues</span><button data-action="search-area" class="text-button">View area issues</button></div><div class="map-legend">${legend}<span class="legend-severity"><i>!</i>High severity</span></div><div class="density-legend"><span>Fewer reports</span><i></i><span>More</span><small>Click a hot spot to list its issues</small></div></div>
+    <div class="map-bottom-left">${emptyNotice}<div class="map-summary"><strong class="map-visible-count">Toronto, Ontario</strong> <span class="muted">· ${filtered().length} ${sampleWord()}issues</span><button data-action="search-area" class="text-button">View area issues</button></div><div class="map-legend">${legend}<span class="legend-severity"><i>!</i>High severity</span></div><div class="density-legend"><span>Fewer reports</span><i></i><span>More</span><small>Click a hot spot to list its issues</small></div></div>
     <div class="map-bottom-right"><button class="map-control street-person" draggable="true" data-action="street" aria-label="Street View at the map centre" title="Street View: click for the map centre, or drag onto the map">${icon('person')}</button><div class="zoom-controls"><button class="map-control" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="map-control" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button></div><button class="map-control" data-action="fit-results" title="Fit all matching issues" aria-label="Fit all matching issues">${icon('fit')}</button><button class="map-control" data-action="center" title="Reset Toronto view" aria-label="Reset Toronto view">${icon('home')}</button></div>
     <div class="map-hint">${icon(state.mapMode === 'box' ? 'select' : 'hand')} ${hint}</div>
     <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
-    <div class="map-empty" hidden>${icon('search')}<h3>No matching ${sampleWord()}issues</h3><p>Try a different search or remove a filter.</p><button class="button small" data-action="reset">Reset filters</button></div>
     <aside id="issue-panel" class="issue-panel" aria-label="Selected issues" hidden></aside>
   </div>`;
 }

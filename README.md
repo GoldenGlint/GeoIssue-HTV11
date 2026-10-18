@@ -9,6 +9,8 @@ Start with the [collection package guide](scraping/README.md) for setup, command
 | Web app: run it, plug in data, what is implemented | [Frontend](#frontend) below |
 | Photos to map-ready issues: locate, merge, priority, area stats | [analysis/README.md](analysis/README.md) |
 | Issue fields shared by the analysis and the app | [data-contract.md](data-contract.md) |
+| Tiger Data setup, live report activity, simulated replay and benchmarks | [Tiger Data integration](tiger-data-plan.md) |
+| Vultr hosting, on-demand ingestion, deployment and demo checks | [Vultr implementation plan](vultr-plan.md), [deploy guide](deploy/README.md) |
 | Working collectors and review tools | [scraping/README.md](scraping/README.md) |
 | Current collection status, freshness policy, and model handoff | [Collection workflow](scraping/docs/COLLECTION.md) |
 | Automatic Gemini screening (Toronto / issue / locatability) | [Screening](scraping/docs/SCREENING.md) |
@@ -35,6 +37,8 @@ python scripts/serve.py     # http://127.0.0.1:5173
 ```
 
 `scripts/serve.py` serves the app and a small local API (`/api/status`, `/api/triage`, `/api/digest`) that calls Gemini with the key from `.env`, so the key never reaches the browser. It never serves hidden files such as `.env`. Without a key, the app works and the AI features say they are off.
+
+For Tiger Data, follow [the integration guide](tiger-data-plan.md): install the optional PostgreSQL driver, set `TIGER_DATABASE_URL`, initialize the schema, then add `--tiger` to the analysis command. The same server supplies database-backed issues and hourly report activity. The dashboard refreshes every 15 seconds and clearly labels file snapshots and simulated replay. Gemini and Tiger Data work independently.
 
 With Node.js 18 or newer, `npm run dev` serves the app without the Gemini API. No installation or build step is required either way. Don't use `python -m http.server` once a `.env` exists: it would serve the key. ES modules require HTTP; opening `index.html` directly is not supported.
 

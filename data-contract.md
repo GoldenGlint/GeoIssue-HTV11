@@ -1,6 +1,6 @@
 # CivicLens data contract (frontend ⇄ issue API)
 
-The frontend reads everything through `issueRepository` in `src/data.js`. Today it returns generated sample records; swap its methods for API calls and the map, table, dashboard and exports keep working unchanged.
+The frontend reads everything through `issueRepository` in `src/data.js`. It supports generated samples, public analysis snapshots, and Tiger Data-backed issues. See [Tiger Data setup and activity semantics](tiger-data-plan.md). Submissions and corrections remain browser-local.
 
 | Method | Today | Replace with |
 | --- | --- | --- |
@@ -11,6 +11,8 @@ The frontend reads everything through `issueRepository` in `src/data.js`. Today 
 | `issueRepository.submitCorrection(draft)` | Saves the correction to browser storage | `POST /api/issues/{issue_id}/corrections` → `{ correction_id, status: 'Pending review' }` |
 
 Filtering, sorting, paging and search currently run in the browser (`src/issues.js`). When the dataset outgrows that, move the same filter semantics to query parameters; the Data Explorer's **Query** tab shows the equivalent SQL for the current filters.
+
+With `TIGER_DATABASE_URL` configured, `pipeline` reads `GET /api/issues?dataset=pipeline`; `replay` reads a separate simulated dataset. `/api/pipeline` supplies report/area metadata and `/api/activity` supplies independent-report history. These read-only endpoints return public issue snapshots, do not authenticate the demo role selector, and expose no private coordinates. If Tiger Data is unavailable on initial load, `pipeline` falls back to a labelled file snapshot. Activity applies ward/category/time filters only; it never reconstructs report timestamps from an issue's `sightings_count`.
 
 ## Issue
 

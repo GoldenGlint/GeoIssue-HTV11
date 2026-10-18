@@ -102,10 +102,10 @@
   "evidence_credit": null,
   "is_demo": false,
   "title": "Shattered Display Window with Caution Tape",
-  "priority_score": 38,
+  "priority_score": 39,
   "priority_reasons": [
    "Medium severity (+25)",
-   "Open 3 days (+1.5)",
+   "Open 4 days (+2)",
    "24 m from TMU Station (+12)"
   ],
   "sighting_ids": [
@@ -441,9 +441,10 @@
   "evidence_credit": null,
   "is_demo": false,
   "title": "Road Closed Sign and Channelizing Posts",
-  "priority_score": 25,
+  "priority_score": 26,
   "priority_reasons": [
-   "Medium severity (+25)"
+   "Medium severity (+25)",
+   "Open 1 day (+0.5)"
   ],
   "sighting_ids": [
    "CL-5390414C"
@@ -665,6 +666,7 @@
   "priority_score": 18,
   "priority_reasons": [
    "Medium severity (+25)",
+   "Open 1 day (+0.5)",
    "Low detection confidence 35% (x0.7)"
   ],
   "sighting_ids": [

@@ -7,7 +7,9 @@ const status = kind => ({ live: '<span class="method-status live">Live in this p
 
 export function methodologyHtml() {
   const counts = state.pipeline.report?.counts;
-  const issues = state.dataSource === 'pipeline'
+  const issues = state.dataSource === 'replay'
+    ? `${state.issues.length} fictional issues and their simulated reports, stored in a separate Tiger Data replay dataset. They do not describe real places or conditions.`
+    : state.dataSource === 'pipeline'
     ? `Pipeline output from <code>python -m analysis</code>${counts ? `: ${counts.records ?? counts.input_records} photos analysed → ${(counts.sightings || 0) + (counts.dropped || 0)} civic issues found → ${counts.sightings} located in Toronto → ${counts.issues} unique issues` : ''}.`
     : `${state.sources.sample} fictional records generated for the demo (deterministic, so everyone sees the same data). Switch to pipeline output in the header once <code>python -m analysis</code> has run.`;
   const steps = [
@@ -20,6 +22,7 @@ export function methodologyHtml() {
   ];
   const sources = [
     ['Issues', issues],
+    ['Report history', state.dataBackend.type === 'tiger' ? 'Stored in Tiger Data alongside current issue records. Timestamped reports power hourly ward trends; older report chunks use compressed column storage. <button class="text-button" data-action="tiger-info">How Tiger Data powers CivicLens →</button>' : 'The current source is a sample or file snapshot. A connected Tiger Data source provides timestamped report history and hourly ward trends.'],
     ['Evidence photos', 'Analysed issues display their collected photos in full. Fictional records use sample photos under CC BY / CC BY-SA that illustrate the category, not the record itself. Sample credits: <a href="assets/evidence/CREDITS.md" target="_blank" rel="noopener">assets/evidence/CREDITS.md</a>.'],
     ['Ward boundaries', 'City of Toronto “City Wards” open data (25-ward model). Contains information licensed under the Open Government Licence – Toronto.'],
     ['TTC stations and highways', 'OpenStreetMap, © OpenStreetMap contributors (ODbL). Distances to the nearest station, school and highway drive the proximity filter and priority.'],
