@@ -1,9 +1,24 @@
 """Loads config.toml. Relative paths in it are resolved from the repository root."""
 import tomllib
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = Path(__file__).resolve().parent / "config.toml"
+
+
+def setting(name, default=None):
+    """Server-side environment lookup shared by the API and optional Tiger importer."""
+    if os.environ.get(name):
+        return os.environ[name]
+    for file in (".env", "spikes/.env"):
+        path = ROOT / file
+        if path.is_file():
+            for line in path.read_text(encoding="utf-8-sig").splitlines():
+                key, sep, value = line.partition("=")
+                if sep and key.strip().removeprefix("export ").strip() == name:
+                    return value.strip().strip("'\"") or default
+    return default
 
 
 def load(path=None):

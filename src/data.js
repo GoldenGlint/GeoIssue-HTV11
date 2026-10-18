@@ -20,12 +20,12 @@ export const TORONTO_BOUNDS = { west: -79.64, south: 43.58, east: -79.11, north:
 const DAY = 86400000;
 
 export const categories = {
-  Pothole: { color: '#fa6575', icon: 'warning' },
-  'Sidewalk damage': { color: '#ffb452', icon: 'cone' },
-  Graffiti: { color: '#ba80f6', icon: 'tool' },
-  Litter: { color: '#25d5ac', icon: 'trash' },
-  Flooding: { color: '#4ea8ff', icon: 'water' },
-  Other: { color: '#9daec3', icon: 'more' },
+  Pothole: { color: '#dc2626', icon: 'warning' },
+  'Sidewalk damage': { color: '#d97706', icon: 'cone' },
+  Graffiti: { color: '#7c3aed', icon: 'tool' },
+  Litter: { color: '#059669', icon: 'trash' },
+  Flooding: { color: '#2563eb', icon: 'water' },
+  Other: { color: '#6b7280', icon: 'more' },
 };
 
 // Toronto's 25 wards (2018 boundaries).
@@ -266,17 +266,46 @@ const analyzedFile = async name => {
     return response.ok ? await response.json() : null;
   } catch { return null; }
 };
-let analyzedCache;
-const analyzedIssues = () => analyzedCache ||= analyzedFile('issues.public.json').then(issues => Array.isArray(issues) && issues.length ? issues : null);
+const pipelineCache = new Map();
+async function databaseSnapshot(dataset) {
+  const [issues, metadata] = await Promise.all(['issues', 'pipeline'].map(async endpoint => {
+    const response = await fetch(`/api/${endpoint}?dataset=${dataset}`, { cache: 'no-store', signal: AbortSignal.timeout(12000) });
+    if (!response.ok) throw new Error('Tiger Data is unavailable');
+    return response.json();
+  }));
+  if (!Array.isArray(issues)) throw new Error('Invalid issue response');
+  return { issues, ...metadata, backend: { type: 'tiger', simulated: metadata.simulated } };
+}
+
+async function loadPipeline(dataset, configured) {
+  if (configured) {
+    try { const snapshot = await databaseSnapshot(dataset); pipelineCache.set(dataset, snapshot); return snapshot; }
+    catch {
+      if (dataset === 'replay') return { issues: [] };
+    }
+  }
+  const [issues, report, areas] = await Promise.all(['issues.public.json', 'report.json', 'areas.json'].map(analyzedFile));
+  const snapshot = { issues: Array.isArray(issues) ? issues : [], report, areas,
+    backend: { type: 'file', warning: configured ? 'Tiger Data unavailable · showing file snapshot' : '' } };
+  pipelineCache.set(dataset, snapshot);
+  return snapshot;
+}
 
 export const issueRepository = {
   /** Issue counts per dataset. The sample is always available; pipeline output only after `python -m analysis`. */
-  async sources() { return { sample: demoIssues.length, pipeline: (await analyzedIssues())?.length || 0 }; },
+  async sources() {
+    const status = await fetch('/api/status', { cache: 'no-store', signal: AbortSignal.timeout(12000) })
+      .then(r => r.ok ? r.json() : {}).catch(() => ({}));
+    const [pipeline, replay] = await Promise.all([loadPipeline('pipeline', status.tiger), status.tiger ? loadPipeline('replay', true) : { issues: [] }]);
+    return { sample: demoIssues.length, pipeline: pipeline.issues.length, replay: replay.issues.length };
+  },
+  backend: source => pipelineCache.get(source)?.backend || { type: 'sample' },
+  async refresh(source) { const snapshot = await databaseSnapshot(source); pipelineCache.set(source, snapshot); return snapshot; },
   /** Pipeline run report (counts per stage) and per-area stats and summaries, or null when not available. */
-  pipelineReport: () => analyzedFile('report.json'),
-  areaSummaries: () => analyzedFile('areas.json'),
+  pipelineReport: (source = 'pipeline') => pipelineCache.get(source)?.report || null,
+  areaSummaries: (source = 'pipeline') => pipelineCache.get(source)?.areas || null,
   async list(source = 'sample') {
-    if (source === 'pipeline') { const analyzed = await analyzedIssues(); if (analyzed) return structuredClone(analyzed); }
+    if (source !== 'sample') return structuredClone(pipelineCache.get(source)?.issues || []);
     const photos = await evidenceByCategory(), issues = structuredClone(demoIssues);
     for (const [j, issue] of issues.entries()) {
       const options = photos[issue.issue_type];

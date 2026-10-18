@@ -119,7 +119,9 @@ def _merge(members, incident_id=None):
         "verification_status": "Verified" if any(r.get("verification_status") == "Verified" for r in members)
                                else issue.get("verification_status"),
         "sighting_ids": [r["issue_id"] for r in members],
-        "evidence_photos": [r["photo_source"] for r in members if r.get("photo_source")],
+        "evidence_photos": list(dict.fromkeys(photo for r in members for photo in
+                                             ([r["photo_source"]] if r.get("photo_source") else []) + (r.get("evidence_photos") or []))),
+        "source_posts": list(dict.fromkeys(url for r in members for url in r.get("source_posts") or [])),
         "is_demo": any(r.get("is_demo") for r in members),
         "photo_needs_blur": any(r.get("photo_needs_blur") for r in members) or None,
         "geo_clues": list(dict.fromkeys(c for r in members for c in r.get("geo_clues") or [])) or None,

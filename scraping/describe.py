@@ -175,8 +175,14 @@ def run(batch, *, max_requests=100, model=None, key=None, session=None, cache_pa
                 if last_request_at and wait > 0:
                     time.sleep(wait)
                 report["requests"] += 1
-                result = validate_details(generate_content(session, key, model, parts, DETAIL_SCHEMA), group)
+                response = generate_content(session, key, model, parts, DETAIL_SCHEMA)
                 last_request_at = time.monotonic()
+                try:
+                    result = validate_details(response, group)
+                except ValueError as exc:
+                    # One inconsistent answer leaves only this group pending.
+                    report["errors"].append(f"{group['group_id']}: {str(exc)[:200]}")
+                    continue
                 cache[fingerprint] = {
                     "fingerprint": fingerprint, "group_id": group["group_id"],
                     "prompt_version": DETAIL_PROMPT_VERSION, "model": model,

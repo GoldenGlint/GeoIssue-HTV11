@@ -117,7 +117,7 @@ Code owns keep/reject: reject if `sensitive` or scene is not `public_outdoor`, o
 | `posted_at`, `captured_at`, `freshness`, `screening.appears_old` | Posting date and capture-age evidence; recent posting is not proof of a current condition |
 | `local_path`, `media_url`, `media_index`, `sha256`, `dhash` | Saved file, source image URL, carousel position, exact source-pixel hash and similarity hash |
 | `width`, `height`, `saved_width`, `saved_height` | Source image dimensions versus the actual saved JPEG dimensions; use saved dimensions for boxes/crops |
-| `screening.model`, `prompt_version`, `screened_at`, `blur_before_public_display` | Screening provenance and the requirement to censor identifiable details before public display |
+| `screening.model`, `prompt_version`, `screened_at`, `blur_before_public_display` | Screening provenance and the legacy face/plate flag, retained as metadata; the current display policy does not withhold flagged photos |
 | `post_group_id`, `issue_details` | Same-post group identity and detailed multi-image issue assessment, when generated |
 
 Caption, alt text, source location claims and the source batch are also retained. These are model-screened candidates, not verified issue reports. Issue classes are pothole, sidewalk damage, blocked access, dumping, drain, flooding, damaged transit/shelter, and other. The prompt requires visible outdoor infrastructure evidence; it does not verify municipal asset ownership, exact coordinates, severity, or whether an issue has since been fixed. Screenshots and ordinary street scenes can still be misclassified.
@@ -141,7 +141,7 @@ Source-batch galleries show only passed images. The handoff preview shows passed
 
 ## Privacy
 
-Unblurred images may be sent to Gemini and used for local model training. A separate downstream component censors faces and identifiable information before public display or sharing. `blur_before_public_display` / `blur_required` means censor before public display, not before screening.
+Unblurred images may be sent to Gemini and used for local model training. The current photo-display policy also permits collected photos to be displayed in full. `blur_before_public_display` / `blur_required` remains screening metadata; it does not block display under the default analysis configuration. The upload form’s blurring tools remain available.
 
 ## Suggested repeat schedule
 

@@ -263,7 +263,8 @@ def load_cache(path):
 
 
 def screen_batch(batch, *, model=None, max_requests=1000, key=None, session=None, now=None,
-                 min_interval=MIN_REQUEST_INTERVAL, prefilter=True, shared_cache=SHARED_CACHE):
+                 min_interval=MIN_REQUEST_INTERVAL, prefilter=True, shared_cache=SHARED_CACHE,
+                 exploration_limit=0):
     batch = Path(batch)
     if not (batch / "media.jsonl").is_file():
         raise ValueError("Batch has no media.jsonl.")
@@ -278,6 +279,7 @@ def screen_batch(batch, *, model=None, max_requests=1000, key=None, session=None
     report = {
         "batch": batch.name, "started_at": now.isoformat(), "prompt_version": PROMPT_VERSION,
         "status": "ok", "requests": 0, "cache_hits": 0, "prefiltered": 0, "unscreened": 0,
+        "exploration_requests": 0,
         "prefilter": "issue_words" if prefilter else "off", "screened": 0, "kept": 0,
         "issue_candidates": 0, "passed": 0, "pass_blockers": {},
         "live": 0, "training": 0, "rejected": 0, "errors": [],
@@ -307,7 +309,8 @@ def screen_batch(batch, *, model=None, max_requests=1000, key=None, session=None
                 result.update(decide(result["assessment"], row, now=now))
                 report["cache_hits"] += 1
                 report.setdefault("model", result.get("model"))
-            elif prefilter and not has_issue_words(row):
+            elif (prefilter and not has_issue_words(row)
+                  and report["exploration_requests"] >= exploration_limit):
                 report["prefiltered"] += 1
                 blockers["prefiltered"] += 1
                 continue
@@ -337,6 +340,9 @@ def screen_batch(batch, *, model=None, max_requests=1000, key=None, session=None
                     wait = min_interval - (time.monotonic() - last_request_at)
                     if last_request_at and wait > 0:
                         time.sleep(wait)
+                    report["requests"] += 1
+                    if prefilter and not has_issue_words(row):
+                        report["exploration_requests"] += 1
                     assessment = generate(session, key, model, row, path.read_bytes())
                     last_request_at = time.monotonic()
                 except (ValueError, OSError, requests.RequestException) as exc:
@@ -347,7 +353,6 @@ def screen_batch(batch, *, model=None, max_requests=1000, key=None, session=None
                         stop_reason = "Gemini quota reached; remaining images left for the next run."
                         report["unscreened"] += 1
                     continue
-                report["requests"] += 1
                 decision = decide(assessment, row, now=now)
                 result = {
                     "key": row["key"], "sha256": digest, "platform": row["platform"],
@@ -371,6 +376,9 @@ def screen_batch(batch, *, model=None, max_requests=1000, key=None, session=None
             if result.get("passed"):
                 report["passed"] += 1
             blockers.update(result.get("pass_blockers") or [])
+            if report["requests"] and report["screened"] % 10 == 0:
+                print(f"Screened {report['screened']} images; {report['passed']} passed; "
+                      f"{report['requests']} new requests.", flush=True)
     finally:
         if own_session:
             session.close()
@@ -452,6 +460,8 @@ def main():
     parser.add_argument("--max-requests", type=int, default=1000)
     parser.add_argument("--no-prefilter", action="store_true",
                         help="Send every image to Gemini, not only captions with problem words.")
+    parser.add_argument("--exploration-images", type=int, default=0,
+                        help="Also screen this many images without problem words.")
     args = parser.parse_args()
     try:
         batch = args.batch.resolve()
@@ -459,8 +469,10 @@ def main():
             raise ValueError("Screen only an ignored scraping/data batch.")
         if not 0 <= args.max_requests <= 5000:
             raise ValueError("Use a max-requests value between 0 (cache only) and 5000.")
+        if not 0 <= args.exploration_images <= args.max_requests:
+            raise ValueError("Exploration images must fit the request budget.")
         report = screen_batch(batch, model=args.model, max_requests=args.max_requests,
-                              prefilter=not args.no_prefilter)
+                              prefilter=not args.no_prefilter, exploration_limit=args.exploration_images)
     except (ValueError, OSError, requests.RequestException) as exc:
         parser.exit(1, f"Screening stopped: {exc}\n")
     print(json.dumps(report, indent=2))

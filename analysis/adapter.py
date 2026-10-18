@@ -10,6 +10,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 _PATH_PART = re.compile(r"([^.\[\]]+)|\[(\d+)\]")
 
@@ -238,6 +239,16 @@ def adapt(items, config, report):
                 photo = str(record.pop("photo"))
                 record["provenance"]["photo_source"] = record["provenance"].pop("photo")
                 record["photo_source"] = photo if re.match(r"https?://", photo) else str((base_dir / photo).resolve())
+            if record.get("source_posts"):
+                urls = record["source_posts"]
+                record["source_posts"] = list(dict.fromkeys(url for url in (urls if isinstance(urls, list) else [urls]) if _valid_post_url(url)))
+            if explode_path == "passed_images":
+                # Companion views supply context only; they never become new sightings or issue claims.
+                photos = (raw.get("passed_images") or []) + (raw.get("supplemental_images") or [])
+                record["evidence_photos"] = list(dict.fromkeys(
+                    str((base_dir / image["local_path"]).resolve()) for image in photos if image.get("local_path")))
+                record["photo_needs_blur"] = record.get("photo_needs_blur", False) or any(
+                    (image.get("screening") or {}).get("blur_before_public_display") for image in photos)
             clues = record.get("location_clues")
             if clues is not None:
                 record["geo_clues"] = [_flatten_text(c) for c in clues] if isinstance(clues, list) else [_flatten_text(clues)]
@@ -252,6 +263,16 @@ def adapt(items, config, report):
         {leaf for leaf in report["unused_input_fields"] if any(part.strip("[]") in private for part in re.split(r"[.\[]", leaf))}
     )
     return records
+
+
+def _valid_post_url(value):
+    if not isinstance(value, str):
+        return False
+    try:
+        url = urlsplit(value)
+        return url.scheme == "https" and bool(url.hostname) and not url.username and not url.password
+    except (ValueError, TypeError):
+        return False
 
 
 def _input_path(candidate, explode):

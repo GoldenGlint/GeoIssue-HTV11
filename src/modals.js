@@ -5,11 +5,13 @@ import { CivicMap } from './map.js';
 import { icon } from './icons.js';
 import { esc, badge, typeIcon, typeColor, countBy, age, plural } from './format.js';
 import { state, scopedRows, persist, remember, addSighting, isSampleData, sampleWord } from './state.js';
-import { toast, showModal, closeModal, modalHeader, detailHtml } from './ui.js';
-import { render, nav, toggleSave, setRole } from './app.js';
+import { toast, showModal, closeModal, modalHeader, detailHtml, bindEvidence } from './ui.js';
+import { render, nav, toggleSave, setRole, action, themeButtonHtml } from './app.js';
+import { themePreference, setTheme } from './theme.js';
 import { getMap, openIssue, frameIssues, renderPanel } from './views/map-view.js';
 import { apiStatus, triagePhoto } from './api.js';
 import { blurPhoto } from './blur.js';
+import { tigerProofHtml } from './activity.js';
 import { geolocationAvailable, geolocationModel, locatePhoto, cancelJob, cancelButton, onJobs, findJob, isActive, jobCoords, jobHeadline, lastStep, zoomFor, locationFromJob } from './geolocate.js';
 
 // photos: { file, url (original), blurredUrl, boxes (from Gemini), manualBoxes, status, result, error, showOriginal }
@@ -137,7 +139,7 @@ function joinSighting(id) {
   if (!issue) return;
   for (const p of uploadDraft.photos) { URL.revokeObjectURL(p.url); if (p.blurredUrl) URL.revokeObjectURL(p.blurredUrl); }
   uploadDraft = freshDraft();
-  showModal(`${modalHeader('LOCAL DEMO RECEIPT', 'Sighting added')}<div class="submission-success">${icon('check')}<h3>Thanks. Your sighting was added to ${esc(issue.issue_id)}</h3><p>${esc(issue.issue_type)} at ${esc(issue.address)} now has ${plural(issue.sightings_count, 'sighting')}${issue.priority_score != null ? ` and a priority of ${issue.priority_score}` : ''}. It's listed under Saved → Your submissions.</p></div><div class="modal-footer"><button class="button" data-close>Back to workspace</button><button class="button primary" id="view-joined">${icon('map')} View it on the map</button></div>`, { label: 'Sighting added' });
+  showModal(`${modalHeader('Local demo receipt', 'Sighting added')}<div class="submission-success">${icon('check')}<h3>Thanks. Your sighting was added to ${esc(issue.issue_id)}</h3><p>${esc(issue.issue_type)} at ${esc(issue.address)} now has ${plural(issue.sightings_count, 'sighting')}${issue.priority_score != null ? ` and a priority of ${issue.priority_score}` : ''}. It's listed under Saved → Your submissions.</p></div><div class="modal-footer"><button class="button" data-close>Back to workspace</button><button class="button primary" id="view-joined">${icon('map')} View it on the map</button></div>`, { label: 'Sighting added' });
   $('#view-joined').onclick = () => { closeModal(); nav('map'); openIssue(id); frameIssues([issue]); };
   render();
 }
@@ -494,16 +496,36 @@ function exportData(rows, format) {
 
 export function settingsModal() {
   const roles = ['Public', 'Volunteer', 'City Staff'];
-  showModal(`${modalHeader('', 'Preferences')}<div class="modal-body"><label class="form-label">Demo account type<select id="settings-role">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></label><div class="setting-row"><div><h3>Local viewing history</h3><p>Remember recently opened issues on this browser.</p></div><input id="history-toggle" type="checkbox" role="switch" aria-label="Enable viewing history" ${state.historyEnabled ? 'checked' : ''}></div><div class="setting-row"><div><h3>Saved issues</h3><p>${state.saved.length} bookmarks stored locally.</p></div><button class="button small" id="clear-saves">Clear saved</button></div><div class="setting-row"><div><h3>Local submissions</h3><p>${state.pending.length} sample submissions. Photos are never stored.</p></div><button class="button small" id="clear-pending">Clear</button></div><p class="fine-print">The account selector previews roles. Authentication, permissions, and cross-device persistence are backend integration points.</p></div><div class="modal-footer"><button class="button primary" data-close>Done</button></div>`, { label: 'Preferences' });
+  showModal(`${modalHeader('', 'Preferences')}<div class="modal-body"><label class="form-label">Demo account type<select id="settings-role">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></label><label class="form-label">Appearance<select id="settings-theme">${[['light', 'Light'], ['dark', 'Dark'], ['system', 'Match system']].map(([value, name]) => `<option value="${value}" ${themePreference() === value ? 'selected' : ''}>${name}</option>`).join('')}</select></label><div class="setting-row"><div><h3>Local viewing history</h3><p>Remember recently opened issues on this browser.</p></div><input id="history-toggle" type="checkbox" role="switch" aria-label="Enable viewing history" ${state.historyEnabled ? 'checked' : ''}></div><div class="setting-row"><div><h3>Saved issues</h3><p>${state.saved.length} bookmarks stored locally.</p></div><button class="button small" id="clear-saves">Clear saved</button></div><div class="setting-row"><div><h3>Local submissions</h3><p>${state.pending.length} sample submissions. Photos are never stored.</p></div><button class="button small" id="clear-pending">Clear</button></div><p class="fine-print">The account selector previews roles. Authentication, permissions, and cross-device persistence are backend integration points.</p></div><div class="modal-footer"><button class="button primary" data-close>Done</button></div>`, { label: 'Preferences' });
   document.querySelector('#settings-role').onchange = e => setRole(e.target.value);
+  document.querySelector('#settings-theme').onchange = e => {
+    setTheme(e.target.value);
+    const toggle = document.querySelector('.theme-toggle');
+    if (toggle) { toggle.outerHTML = themeButtonHtml(); document.querySelector('.theme-toggle').onclick = () => action('theme'); }
+  };
   document.querySelector('#history-toggle').onchange = e => { state.historyEnabled = e.target.checked; persist('historyEnabled', state.historyEnabled); };
   document.querySelector('#clear-saves').onclick = () => { state.saved = []; persist('saved', []); render(); settingsModal(); };
   document.querySelector('#clear-pending').onclick = () => { state.pending = []; persist('pending', []); render(); settingsModal(); };
 }
 
+export function tigerModal() {
+  const flow = [
+    ['1', 'Collect & analyse', 'The Python pipeline checks public photos, estimates locations and groups repeat sightings into issues. Gemini can assist with photo analysis.'],
+    ['2', 'Save to Tiger Data', 'Each imported issue has a current record, plus timestamped reports stored in a PostgreSQL hypertable. Multiple photos from one post count once per issue.'],
+    ['3', 'Prepare the trends', 'Continuous Aggregates maintain hourly report totals by ward and category. Recent reports are included alongside those prepared totals.'],
+    ['4', 'Explore in CivicLens', 'The map reads current issues; the activity chart reads report history. The app checks for updates every 15 seconds while visible.'],
+  ];
+  showModal(`${modalHeader('Tiger Data', 'From photos to report history')}<div class="modal-body help-content"><p>Tiger Data is CivicLens’s shared database. It connects today’s issue map with the history needed to spot changing activity across Toronto.</p><p class="tiger-proof" id="tiger-proof" hidden></p>${flow.map(([n, title, text]) => `<div class="help-step"><span>${n}</span><div><h3>${title}</h3><p>${text}</p></div></div>`).join('')}<div class="tiger-storage">${icon('database')}<div><h3>Keep the history, use less storage</h3><p>Hypercore keeps recent reports ready for new imports and converts older report chunks to compressed column storage. Measured savings from our database appear above.</p></div></div><p class="fine-print">New collection batches enter through an analysis import; polling reads the database. The simulated replay is a separate fictional dataset. Uploads, corrections and review decisions in this prototype stay in this browser.</p></div><div class="modal-footer"><a class="button" href="https://www.tigerdata.com/docs/learn/continuous-aggregates" target="_blank" rel="noopener">Tiger Data docs ${icon('external')}</a><button class="button primary" data-close>Got it</button></div>`, { label: 'How Tiger Data powers CivicLens' });
+  const proof = $('#tiger-proof');
+  fetch('/api/tiger', { cache: 'no-store', signal: AbortSignal.timeout(10000) })
+    .then(response => response.ok ? response.json() : null)
+    .then(data => { if (data && proof.isConnected) { proof.innerHTML = tigerProofHtml(data); proof.hidden = false; } })
+    .catch(() => {});
+}
+
 export function helpModal() {
   const steps = [['1', 'Discover', 'Explore issues on the map, or filter and export the same records in Data Explorer.'], ['2', 'Understand', 'Open a pin to inspect evidence, approximate location, how it was located, and nearby infrastructure.'], ['3', 'Verify', 'A volunteer reviews findings before they become reliable public records.']];
-  showModal(`${modalHeader('', 'How CivicLens works')}<div class="modal-body help-content"><p>CivicLens brings civic issues from public imagery and community reports into a shared Toronto workspace.</p>${steps.map(([n, t, d]) => `<div class="help-step"><span>${n}</span><div><h3>${t}</h3><p>${d}</p></div></div>`).join('')}<h3>Map controls</h3><p>Drag to pan; scroll, pinch or double-click to zoom; Shift + click to select multiple pins. Focus the map and use arrow keys to pan, + / - to zoom, or Home to return to Toronto. Search suggestions support arrow keys and Enter, and include wards. Fit all matching issues brings filtered results into view. Box select (the dashed square) enables a selection rectangle. A cluster opens a list; choose Zoom in to change the viewport. Pins with a “!” badge are high severity. Escape clears selection.</p><div class="notice-banner">${icon('code')} This is a prototype. Sample data is fictional; pipeline output comes from public posts analysed by the photo pipeline. TTC stations, highways and ward boundaries are real open data, and Street View opens Google Maps. Map tiles are provided by OpenStreetMap.</div><p class="fine-print">Accounts, durable submissions and corrections, 311 context and a shared database still need a backend. Gemini suggestions need <code>python scripts/serve.py</code> with a key in <code>.env</code>.</p></div><div class="modal-footer"><button class="button primary" data-close>Got it</button></div>`, { label: 'How CivicLens works' });
+  showModal(`${modalHeader('', 'How CivicLens works')}<div class="modal-body help-content"><p>CivicLens brings civic issues from public imagery and community reports into a shared Toronto workspace.</p>${steps.map(([n, t, d]) => `<div class="help-step"><span>${n}</span><div><h3>${t}</h3><p>${d}</p></div></div>`).join('')}<h3>Map controls</h3><p>Drag to pan; scroll, pinch or double-click to zoom; Shift + click to select multiple pins. Focus the map and use arrow keys to pan, + / - to zoom, or Home to return to Toronto. Search suggestions support arrow keys and Enter, and include wards. Fit all matching issues brings filtered results into view. Box select (the dashed square) enables a selection rectangle. A cluster opens a list; choose Zoom in to change the viewport. Pins with a “!” badge are high severity. Escape clears selection.</p><div class="notice-banner">${icon('code')} This is a prototype. Sample data is fictional; pipeline output comes from public posts analysed by the photo pipeline. TTC stations, highways and ward boundaries are real open data, and Street View opens Google Maps. Map tiles are provided by OpenStreetMap.</div><p class="fine-print">Tiger Data stores imported issue snapshots and report history when connected. Accounts, shared submissions and corrections, and 311 integration remain in progress. Gemini suggestions need the local server with a configured key.</p></div><div class="modal-footer"><button class="button primary" data-close>Got it</button></div>`, { label: 'How CivicLens works' });
 }
 
 export async function shareIssue(i) {
@@ -520,6 +542,7 @@ export function issueModal(i) {
   remember(i);
   showModal(`<div class="modal-heading"><div><h2>Issue details</h2></div><button class="icon-button" data-close aria-label="Close issue">${icon('close')}</button></div>${detailHtml(i)}<div class="modal-footer"><button class="button" id="modal-save">${icon('bookmark')} ${state.saved.includes(i.issue_id) ? 'Remove saved' : 'Save issue'}</button><button class="button" id="modal-correct">${icon('edit')} Suggest correction</button><button class="button primary" id="modal-on-map">${icon('map')} View on map</button></div>`, { label: `Issue ${i.issue_id}` });
   document.querySelector('#modal-save').onclick = () => { toggleSave([i.issue_id]); closeModal(); };
+  bindEvidence(document.querySelector('#modal-root'));
   document.querySelector('#modal-correct').onclick = () => correctionModal(i);
   document.querySelector('#modal-on-map').onclick = () => { closeModal(); nav('map'); openIssue(i.issue_id); frameIssues([i]); };
 }

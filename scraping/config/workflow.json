@@ -1,0 +1,11 @@
+{
+  "sources": [
+    {"name": "bluesky-live", "platform": "bluesky", "queries": "bluesky-queries.txt", "max_images": 200},
+    {"name": "expanded-bluesky-issues", "platform": "bluesky", "queries": "bluesky-issues.txt", "max_images": 200},
+    {"name": "expanded-bluesky-places", "platform": "bluesky", "queries": "bluesky-places.txt", "max_images": 200},
+    {"name": "expanded-reddit", "platform": "reddit", "config": "reddit.json"},
+    {"name": "expanded-reddit-discovery", "platform": "reddit", "config": "reddit-discovery.json"},
+    {"name": "expanded-reddit-topics", "platform": "reddit", "config": "reddit-topics.json"},
+    {"name": "expanded-mastodon", "platform": "mastodon", "config": "mastodon.json"}
+  ]
+}

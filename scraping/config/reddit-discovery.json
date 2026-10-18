@@ -1,0 +1,10 @@
+{
+  "api": "https://arctic-shift.photon-reddit.com/api",
+  "subreddits": ["Mississauga", "Brampton", "Markham", "Vaughan", "RichmondHill", "Pickering", "urbanplanning", "transit", "bicycling", "fuckcars"],
+  "required_terms": ["toronto", "biketo", "ttc", "bloor", "spadina", "scarborough", "etobicoke", "north york", "danforth"],
+  "days": 7,
+  "max_posts_per_subreddit": 300,
+  "max_images_per_post": 10,
+  "max_images": 150,
+  "pool": "live"
+}

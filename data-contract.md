@@ -1,6 +1,6 @@
 # CivicLens data contract (frontend ⇄ issue API)
 
-The frontend reads everything through `issueRepository` in `src/data.js`. Today it returns generated sample records; swap its methods for API calls and the map, table, dashboard and exports keep working unchanged.
+The frontend reads everything through `issueRepository` in `src/data.js`. It supports generated samples, public analysis snapshots, and Tiger Data-backed issues. See [Tiger Data setup and activity semantics](tiger-data-plan.md). Submissions and corrections remain browser-local.
 
 | Method | Today | Replace with |
 | --- | --- | --- |
@@ -11,6 +11,8 @@ The frontend reads everything through `issueRepository` in `src/data.js`. Today 
 | `issueRepository.submitCorrection(draft)` | Saves the correction to browser storage | `POST /api/issues/{issue_id}/corrections` → `{ correction_id, status: 'Pending review' }` |
 
 Filtering, sorting, paging and search currently run in the browser (`src/issues.js`). When the dataset outgrows that, move the same filter semantics to query parameters; the Data Explorer's **Query** tab shows the equivalent SQL for the current filters.
+
+With `TIGER_DATABASE_URL` configured, `pipeline` reads `GET /api/issues?dataset=pipeline`; `replay` reads a separate simulated dataset. `/api/pipeline` supplies report/area metadata and `/api/activity` supplies independent-report history. These read-only endpoints return public issue snapshots, do not authenticate the demo role selector, and expose no private coordinates. If Tiger Data is unavailable on initial load, `pipeline` falls back to a labelled file snapshot. Activity applies ward/category/time filters only; it never reconstructs report timestamps from an issue's `sightings_count`.
 
 ## Issue
 
@@ -49,10 +51,12 @@ Fields follow `features.md` §7. Rows marked *display* are extras the UI uses th
 | `source_category` | `'Public social post' \| 'Public imagery' \| 'Community submission'` | |
 | `description` | string | Short, factual. |
 | `explanation` | string | Why it was flagged; grounded in the evidence. |
-| `evidence_thumbnail` | URL \| null | Privacy-processed (blurred, EXIF-stripped) derivative only. |
+| `evidence_thumbnail` | URL \| null | Primary evidence photo, displayed without cropping. |
+| `evidence_photos` | `{ url, role: 'evidence' \| 'context' }[]` | *display* Primary photo and available companion images from the source posts. Context images do not add sightings or establish the issue. |
+| `source_posts` | HTTPS URL[] | *display* Validated original social-post links for checking context; merged issues can link to several posts. |
 | `evidence_credit` | `{ title, author, license, license_url, source_url, is_sample }` \| null | *display* Required when the image is third-party or a sample. Only `http(s)` source links are rendered. |
-| `evidence_withheld` | string \| null | *display* Why there is no photo, e.g. it still needs face and plate blurring. Set by the analysis when a photo is flagged for blurring. |
-| `evidence_blurred` | boolean | *display* Optional. `true` shows a "Faces and plates blurred" tag on the evidence photo. Set it only once a photo really is blurred. Until then the analysis withholds flagged photos and sets `evidence_withheld` instead. |
+| `evidence_withheld` | string \| null | *display* Optional reason a photo is withheld when a deployment explicitly enables withholding. The current default displays all available photos, including those flagged for blurring. |
+| `evidence_blurred` | boolean | *display* Optional. `true` shows a "Faces and plates blurred" tag on the evidence photo. Set it only once a photo really is blurred; full photos can display without this flag. |
 | `is_demo` | boolean | `true` for every sample record. |
 
 Never include usernames, handles, author IDs, original post URLs, or precise coordinates for unverified issues in public responses.

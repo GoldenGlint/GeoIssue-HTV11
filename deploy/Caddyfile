@@ -1,0 +1,5 @@
+# Replace {$CIVICLENS_DOMAIN} with the public hostname before installing.
+# Caddy obtains a certificate and proxies to the loopback Python server.
+{$CIVICLENS_DOMAIN} {
+	reverse_proxy 127.0.0.1:5173
+}

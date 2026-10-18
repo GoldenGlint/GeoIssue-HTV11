@@ -15,7 +15,7 @@ from .record import FRONTEND_FIELDS, LIST_FIELDS, PUBLIC_EXTRA_FIELDS, as_incide
 from .reference import Reference
 
 
-def run(input_path, config, out_dir=None, now=None, offline=False):
+def run(input_path, config, out_dir=None, now=None, offline=False, *, photo_url_prefix=None):
     now = now or datetime.now(timezone.utc)
     out = resolve(out_dir or config.get("output", {}).get("dir", "data/analyzed"))
     report = adapter.new_report()
@@ -47,7 +47,9 @@ def run(input_path, config, out_dir=None, now=None, offline=False):
     out.mkdir(parents=True, exist_ok=True)
     for issue in issues:
         _finalise(issue, config, now, placeholder)
-        _publish_photo(issue, out, config.get("output", {}), report)
+        _publish_evidence(issue, out, config.get("output", {}), report, photo_url_prefix)
+    from .tiger import prepare_sightings
+    events = prepare_sightings(issues, sightings)
     for record in sightings + issues:
         for field in ("post_text", "source_post"):  # used to locate and merge, never written
             record.pop(field, None)
@@ -74,7 +76,7 @@ def run(input_path, config, out_dir=None, now=None, offline=False):
         (out / "areas.json").unlink()
     for name, data in outputs.items():
         (out / name).write_text(json.dumps(data, indent=1, ensure_ascii=False, default=str), encoding="utf-8")
-    return {"out": out, "public": public, "issues": issues, "sightings": sightings, "areas": areas, "report": report}
+    return {"out": out, "public": public, "issues": issues, "sightings": sightings, "events": events, "areas": areas, "report": report}
 
 
 def _keep_located(records, bbox, report):
@@ -121,16 +123,34 @@ def _explanation(issue, radius_m):
     return " ".join(parts)
 
 
-def _publish_photo(issue, out, output_cfg, report):
+def _publish_evidence(issue, out, output_cfg, report, photo_url_prefix=None):
+    sources = list(dict.fromkeys(([issue["photo_source"]] if issue.get("photo_source") else []) + (issue.get("evidence_photos") or [])))
+    _publish_photo(issue, out, output_cfg, report, photo_url_prefix)
+    photos = []
+    if issue.get("evidence_thumbnail"):
+        photos.append({"url": issue["evidence_thumbnail"], "role": "evidence"})
+    if not issue.get("evidence_withheld"):
+        for index, source in enumerate(sources):
+            if source == issue.get("photo_source"):
+                continue
+            companion = {"issue_id": f"{issue['issue_id']}-{index + 1}", "photo_source": source}
+            _publish_photo(companion, out, output_cfg, report, photo_url_prefix)
+            if companion.get("evidence_thumbnail"):
+                photos.append({"url": companion["evidence_thumbnail"], "role": "context"})
+    issue["evidence_photos"] = photos
+    if not issue.get("evidence_thumbnail") and photos:
+        issue["evidence_thumbnail"] = photos[0]["url"]
+
+
+def _publish_photo(issue, out, output_cfg, report, photo_url_prefix=None):
     source = issue.get("photo_source")
     if not source or issue.get("evidence_thumbnail"):
         return
-    if issue.get("photo_needs_blur") and output_cfg.get("photos_needing_blur", "withhold") == "withhold":
-        # Neither copied nor linked, so the app never shows an unblurred face or plate.
+    if issue.get("photo_needs_blur") and output_cfg.get("photos_needing_blur", "show") == "withhold":
+        # Optional deployment override; the default policy allows full photos.
         issue["evidence_withheld"] = "Photo withheld until faces and licence plates are blurred."
         report["counts"]["photos_withheld"] += 1
         return
-    copy = output_cfg.get("copy_photos", True)
     if source.startswith(("http://", "https://")):
         issue["evidence_thumbnail"] = source
         return
@@ -138,9 +158,21 @@ def _publish_photo(issue, out, output_cfg, report):
     if not path.is_file():
         report["warnings"].append(f"{issue['issue_id']}: photo {path.name} not found")
         return
+    name = f"{issue['issue_id']}{path.suffix.lower()}"
+    if photo_url_prefix is not None:
+        # A published snapshot must be self-contained: the URL is the public path, not a staging path.
+        if "/" in name or "\\" in name or name.startswith("."):
+            report["warnings"].append(f"{issue['issue_id']}: photo name is not safe to publish")
+            return
+        (out / "photos").mkdir(exist_ok=True)
+        shutil.copyfile(path, out / "photos" / name)
+        prefix = photo_url_prefix if photo_url_prefix.endswith("/") else photo_url_prefix + "/"
+        issue["evidence_thumbnail"] = f"{prefix}photos/{name}"
+        return
+    copy = output_cfg.get("copy_photos", True)
     if copy:
         (out / "photos").mkdir(exist_ok=True)
-        path = Path(shutil.copyfile(path, out / "photos" / f"{issue['issue_id']}{path.suffix.lower()}"))
+        path = Path(shutil.copyfile(path, out / "photos" / name))
     try:
         issue["evidence_thumbnail"] = "./" + path.resolve().relative_to(ROOT).as_posix()
     except ValueError:

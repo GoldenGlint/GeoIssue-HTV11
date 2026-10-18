@@ -16,6 +16,7 @@ def main():
     parser.add_argument("--config", help="config file (default: analysis/config.toml)")
     parser.add_argument("--now", help="ISO time to measure ages and trends from (default: now)")
     parser.add_argument("--offline", action="store_true", help="write template summaries instead of calling Gemini")
+    parser.add_argument("--tiger", action="store_true", help="also synchronize this complete handoff to Tiger Data")
     args = parser.parse_args()
 
     now = datetime.fromisoformat(args.now.replace("Z", "+00:00")) if args.now else datetime.now(timezone.utc)
@@ -23,6 +24,15 @@ def main():
         now = now.replace(tzinfo=timezone.utc)
     result = run(args.input, cfg.load(args.config), args.out, now, args.offline)
     print_summary(result)
+    if args.tiger:
+        from . import tiger
+        try:
+            metadata = tiger.sync(result["public"], result["events"], result["report"], result["areas"])
+            print(f"Tiger Data: {metadata['reports']} independent reports synchronized")
+        except tiger.Unavailable as error:
+            parser.exit(1, f"{error}\nAnalysis files were saved; the database import did not finish.\n")
+        except Exception:
+            parser.exit(1, "Tiger Data import did not finish. Analysis files were saved. Check schema setup and handoff dates, then retry.\n")
 
 
 def print_summary(result):

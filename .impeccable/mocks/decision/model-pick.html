@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>CivicLens Map Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--land:#2b2c2e;--pan:#333537;--rule:#46494c;--tx:#ecebe7;--tx2:#b9b8b2;--y:#f6c400;--ink:#1d1d1d;--on:#3c3e41}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1440px;height:900px;margin:0;overflow:hidden}
+body{display:grid;grid-template-columns:232px 818px 390px;grid-template-rows:56px 844px;background:var(--land);color:var(--tx);font:400 13px/1.45 Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0}
+a{color:inherit;text-decoration:none}
+.stc{font-family:"Allerta Stencil",Barlow,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.1em}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}.mut{color:var(--tx2)}
+.btn{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;background:var(--pan);border:1px solid var(--rule);border-radius:2px;font-weight:500;white-space:nowrap}
+.ib{width:32px;padding:0;justify-content:center}.pri{background:var(--y);border-color:var(--y);color:var(--ink);font-weight:600}
+.lk{font-weight:600;text-decoration-line:underline;text-decoration-color:var(--y);text-decoration-thickness:2px;text-underline-offset:4px}
+.side{grid-row:1/3;display:flex;flex-direction:column;background:var(--pan);border-right:1px solid var(--rule);padding-top:12px}
+.logo{display:flex;align-items:center;gap:8px;height:32px;padding:0 16px;font-size:16px;font-weight:700}
+.loc{margin:12px 16px 16px;padding:0 8px 0 10px;background:var(--land)}
+.loc .i:last-child{margin-left:auto;color:var(--tx2)}
+.nav a{position:relative;display:flex;align-items:center;gap:12px;height:36px;padding:0 16px;color:var(--tx2);font-weight:500}
+.nav a.on{background:var(--on);color:var(--tx);font-weight:600}
+.nav a.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--y)}
+.nav h4{padding:16px 16px 4px;font-size:12px;font-weight:600;color:var(--tx2)}
+.up{margin:16px;height:36px;justify-content:center}
+.sb{margin-top:auto;border-top:1px solid var(--rule);padding:8px 0 16px}
+.user{display:flex;align-items:center;gap:8px;margin:8px 16px 0;padding-top:12px;border-top:1px solid var(--rule)}
+.av{width:28px;height:28px;border-radius:50%;background:var(--rule);display:grid;place-items:center;font-size:12px;font-weight:600}
+.hdr{grid-column:2;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--pan);border-bottom:1px solid var(--rule)}
+.hdr h1{margin-right:auto;font-size:16px;font-weight:700}
+.tg{position:relative;width:24px;height:14px;border-radius:2px;background:var(--y)}.tg::after{content:"";position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:1px;background:var(--ink)}
+.map{grid-column:2;position:relative;overflow:hidden}
+.map>svg{position:absolute;inset:0;display:block}
+.fl{position:absolute;display:flex;align-items:center;gap:8px}
+.srch{flex:1;min-width:0;padding:0 10px;color:var(--tx2);font-weight:400}
+.srch span{overflow:hidden;text-overflow:ellipsis}
+.sel{gap:6px;padding:0 8px 0 12px}.sel .i{width:14px;color:var(--tx2)}
+.seg{display:flex;height:32px;background:var(--pan);border:1px solid var(--rule);border-radius:2px}
+.seg button{position:relative;padding:0 14px;color:var(--tx2);font-weight:500}
+.seg button+button{border-left:1px solid var(--rule)}.seg .on{color:var(--tx);font-weight:600}
+.seg .on::after{content:"";position:absolute;left:10px;right:10px;bottom:4px;height:3px;background:var(--y)}
+.col{position:absolute;right:16px;display:flex;flex-direction:column;gap:8px}
+.grp{display:flex;flex-direction:column;background:var(--pan);border:1px solid var(--rule);border-radius:2px}
+.grp button{width:30px;height:30px;display:grid;place-items:center}.grp button+button{border-top:1px solid var(--rule)}
+.box{position:absolute;left:16px;bottom:16px;padding:12px 16px;background:var(--pan);border:1px solid var(--rule);border-radius:2px}
+.box hr{border:0;border-top:1px solid var(--rule);margin:8px 0}.lgh{font-size:13px;color:var(--tx2);margin-bottom:6px}
+.lg{display:flex;gap:14px;font-size:12px;font-weight:500}.lg span{display:flex;align-items:center;gap:6px}.sw{width:22px;height:8px}
+.pnl{grid-column:3;grid-row:1/3;display:flex;flex-direction:column;background:var(--pan);border-left:1px solid var(--rule)}
+.ptop{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 12px 0 16px;border-bottom:1px solid var(--rule)}
+.ptop a{display:flex;align-items:center;gap:8px;font-weight:600}
+.band{display:flex;align-items:center;height:48px;padding:0 16px;background:#3d82d9;color:#151515;font-size:22px;letter-spacing:.24em}
+.pb{flex:1;padding:16px;overflow:hidden}
+.id{font-weight:500;font-variant-numeric:tabular-nums}
+h2{margin:4px 0 16px;font-size:22px;line-height:28px;font-weight:700}
+.ph{position:relative;height:168px;display:grid;place-items:center;background:var(--land);border:1px solid var(--rule);border-radius:2px;color:var(--tx2)}
+.ph span{position:absolute;left:8px;bottom:6px;font-size:12px}
+.bdg{display:flex;gap:8px;margin:12px 0 16px}
+.bdg span{display:flex;align-items:center;height:24px;padding:0 8px;border:1px solid var(--rule);border-radius:2px;font-size:12px;font-weight:600}
+h3{font-size:16px;line-height:22px;font-weight:600;margin-bottom:4px}
+.blk{display:grid;grid-template-columns:32px 1fr;margin-top:16px;padding-top:12px;border-top:1px solid var(--rule)}
+.blk b{font-weight:600}.pr{grid-template-columns:88px 1fr}
+.big{display:block;font-size:36px;line-height:40px;font-weight:700;font-variant-numeric:tabular-nums}
+.meter{height:4px;margin:8px 0;background:var(--rule)}.meter i{display:block;width:27%;height:4px;background:var(--tx)}
+li{list-style:none;display:flex;align-items:center;gap:8px}li::before{content:"";width:8px;height:2px;background:var(--tx2)}
+.pf{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--rule)}
+.pf .btn:last-child{flex:1;justify-content:center}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><symbol id="cv" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></symbol><symbol id="sw" viewBox="0 0 22 8"><path d="M1.5 2.2 19.6 1.2 21.2 3.8 19.8 6.6 1.2 6.2.4 4z" fill="currentColor" stroke="none"/></symbol></svg>
+
+<aside class="side">
+  <div class="logo"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="#ecebe7" stroke-width="1.5"/><circle cx="14" cy="14" r="6.5" stroke="#ecebe7" stroke-width="3"/><circle cx="14" cy="14" r="2.4" fill="#f6c400"/></svg>CivicLens</div>
+  <button class="btn loc"><svg class="i" viewBox="0 0 16 16"><path d="M8 14s5-4.5 5-8.5a5 5 0 0 0-10 0C3 9.5 8 14 8 14z"/><circle cx="8" cy="5.5" r="1.5"/></svg>Toronto<svg class="i" viewBox="0 0 16 16"><use href="#cv"/></svg></button>
+  <nav class="nav">
+    <a class="on"><svg class="i" viewBox="0 0 16 16"><path d="M2 4l4-1.5 4 1.5 4-1.5V12l-4 1.5-4-1.5-4 1.5zM6 2.5V12M10 4v9.5"/></svg>Map Explorer</a>
+    <a><svg class="i" viewBox="0 0 16 16"><path d="M2.5 3h11v10h-11zM2.5 6.5h11M2.5 10h11M6.5 6.5V13"/></svg>Data Explorer</a>
+    <a><svg class="i" viewBox="0 0 16 16"><path d="M3.5 13V8M8 13V3M12.5 13V6M2 13.5h12"/></svg>Dashboard</a>
+    <h4>Your workspace</h4>
+    <a><svg class="i" viewBox="0 0 16 16"><path d="M4 2.5h8v11l-4-3-4 3z"/></svg>Saved</a>
+    <a><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>Recents</a>
+  </nav>
+  <button class="btn pri up"><svg class="i" viewBox="0 0 16 16" style="stroke-width:2"><path d="M8 3v10M3 8h10"/></svg>Upload new issue</button>
+  <div class="sb nav">
+    <a><svg class="i" viewBox="0 0 16 16"><path d="M2 4.5h7M12 4.5h2M2 11.5h2M7 11.5h7"/><circle cx="10.5" cy="4.5" r="1.5"/><circle cx="5.5" cy="11.5" r="1.5"/></svg>Settings</a>
+    <a><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M6.3 6.3a1.8 1.8 0 1 1 2.4 1.7c-.5.2-.7.6-.7 1.1v.4M8 11.2v.1"/></svg>Help &amp; methodology</a>
+    <div class="user"><span class="av">JD</span><span><b style="font-weight:600">Jamie Davis</b> <span class="mut">· Public</span></span></div>
+  </div>
+</aside>
+
+<header class="hdr">
+  <h1>Map Explorer</h1>
+  <button class="btn"><span class="tg"></span>Pipeline output · 6<svg class="i mut" viewBox="0 0 16 16"><use href="#cv"/></svg></button>
+  <button class="btn ib" aria-label="Theme"><svg class="i" viewBox="0 0 16 16"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5z"/></svg></button>
+  <button class="btn ib" aria-label="Help"><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M6.3 6.3a1.8 1.8 0 1 1 2.4 1.7c-.5.2-.7.6-.7 1.1v.4M8 11.2v.1"/></svg></button>
+</header>
+
+<main class="map">
+<svg viewBox="0 0 818 844" width="818" height="844" role="img" aria-label="Map of Toronto with six issue marks">
+<defs>
+  <pattern id="gd" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(-16 409 422)"><path d="M24 0V24H0" fill="none" stroke="#4a4d50"/></pattern>
+  <filter id="gr" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .93 0 0 0 0 .92 0 0 0 0 .9 .22 0 0 0 -.09"/></filter>
+  <g id="pn"><path d="M-12 0h7M5 0h7" stroke="currentColor" stroke-width="3.5"/><path d="M0 1V-22" stroke="#b9b8b2" stroke-width="1.25"/><path d="M.6-22h12v8H.6z" fill="currentColor"/></g>
+  <g id="ps"><path d="M-18 0h11M7 0h11" stroke="currentColor" stroke-width="4.5"/><path d="M0 2V-38" stroke="#ecebe7" stroke-width="1.75"/><path d="M.9-38h19v12H.9z" fill="currentColor"/></g>
+</defs>
+<rect width="818" height="844" fill="#2b2c2e"/>
+<rect width="818" height="844" fill="url(#gd)"/>
+<g fill="none" stroke="#1e2329" stroke-width="3"><path d="M232 110C250 200 228 260 246 330S236 450 258 520 250 640 266 690"/><path d="M560 120C548 220 572 300 542 380S552 480 522 540 540 586 548 598"/></g>
+<g transform="rotate(-16 409 422)">
+  <rect x="300" y="478" width="40" height="62" fill="#30342f"/>
+  <path fill="none" stroke="#5d6064" stroke-width="2" d="M-400 60H1200M-400 150H1200M-400 330H1200M-400 400H1200M-400 470H1200M-400 525H1200M-400 560H1200M100-400V1200M240-400V1200M290-400V1200M355-400V1200M390-400V1200M450-400V1200M545-400V1200M610-400V1200M700-400V1200M790-400V1200"/>
+</g>
+<g fill="none"><path d="M-10 322C200 300 380 250 560 200S760 140 830 124" stroke="#5d6064" stroke-width="9"/><path d="M-10 322C200 300 380 250 560 200S760 140 830 124" stroke="#2b2c2e" stroke-width="6"/><path d="M-10 322C200 300 380 250 560 200S760 140 830 124" stroke="#5d6064" stroke-width="1" stroke-dasharray="7 6"/></g>
+<path d="M0 770C40 764 80 758 120 752S190 742 214 728 252 690 280 684 330 640 360 628 450 612 500 600 560 600 580 606 600 568 630 548 730 470 770 440 806 410 818 404V844H0Z" fill="#1e2329" stroke="#3a3d41"/>
+<path d="M404 650c22-12 70-16 104-12 14 2 22 8 14 14-34 8-84 10-118 4z" fill="#2b2c2e"/>
+<rect width="818" height="844" filter="url(#gr)"/>
+<g font-family="Barlow,sans-serif" font-size="12" font-weight="600" fill="#b9b8b2" letter-spacing=".04em" stroke="#2b2c2e" stroke-width="3" paint-order="stroke">
+  <text x="40" y="298">Hwy 401</text><text x="396" y="298">North York</text><text x="604" y="404">Scarborough</text>
+  <text x="58" y="636">Etobicoke</text><text x="300" y="586">High Park</text><text x="540" y="700" stroke="#1e2329" letter-spacing=".12em">Lake Ontario</text>
+</g>
+<circle cx="429" cy="560" r="36" fill="none" stroke="#ecebe7" stroke-width="3" stroke-dasharray="9 6"/>
+<text x="472" y="588" font-family="'Allerta Stencil',sans-serif" font-size="16" fill="#ecebe7" letter-spacing=".04em">±252 m</text>
+<path d="M113 559.5h24" stroke="#f6c400" stroke-width="3"/>
+<use href="#pn" x="125" y="553" style="color:#e3261b"/>
+<use href="#pn" x="343" y="522" style="color:#e0479a"/>
+<use href="#pn" x="475" y="505" style="color:#f07c1f"/>
+<use href="#pn" x="663" y="253" style="color:#2e9b4e"/>
+<use href="#pn" x="769" y="296" style="color:#ecebe7"/>
+<use href="#ps" x="429" y="560" style="color:#3d82d9"/>
+</svg>
+
+  <div class="fl" style="top:16px;left:16px;right:16px">
+    <label class="btn srch"><svg class="i" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><span>Search issues, places or IDs…</span></label>
+    <button class="btn sel">All issue types<svg class="i" viewBox="0 0 16 16"><use href="#cv"/></svg></button>
+    <button class="btn sel">All severities<svg class="i" viewBox="0 0 16 16"><use href="#cv"/></svg></button>
+    <button class="btn sel">All statuses<svg class="i" viewBox="0 0 16 16"><use href="#cv"/></svg></button>
+    <button class="btn sel">Last 30 days<svg class="i" viewBox="0 0 16 16"><use href="#cv"/></svg></button>
+    <button class="btn sel">All areas<svg class="i" viewBox="0 0 16 16"><use href="#cv"/></svg></button>
+  </div>
+  <div class="fl" style="top:56px;left:16px">
+    <div class="seg"><button class="on">Pins</button><button>Density</button></div>
+    <button class="btn"><svg class="i" viewBox="0 0 16 16"><circle cx="4" cy="12" r="1.75"/><circle cx="12" cy="4" r="1.75"/><path d="M5.75 12H10a2 2 0 0 0 0-4H6a2 2 0 0 1 0-4h4.25"/></svg>Plan crew route</button>
+  </div>
+  <div class="fl" style="top:56px;right:16px"><span class="btn"><svg class="i mut" viewBox="0 0 16 16"><path d="M8 2.5 14 6 8 9.5 2 6zM2 9.5 8 13l6-3.5"/></svg>Infrastructure &amp; proximity · 6 issues</span></div>
+  <div class="col" style="top:96px"><div class="grp">
+    <button aria-label="Pan"><svg class="i" viewBox="0 0 16 16"><path d="M8 2v12M2 8h12M6.5 3.5 8 2l1.5 1.5M6.5 12.5 8 14l1.5-1.5M3.5 6.5 2 8l1.5 1.5M12.5 6.5 14 8l-1.5 1.5"/></svg></button>
+    <button aria-label="Box select"><svg class="i" viewBox="0 0 16 16"><path d="M2.5 2.5h11v11h-11z" stroke-dasharray="2 2"/></svg></button>
+    <button aria-label="Layers"><svg class="i" viewBox="0 0 16 16"><path d="M8 2.5 14 6 8 9.5 2 6zM2 9.5 8 13l6-3.5"/></svg></button>
+  </div></div>
+  <div class="col" style="bottom:16px">
+    <div class="grp"><button aria-label="Zoom in"><svg class="i" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></button><button aria-label="Zoom out"><svg class="i" viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button></div>
+    <div class="grp"><button aria-label="Fit"><svg class="i" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg></button></div>
+    <div class="grp"><button aria-label="Home"><svg class="i" viewBox="0 0 16 16"><path d="M2.5 7.5 8 3l5.5 4.5M4 6.5V13h8V6.5"/></svg></button></div>
+  </div>
+  <div class="box">
+    <div><b style="font-weight:600">6 in view</b> <span class="mut">/ 6 matching ·</span> <a class="lk">View area issues</a></div>
+    <hr>
+    <div class="stc lgh">Issue types</div>
+    <div class="lg">
+      <span><svg class="sw" style="color:#e3261b"><use href="#sw"/></svg>Pothole</span><span><svg class="sw" style="color:#f07c1f"><use href="#sw"/></svg>Sidewalk damage</span><span><svg class="sw" style="color:#e0479a"><use href="#sw"/></svg>Graffiti</span><span><svg class="sw" style="color:#2e9b4e"><use href="#sw"/></svg>Litter</span>
+      <span><svg class="sw" style="color:#3d82d9"><use href="#sw"/></svg>Flooding</span><span><svg class="sw" style="color:#ecebe7"><use href="#sw"/></svg>Other</span><span><svg class="sw" style="color:#f6c400"><use href="#sw"/></svg>High severity</span>
+    </div>
+  </div>
+</main>
+
+<aside class="pnl">
+  <div class="ptop"><a><svg class="i" viewBox="0 0 16 16"><path d="M13 8H3M7 4 3 8l4 4"/></svg>Issue details</a><button class="btn ib" aria-label="Close"><svg class="i" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+  <div class="band stc">Flooding</div>
+  <div class="pb">
+    <div class="id mut">CL-B48D629A · Flooding</div>
+    <h2>Storm Drain Grate Alignment</h2>
+    <div class="ph"><svg class="i" viewBox="0 0 16 16" style="width:24px;height:24px"><path d="M2.5 3.5h11v9h-11zM2.5 10.5l3-3 3 3 2-2 3 3"/><circle cx="10.5" cy="6" r="1"/></svg><span>Evidence photo · faces and plates blurred</span></div>
+    <div class="bdg"><span>Medium</span><span>Open</span><span>Needs review</span></div>
+    <h3>Queen St W &amp; Spadina Ave</h3>
+    <p>A storm drain grate sits out of line with its frame at the corner, leaving a gap along one edge where a bike tire could catch.</p>
+    <div class="blk">
+      <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="#ecebe7" stroke-width="2" stroke-dasharray="3.5 2.5"/><circle cx="10" cy="10" r="2" fill="#3d82d9"/></svg>
+      <div><b>Approximate location · 252 m radius</b><p class="mut">The pin may be off by up to this distance.</p><a class="lk">Open in Google Street View</a> <span class="mut">↗</span></div>
+    </div>
+    <div class="blk pr">
+      <div><span class="big">27</span><span class="mut">of 100</span></div>
+      <div><b>Priority for City staff</b><div class="meter"><i></i></div><ul class="mut"><li>Medium severity (+25)</li><li>Open 3 days (+1.5)</li></ul></div>
+    </div>
+  </div>
+  <div class="pf">
+    <button class="btn"><svg class="i" viewBox="0 0 16 16"><path d="M4 2.5h8v11l-4-3-4 3z"/></svg>Save</button>
+    <button class="btn"><svg class="i" viewBox="0 0 16 16"><path d="M8 2.5v8M5 5.5l3-3 3 3M3 9.5v4h10v-4"/></svg>Share</button>
+    <button class="btn"><svg class="i" viewBox="0 0 16 16"><path d="M3 13l1-3.5 6.5-6.5 2.5 2.5-6.5 6.5z"/></svg>Suggest correction</button>
+  </div>
+</aside>
+</body>
+</html>

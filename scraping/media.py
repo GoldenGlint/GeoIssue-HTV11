@@ -8,6 +8,7 @@ from io import BytesIO
 import json
 from pathlib import Path
 import re
+import tempfile
 from urllib.parse import urlsplit, urljoin
 
 from PIL import Image, ImageOps
@@ -31,6 +32,7 @@ class MediaRecord:
     captured_at: str | None = None
     found_by: list = field(default_factory=list)
     schema_version: int = 1
+    post_url: str | None = None
 
     def __post_init__(self):
         if (self.schema_version != 1 or not isinstance(self.platform, str)
@@ -111,11 +113,19 @@ def redact_text(text):
 
 
 def read_jsonl(path):
-    return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+    # Captions may contain U+2028/U+0085, which str.splitlines() would treat as record breaks.
+    return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").split("\n") if line.strip()]
 
 
 def source_post_url(row):
     """Turn the current collectors' native identities into browser links."""
+    hosts = {
+        "instagram": ("instagram.com",), "facebook": ("facebook.com",),
+        "threads": ("threads.com", "threads.net"),
+    }.get(row.get("platform"))
+    explicit = row.get("post_url")
+    if hosts and isinstance(explicit, str) and allowed_url(explicit, hosts):
+        return explicit
     post_id = row.get("post_id") or ""
     if row.get("platform") == "bluesky":
         match = re.fullmatch(r"at://(did:[A-Za-z0-9:._-]+)/app\.bsky\.feed\.post/([A-Za-z0-9._~-]+)", post_id)
@@ -127,13 +137,21 @@ def source_post_url(row):
     return None
 
 
-def write_json(path, value):
+def _write_text(path, value):
     path = Path(path)
-    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    # Readers must see a complete old or new manifest, including while a run saves progress.
+    with tempfile.TemporaryDirectory(dir=path.parent, prefix=f".{path.name}-") as folder:
+        staged = Path(folder) / "content"
+        staged.write_text(value, encoding="utf-8")
+        staged.replace(path)
+
+
+def write_json(path, value):
+    _write_text(path, json.dumps(value, indent=2, ensure_ascii=False) + "\n")
 
 
 def write_jsonl(path, rows):
-    Path(path).write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
+    _write_text(path, "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows))
 
 
 def allowed_url(url, hosts):

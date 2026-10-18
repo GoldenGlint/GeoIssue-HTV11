@@ -6,7 +6,7 @@ export const DAY = 86400000;
 export const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 /** What to call an issue: the photo analysis's short title when it has one, otherwise its type. */
 export const issueName = i => i.title || i.issue_type;
-export const typeColor = type => categories[type]?.color || '#4ea8ff';
+export const typeColor = type => categories[type]?.color || '#2563eb';
 export const typeIcon = type => icon(categories[type]?.icon || 'pin');
 export const badge = (text, kind = '') => `<span class="badge ${kind || String(text).toLowerCase().replaceAll(' ', '-')}">${esc(text)}</span>`;
 export const date = (value, options = {}) => new Date(value).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: 'America/Toronto', ...options });

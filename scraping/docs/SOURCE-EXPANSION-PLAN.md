@@ -1,188 +1,208 @@
-# Expansion plan: recent Toronto infrastructure photos
+# Implementation plan: more viable Toronto issue images
 
-Written October 17, 2026. Status: **partially implemented**. Mastodon and Flickr collectors exist; Gemini screening replaces the separate human-review pilot. Flickr still needs an application key ([flickr-access-results.json](../research/results/flickr-access-results.json)). See [SCREENING.md](SCREENING.md) and [COLLECTION.md](COLLECTION.md).
+Drafted October 17, 2026. **Planning only: no new collection runs, spending, schedules, or collector changes are authorized by this document.** This replaces the earlier source-expansion proposal.
 
-## 1. Goal and decisions
+Priorities: **expand Bluesky, Mastodon and Reddit → improve screening coverage → curate Instagram and public Facebook Pages → pilot Threads → add X if an access route fits the budget.** Flickr is excluded at the user's request.
 
-Supply the identification-model owner with **recent, reviewable photos of Toronto public infrastructure that could contain visible issues**. Prioritize sidewalks, curb ramps, crossings, road surfaces, drain grates, cycle lanes, transit shelters, public bins, and pedestrian access around construction.
+## 1. Outcome and constraints
 
-Collect two useful kinds of input: explicit issue photos and ordinary infrastructure scenes where a model could discover an incidental issue. Keep normal-condition scenes as negative examples. Do not equate an outdoor photo, a complaint, or construction activity with a defect.
+Optimize for **new, distinct, locatable issue observations**, rather than raw photo count. A viable candidate must have:
 
-**Add Mastodon first. Pilot Flickr second if an application key is available.** Keep the existing Bluesky and Instagram adapters. Use the same image pipeline and combined gallery; the identification model remains separate work.
+- An independently passed image showing a visible issue in a public outdoor scene.
+- Toronto evidence and medium/high locatability under the existing screening rules.
+- A posting time within seven days, prioritizing the last 72 hours; no known historical capture or repost clue.
+- A detailed assessment with `issue_supported: yes` for the passed image. `no`, `uncertain`, and pending assessments remain separate.
+- Original source provenance and eligible same-post photos preserved for context.
 
-The budget remains **US$0 out of pocket**. Reuse installed dependencies and existing local review tools. This plan does not increase any Apify allowance or require a paid collection service.
+These remain model-supported candidates, not verified current conditions. Report unknown capture age explicitly. Keep the existing privacy gates and `alert_eligible: false`. Count several views of one event as one observation; do not assume every image in a post depicts the same event.
 
-| Priority | Source | Concrete contribution | Evidence and constraint |
-| --- | --- | --- | --- |
-| 1 | Mastodon | Additional public Toronto/cycling photo posts and inspected local feeds | Anonymous media-tag access already worked on one instance; visual usefulness and sustained yield remain unmeasured |
-| 2 | Flickr | Geographically searchable public photos with possible capture-date evidence | API supports useful filters; application-key access and recent Toronto supply have not been tested |
-| Alongside these | Curated Instagram/Bluesky inputs | Improve relevance without adding another platform | Use existing collectors and limits; inspect feeds before allocating volume |
-| Separate reference work | Mapillary | Help check a candidate location against street-level imagery | Do not count reference frames as fresh issue observations or organic social-discovery yield |
+Use the current pipeline: **collector → MediaRecord/process_media → screen → handoff → describe**. Reuse Requests, Pillow, JSON configuration, fingerprints and caches. No new database, job queue, provider framework, or vision model is needed.
 
-Defer additional social platforms until these pilots produce reviewed yield figures. Do not spend the hackathon adding connectors to compensate for poor scene relevance or unknown capture age.
+Bluesky and Mastodon reads and the current Reddit archive route have no per-request charge to this project, but **usage is not unlimited**. Observe rate limits, access restrictions, archive lag, bounded pagination and backoff. Reddit collection currently uses the third-party Arctic Shift archive, not an unrestricted official Reddit API. [Mastodon limits](https://docs.joinmastodon.org/api/rate-limits/), [Arctic Shift](https://github.com/ArthurHeitmann/arctic_shift).
 
-## 2. Starting evidence and targets
+Keep **US$0 out of pocket**. The existing Instagram wrapper permits at most ten requested posts and US$0.05 of verified free credit per run. That historical limit is not an allowance for repeated runs or other actors. New provider pilots need their own explicitly allocated share of available free credit and an enforceable cap; skip actors whose minimum charges or account requirements do not fit. This plan does not increase any allowance.
 
-The combined saved set currently has **92 image records**, including **86 recent-upload candidates** after duplicate/historical-caption exclusions. These are not 86 verified Toronto infrastructure scenes; capture time remains unknown. Treat them as a baseline to review, not as completed input-quality validation.
+## 2. Baseline and measurement
 
-The [existing Mastodon probe](../research/results/mastodon-access-results.json) inspected one page of 20 media posts per tag on `mastodon.social`:
+Before changing discovery, summarize the saved seven-day results and current handoff. Existing metadata probes found:
 
-| Tag | Recent public original photo posts | Image attachments |
+| Discovery input | Images returned | Images with problem words |
 | --- | ---: | ---: |
-| `Toronto` | 18 | 25 |
-| `BikeTO` | 19 | 27 |
+| Bluesky: Bloor bike lanes | 24 | 24 |
+| Bluesky: Toronto sidewalk | 14 | 14 |
+| Mastodon: #Toronto | 140 | 32 |
+| Mastodon: #BikeTO | 26 | 22 |
+| Reddit: r/toronto | 203 | 50 |
+| Reddit: r/TTC | 41 | 3 |
 
-These counts may overlap. They establish access and some recent posting activity, not unique useful images, recent capture, or location accuracy. No images were downloaded in that probe.
+These are overlapping, bounded discovery counts, not screened viability or exhaustive supply. Sources: [query probes](../research/results/query-probe-results.json), [screening workflow](SCREENING.md).
 
-The inference-demo targets remain **300–500 raw candidates overall → 100–150 reviewed Toronto infrastructure scenes → at least ten distinct visible issue candidates**. Prepare 20–30 dependable examples for the live presentation. These are goals, not promised yields, training-set requirements, or proof of model accuracy. If natural supply falls short, use clearly labelled recent team photos rather than quietly relaxing freshness requirements.
+The latest Instagram hashtag pilot produced 19 downloaded photos from ten posts, one initial pass and **zero new supported issues after detailed assessment**. Use that result to change discovery rather than repeat broad hashtag collection. [Pilot evidence](../research/results/instagram-expansion-results.json).
 
-## 3. Mastodon: first implementation
+Record per query, tag, account, community and platform:
 
-### A. Discovery inputs
+`posts fetched → photo posts → downloaded → distinct new images → screened → independently passed → supported image groups → distinct issue observations`
 
-Start with the two verified-access tags, `BikeTO` and `Toronto`, on `mastodon.social`. Keep their results separate in the report so a broad tag cannot hide poor infrastructure yield.
+Also record failures, cap hits, source/age uncertainty, requests, credit consumption and elapsed effort. Preserve all `found_by` values on duplicates; do not count one image as several successes because several queries found it. Allocate cross-query credit fractionally or report overlap explicitly. Rank primarily by **incremental supported observations**, then supported groups per 100 images screened and per unit of credit. Problem-word counts are only a cheap discovery signal.
 
-Create a small editable `scraping/config/mastodon.json` with an instance, enabled tag feeds, inspected account feeds, local place terms, issue terms, and request/download caps. Use typed source entries; a hashtag feed is not a free-text caption search. Keep the existing Bluesky query file independent.
+## 3. Phase 1: expand the working sources
 
-Use these as **ranking and review clues**, not mandatory caption matches:
+### A. Bluesky: broaden systematically
 
-| Clue type | Initial examples |
+Prepare approximately 60–90 candidate searches in two or three editable files under `scraping/config/`, grouped by issue and geography. Use `probe_queries` first, with no image downloads or Gemini calls. Retain successful existing searches as the comparison group.
+
+Each collection run supports at most **50 queries plus author feeds**. Use multiple batches rather than raising that limit or generating every possible word combination. Start with one or two result pages per query; paginate deeper only when recent, useful results hit the cap.
+
+Test these discovery families separately:
+
+| Family | Example searches |
 | --- | --- |
-| Public assets | sidewalk, curb ramp, crossing, drain grate, pothole, shelter, bike lane, public bin |
-| Possible problems | blocked, damaged, broken, overflowing, dumping, flooding, inaccessible, obstruction |
-| Local anchors | Queen/Spadina, Danforth, Keele/Junction Road, Scarborough, Etobicoke, named TTC stops |
+| Existing winners | `Bloor bike lanes`, `Toronto sidewalk`, `Toronto crosswalk`, `Queen Spadina` |
+| Access | `Toronto blocked sidewalk`, `Toronto curb ramp`, `Toronto wheelchair access`, `Danforth pedestrian detour` |
+| Surfaces | `Toronto pothole`, `Scarborough cracked sidewalk`, `Etobicoke road damage` |
+| Waste and drainage | `Toronto dumped furniture`, `Toronto overflowing garbage`, `Toronto catch basin`, `Toronto standing water` |
+| Transit and construction | `Toronto broken bus shelter`, `TTC damaged shelter`, `Toronto construction access`, `Eglinton sidewalk` |
+| Resident language | `Toronto almost tripped`, `Toronto still not fixed`, `Toronto reported to 311`, `Toronto cannot get through` |
+| Place-led scenes | `Parkdale street`, `Danforth construction`, `Junction sidewalk`, `Queen Street West Toronto` |
 
-Inspect up to five public local cycling/walking, neighbourhood, or street-photography feeds found through useful pilot posts. Enable a feed only after checking that its recent content contains original public-space photos. City-based accounts and local-sounding hashtags are discovery hints, not Toronto geolocation evidence. Additional tags such as `TOpoli` are optional experiments; do not assume they contain photos rather than campaign cards.
+Expand geographic anchors to Bloor, Danforth, Yonge/Eglinton, Queen/Spadina, Parkdale, the Junction, Scarborough, Etobicoke and North York. An ambiguous street name needs a Toronto/neighbourhood anchor or later city screening. Use ordinary text searches first; do not assume X-style Boolean or image operators work in Bluesky.
 
-Keep an initial capacity split of roughly **60% civic/asset-oriented discovery and 40% broad Toronto scenes**. Do not require complaint language: an ordinary streetscape can still contain a blocked ramp or damaged surface. Do not automatically reject readable public signs; they may be valuable location evidence.
+Allocate roughly 70% of screening capacity to issue-oriented results and 30% to broader street/asset scenes. Inspect original-photo accounts discovered through useful posts, then add a small curated author list using the existing author-feed support. Keep some neighbourhood and category diversity rather than collecting only bike-lane posts.
 
-### B. Bounded visual pilot
+**Deliverable:** ranked candidate searches, two or three query files, a selected active list and a report of new supported groups versus the existing searches.
 
-1. Use media-only hashtag timelines, initially 20 posts per request, at most two pages per feed, and at most six enabled feeds. Cap the entire pilot at **100 image-download attempts** and seven days of posting history; report the 72-hour subset separately.
-2. Use only explicitly public posts. Skip boosts and all video/animated covers; handle each original still-image attachment separately. An image attachment may still be a graphic and requires scene review.
-3. Review a random sample of up to 50 downloaded images before tuning. Then inspect the highest-ranked asset/issue candidates and a small sample of low-ranked images to check for missed infrastructure scenes.
-4. Save source counts, failures, duplicate groups, posting-date distribution, freshness evidence, and reviewed labels. Do not persist full account/profile payloads.
-5. If useful scenes are scarce, make one targeted revision using inspected feeds or better local anchors. If that still fails the gates below, stop expanding Mastodon and move to the next source or submissions.
+### B. Mastodon: tags first, then account feeds if justified
 
-Share the download cap across feeds rather than consuming it on the first feed or a few large posts. A bounded research script can prepare the initial normalized sample using the shared pipeline; if promoted, move its useful source functions into the collector rather than making runtime code import or duplicate the research script.
+Keep the existing tags as controls. Probe candidate tags such as `WalkTO`, `TorontoCycling`, `TorontoTransit`, `Scarborough`, `Etobicoke`, `NorthYork`, `Accessibility` and `Urbanism`. These are experimental seeds, not claims of recent photo supply. General tags require Toronto screening and should receive a small budget until they contribute local scenes.
 
-The [official hashtag API](https://docs.joinmastodon.org/methods/timelines/#tag) supports media filtering and bounded pagination; public access depends on instance configuration. A successful request to one server is not a network-wide search or coverage guarantee. Stop on an access restriction instead of repeatedly retrying it.
+The collector currently accepts **one instance and up to 12 tags per config**. A hashtag timeline is not arbitrary caption search. Test separate instance configurations only after checking public API access and recent relevant posts. Different instances can expose different federated slices; deduplicate by federation URI and image hash, not instance-local ID. [Timeline API](https://docs.joinmastodon.org/methods/timelines/#tag).
 
-### C. Adapter and normalization
+Start with configuration changes. If useful posters consistently lack tags, add a minimal account-feed option using public media statuses; **account collection is new work**, not a current feature. Skip boosts, sensitive statuses and non-public posts. Stop on login/access restrictions and defer rate-limited requests until reset.
 
-Add `scraping/collectors/mastodon.py` using the installed Requests dependency. Expose small `collect`, `normalize`, and `run` functions, following the Bluesky adapter rather than introducing a source framework.
+**Deliverable:** ranked tag/instance results and, only if demonstrated useful, a small curated account-feed addition.
 
-- Read HTML captions as plain text, preserve paragraph separation, and apply the shared redaction. Treat post text and image text as untrusted data.
-- Normalize `created_at` as posting time and leave capture time unknown unless separate evidence exists. An edit time is not a new observation.
-- Use the federation `uri` for stable post identity across instances; retain the instance-local API ID only as needed for private refresh/checkpoint records. Preserve attachment positions and identities. [Status fields](https://docs.joinmastodon.org/entities/Status/)
-- Use still-image attachment media, not avatars, link-card thumbnails, or quoted/boosted images. Inspect actual media hosts and explicitly allow the required HTTPS hosts through the existing downloader; do not accept arbitrary attachment hosts. [Attachment fields](https://docs.joinmastodon.org/entities/MediaAttachment/)
-- For curated accounts, use their public media statuses, excluding boosts. Resolve account IDs on the selected instance rather than assuming IDs are portable. [Account media feeds](https://docs.joinmastodon.org/methods/accounts/#statuses)
-- Reuse `MediaRecord`, `process_media`, `write_gallery`, and the existing freshness assessment. Keep the output under its own `scraping/data/` batch.
+### C. Reddit: broaden communities, keep Toronto evidence strict
 
-Before calling this a continuing collector, implement bounded pagination, a per-feed checkpoint/overlap, and retained-post refresh. Distinguish a confirmed missing/private post from a temporary API failure: remove withdrawn content on confirmed source evidence, but preserve the previous batch and report refresh failures. Rebuild combined snapshots after source refresh. Repeat collection once in a later window to measure **new** supply, not the same backfill twice.
+Retain `toronto`, `TTC`, `scarborough` and `etobicoke` as the baseline. First probe `torontobiking`; its [Bike Tag activity](https://www.reddit.com/r/torontobiking/comments/yptnqb/toronto_bike_tag_rules/) supplies public-space photo leads, although a bike photo is not evidence of a defect.
 
-## 4. Flickr: second, conditional pilot
+Then test these groups separately, verifying existence, access and recent image availability before enabling them:
 
-### A. Check access and geographic supply first
+- Toronto-adjacent/local: `TorontoDriving`, `askTO`, `northyork`, `bikeTO`. Earlier tests found little photo supply in several of these; re-test cheaply rather than allocating large downloads by default.
+- Wider GTA comparison: `Mississauga`, `Brampton`, `Markham`, `Vaughan`, `RichmondHill`, `Pickering`. Enable only if they actually contribute Toronto scenes; neighbouring-city defects do not meet this project's city requirement.
+- Topic communities: `urbanplanning`, `transit`, `bicycling`, `fuckcars`. Pilot a small metadata sample and look for Toronto-related attached photos before spending download/screening capacity. These names are candidate communities, not endorsements or measured sources.
 
-Use a project application key kept in ignored local configuration. Request public photos only. If no key is available, record that dependency and continue with Mastodon/curated existing feeds; do not make a new scraper or paid service the fallback for this pilot.
+The current collector fetches recent submissions by subreddit and supports **at most 15 communities per config**. It has no configurable keyword-search mode. Use several small configs and local title/body ranking first. For high-volume global communities, sample cheaply and skip if Toronto supply is negligible; do not download their entire photo feed. Add source-side text queries only if Arctic Shift documents the needed filter and a live probe confirms its behavior.
 
-Start with **two small named areas**, one around the Queen/Spadina demo area and one in Scarborough chosen from the actual demo coverage. Derive and record their bounds from known geography rather than inventing coordinates. For the pilot, manually check returned locations against the Toronto municipal boundary; a bounding rectangle can include neighbouring places or water.
+Keep galleries and original image positions. Existing direct `i.redd.it` support comes first. Measure how many otherwise useful posts are excluded because they are crossposts, comment images or other hosts; add only a proven, bounded gap. A crosspost may point to an original post for later resolution, but it must not create a second observation. Do not crawl all comments or arbitrary linked websites.
 
-Run at most six search requests initially, **25 photo results per request**, and cap downloads at **50 images**. Compare:
+**Deliverable:** community ranking, a Toronto-focused active configuration and separate low-budget discovery configurations. Distinguish zero photo supply from API failure or archive lag.
 
-- A geographically constrained outdoor-photo search without issue terms.
-- The same area with one concrete asset/issue term, such as sidewalk, drain, blocked access, or dumping.
-- A small comparison without the outdoor-context restriction, because missing metadata could otherwise hide useful photos.
+## 4. Phase 2: make broader discovery survive screening
 
-Use photo-only results, newest-upload ordering, a seven-day upload window, and available taken-date filters. Request geographic/date/licence metadata and a suitably sized image URL. Supported parameters include `bbox`, `media=photos`, `geo_context=2`, `sort=date-posted-desc`, and date limits. A bounding-box search is limited to 250 results per page, although this pilot stays well below that. [Photo search API](https://www.flickr.com/services/api/flickr.photos.search.html)
+The default caption/alt-text problem-word filter can skip ordinary streetscapes that contain incidental defects. Do not remove it globally or loosen the definition of a visible issue.
 
-Allocate the 50-image cap across the search groups after metadata deduplication; downloading the first 50 hits would prevent a useful comparison between areas and filters.
+1. Keep the normal prefilter for targeted issue batches.
+2. Create a deterministic sample of up to 50 **distinct, previously skipped** images from broader discovery batches, balanced across sources. Use a separate local batch and the existing `--no-prefilter` option with an explicit request cap. Selecting the sample is a small planned addition; that option alone does not sample.
+3. Compare supported observations found in the sample with the normal route. Record how often caption filtering hid a viable image, not just how often a broad image looked outdoors.
+4. If useful misses occur, reserve the proposed 30% exploration allocation. Change the word list only for demonstrated vocabulary gaps; keep a bounded sample for photos without complaint wording.
+5. Deduplicate before calling Gemini, reuse the shared cache and preserve all original post photos needed by `handoff`/`describe`. Companions never inherit an independent pass.
 
-Do not widen the current-issue window to years when the recent search is empty. Older photos may enter a separately labelled reference/evaluation set; they do not improve the fresh-observation yield.
+Use the existing automatic path; human spot checks remain optional. Do not count routine roadwork, infographics, ads, screenshots or protests as defects without visible supporting evidence. Recheck `issue_supported` after descriptions, because the Instagram pilot demonstrated that an initial pass can be overturned.
 
-### B. Resolve capture-date semantics before claiming freshness
+**Deliverable:** a comparison of caption-filtered and exploration batches, plus a source/query viability report. Collection volume must fit actual Gemini request limits; unlimited downloads cannot remove that bottleneck.
 
-**Flickr's “taken” date can default to upload time when EXIF is absent.** It can also have coarse precision and is not supplied as a timezone-aware UTC timestamp. Therefore, matching upload/taken dates are not proof of a fresh capture. [Flickr date semantics](https://www.flickr.com/services/api/misc.dates.html)
+## 5. Phase 3: use Apify where it saves implementation work
 
-Inspect actual date/granularity fields and a few individual-photo responses before implementing conversion. Do not manufacture a timezone or second-level precision merely to satisfy `MediaRecord.captured_at`. Leave that field null when its meaning cannot be established. Retain a minimal date-evidence object on processed rows containing the raw taken value, reported precision, known timezone/basis, and uncertainty. The existing merged-row format can preserve optional metadata without changing the required input contract. [Individual-photo metadata](https://www.flickr.com/services/api/flickr.photos.getInfo.html)
+Apify is a hosted collection option, not a mandatory dependency of every platform. The same token can access different actors, but **each actor has its own schema, pricing, account restrictions and adapter**. Do not pass another actor's output to the Instagram normalizer.
 
-Store returned coordinates and accuracy as **source location claims** in `location_evidence`; do not convert an accuracy level into an invented metre radius. Check whether the coordinate depicts the camera or the photographed object when that distinction matters. [Photo location metadata](https://www.flickr.com/services/api/flickr.photos.geo.getLocation.html)
+| Source | Recommended route | Planned discovery | Dependency |
+| --- | --- | --- | --- |
+| Instagram | Existing Apify collector | Inspected public profiles and known photo/carousel URLs | Existing free-credit checks; authenticated Instaloader is an alternative, but no successful local live batch is recorded |
+| Facebook | Apify public Page posts pilot | A few inspected cycling, accessibility, neighbourhood and local-reporter Pages | New normalizer and bounded actor launch; Apify is practical here, not technically mandatory |
+| Threads | Official keyword API if access already exists; otherwise test one Apify actor | Recent Toronto issue/place searches and selected public accounts | New adapter; official route needs app authorization/permissions; actor route uses credits |
+| TikTok | Defer; optional photo-only pilot later | Photo carousels for proven Toronto issue searches | New source work and uncertain useful yield; skip video/frame extraction initially |
 
-Record licence and required attribution before selecting images for display. Keep necessary evidence through merge/export; if display requirements conflict with the existing privacy policy, exclude that image from public display. Public visibility alone is not the display decision.
+For Instagram, prepare 5–10 inspected feeds/post URLs and prioritize original street photos. Web/native search can find candidate URLs without spending scraper credit. Do not treat a profile, hashtag or place search as full public-caption keyword search. Existing target types must be tested separately. [Instagram input schema](https://apify.com/apify/instagram-scraper/input-schema).
 
-### C. Build a persistent adapter only if the pilot is useful
+For Facebook, inspect about five public Pages first and select a few recent original-photo posts. Use `apify/facebook-posts-scraper` as the first candidate: its input documents public Page URLs, result limits and newer-than dates. Public groups require a different actor and separate evaluation; private groups and login-gated material are outside this plan. [Facebook input schema](https://apify.com/apify/facebook-posts-scraper/input-schema).
 
-If reviewed yield passes, add `scraping/collectors/flickr.py` and a small editable `scraping/config/flickr.json` for approved areas, query terms, licences, and caps. Reuse the shared pipeline. A Flickr photo ID is stable image identity; avoid importing owner/profile fields into the normalized record. Add public-availability and metadata refresh before treating saved snapshots as current input.
+For Threads, compare the already documented [Meta keyword endpoint](https://www.postman.com/meta/threads/request/34203612-b3b2c12a-7ce6-4d86-a3c6-6d31e3b66ea1) with one documented actor candidate such as [webdata_labs/threads-scraper](https://apify.com/webdata_labs/threads-scraper). That actor documents keyword results and media, but only approximately one page of search results; do not describe this as exhaustive search. Official API permissions and account access must be established before choosing that route. No Threads collection has been validated in this repo.
 
-If the source provides good geolocated scenes but mostly old captures, classify its role as **reference imagery only**. If it contributes neither recent useful scenes nor useful references within the pilot, stop work on it for the hackathon.
+Pilot one new actor at a time. Check current pricing and output shape before launching, cap total posts across all seeds, preserve run IDs and resume a run rather than launching it again after an uncertain response. A result-count limit alone is not a spending cap. Do not import browser sessions, switch to paid plans or silently increase limits to make an actor work.
 
-## 5. Common freshness, location, and review rules
+**Deliverable:** separate Instagram/Facebook/Threads pilot reports showing credit spent, actual photo downloads and new supported groups. Promote an adapter only after its sample contributes viable images or demonstrates a useful source niche.
 
-| Decision | Required handling |
+## 6. Phase 4: obtain images from X.com
+
+### Route A: official X API, if funded access is available
+
+This is the clearest documented image-extraction route. It requires a developer app, a bearer token and API credits. Recent search covers seven days. X currently lists post reads at **US$0.005 per returned post**; verify the full billable request, expansions and current console pricing before a run. This route is deferred under US$0-out-of-pocket unless suitable credits already exist. [Search](https://docs.x.com/x-api/posts/search/introduction), [pricing](https://docs.x.com/x-api/getting-started/pricing).
+
+Implementation steps for a proposed `scraping/collectors/x.py`:
+
+1. Call `GET https://api.x.com/2/tweets/search/recent` with `start_time`/`end_time`, `sort_order=recency`, a small result cap and bounded `next_token` pagination.
+2. Request `tweet.fields=created_at,attachments,possibly_sensitive`, `expansions=attachments.media_keys`, and `media.fields=media_key,type,url,alt_text,width,height`.
+3. Join each post's ordered `attachments.media_keys` to `includes.media` by `media_key`; the includes list itself does not define attachment order. Keep only attached `type=photo` objects with a usable HTTPS URL. Exclude videos, GIF covers, link thumbnails and referenced-post media.
+4. Download only the expected `pbs.twimg.com` photo URLs through `process_media`. Keep post ID, canonical post link, posting date, original attachment index, alt text and discovery query. Skip sensitive posts and retain unknown capture time.
+5. Feed the normalized batch into the same screening and grouping path, subject to the source's permitted uses. Store credentials only in ignored local configuration.
+
+[Media expansion documentation](https://docs.x.com/x-api/fundamentals/expansions).
+
+Example **official API** queries:
+
+```text
+(Toronto OR Scarborough OR Etobicoke) (pothole OR "blocked sidewalk" OR "illegal dumping") has:images -is:retweet
+(Toronto OR "BikeTO") ("bike lane" OR "curb ramp") has:images -is:retweet
+(Toronto OR "TTC") ("broken shelter" OR "standing water" OR drain) has:images -is:retweet
+```
+
+Do not require `has:geo`: captions and signs may provide location even when posts lack native geotags. Preserve replies because residents may attach evidence in replies to public accounts.
+
+### Route B: an Apify X actor, if it fits verified free credit
+
+A possible candidate is [apidojo/twitter-scraper-lite](https://apify.com/apidojo/twitter-scraper-lite), subject to current actor pricing, free-plan/API eligibility, search behavior and image-response inspection. Use its documented input/query syntax; X web/actor filters such as `filter:images` are distinct from official API `has:images` and require separate verification. Retain only a post's own photo attachments, not a blanket list of every image URL in the result.
+
+Do not default to [apidojo/tweet-scraper V2](https://apify.com/apidojo/tweet-scraper): its current documentation says Free users cannot use it through the API and describes query/demo restrictions. A low advertised per-thousand price does not establish compatibility with this project's tiny pilot allowance.
+
+Pick **one** route after access and cost preflight. If neither fits, record X as deferred and continue with the working sources. Do not spend time building an unofficial browser/login workaround.
+
+**Deliverable:** a documented access decision and, if feasible, one small normalized X batch with working source links, cost accounting and supported-group yield.
+
+## 7. Shared implementation changes and verification
+
+Make only the changes needed by a promoted source:
+
+| Area | Change |
 | --- | --- |
-| Recently uploaded; capture age unknown | Keep as an explicitly unverified candidate for scene/model evaluation; do not label the condition current |
-| Known old capture or historical/repost clue | Exclude from the recent candidate handoff or send to age review; do not silently fall back to upload time |
-| Source claims recent capture | Preserve the claim and its basis; still require current-condition verification before an alert |
-| Toronto tag/account only | Discovery lead; no verified city classification or precise map pin |
-| Named local place plus compatible visual clues | Toronto/location candidate; record the supporting clues and uncertainty |
-| Place checked against map/reference and reviewer-confirmed | Record city/location support at the precision actually justified; an old reference verifies place, not today's defect |
-| Normal infrastructure scene | Valid scene/negative example; no invented issue |
-| Visible obstruction, damage, dumping, etc. | Issue candidate for the model/reviewer; observation is not an engineering determination or automatic alert |
+| `scraping/config/` | Candidate/active search files, subreddit cohorts and separate Mastodon instance configs; source-specific configs only when a pilot needs them |
+| `scraping/probe_queries.py` | Preserve existing metadata probes; extend reports with deduplicated incremental yield by joining saved screening/description results, or use a small reporting helper |
+| `scraping/media.py` | Retain a validated canonical post URL and extend `source_post_url` for promoted sources. It currently handles only Bluesky/Reddit/Mastodon; Instagram also needs this provenance fix |
+| `scraping/collectors/` | Existing Instagram adapter stays; add ordinary Facebook/Threads/X modules only for successful pilots, each with explicit media-host validation |
+| `scraping/screen.py` / workflow | Reuse `--no-prefilter`; add only bounded sample selection/reporting needed for broader discovery |
+| `scraping/handoff.py`, `scraping/share.py` | Check new sources preserve links, groups, timestamps, image hosts and refresh behavior; retain existing contracts and handle source withdrawal |
+| `scraping/research/results/` | Sanitized baseline, source comparisons and cost/yield reports; images, full account data and tokens stay ignored |
 
-Rank the last **72 hours** first and use **seven days** as the initial discovery limit. Apply both posting and known capture-date checks. Preserve person-focused/private-scene exclusions and the existing privacy gate before external analysis or publication.
+Adding a post URL must preserve native identity and existing manifests. Prefer an optional validated field over rewriting existing post IDs. Ensure processing and `source_post_url` preserve it rather than overwriting it with `None`. For each new source, inspect representative real response shapes before fixing field mappings.
 
-Keep `alert_eligible: false` on every collected candidate. A future sender must independently verify current condition and location and recheck age immediately before sending. Neither a classifier score, a reviewer marking “useful,” nor a precise-looking geotag enables notifications.
+Retained-post refresh is not uniformly implemented across existing collectors. Report that gap and add confirmed-missing/private-post cleanup before claiming a source is a continuing current feed; a failed request is not proof of deletion. Revalidate and rebuild exported handoffs before reuse. Preserve source attribution and permitted-use information; discovery access does not establish rights for model training or public republication.
 
-Keep close-up and wider views linked to their parent post: the detail supports the possible issue, and the context can support location matching. Count an event once even when it has four images or is cross-posted to multiple platforms. Do not use the same reference frame as both query and matching target when evaluating geolocation.
+Configuration/document-only changes need syntax/link checks. For implemented logic, run the relevant existing offline tests and add a focused response-shape check for each new adapter: attached-photo ownership, mixed carousel positions, sensitive posts, missing/invalid dates, untrusted hosts, canonical links, deduplication and a bounded failure. Money-handling changes must verify that disallowed plans, minimum charges and ambiguous run starts do not launch/relaunch collection. No network calls in ordinary tests.
 
-## 6. Measurements and go/no-go gates
+## 8. Execution order and completion criteria
 
-Record this funnel per source and discovery group:
-
-**returned posts → attached images → downloaded → distinct → public infrastructure scenes → Toronto-supported scenes → age-evidence category → issue candidates → candidates with usable location evidence**.
-
-“Toronto-supported” requires documented visual/map evidence beyond a tag or account residence. Keep caption-only location claims in a separate count. Report unknown capture age rather than treating the posting window as capture verification.
-
-Use these **proposed pilot gates**, not claims about current accuracy or available volume:
-
-Contribution counts below must pass the recent-upload and known-age checks. Report the unknown-capture-age subset separately; none of these gates establishes a verified current condition.
-
-| Decision | Mastodon: up to 100 downloaded images | Flickr: up to 50 downloaded images |
+| Order | Work | Finish condition |
 | --- | --- | --- |
-| Download reliability | At least 95% of eligible attempts fetch/decode; investigate systematic failures before expanding | Same |
-| Useful scene contribution | At least 20 distinct reviewed Toronto-supported infrastructure scenes | At least 10 |
-| Location contribution | At least five scenes with a specific, reviewable place/asset candidate | At least five, with the actual geo precision recorded |
-| Role as an issue-candidate source | Aim for at least two distinct visually plausible issue events | Aim for at least one |
-| Continuing supply | A later run adds new useful scenes; report elapsed time and incremental counts | Same, if promoted to a fresh-observation source |
+| 1 | Baseline and discovery candidates | Saved counts reproduced; all new seeds clearly labelled experimental |
+| 2 | Expand Bluesky/Mastodon/Reddit | Ranked searches and communities; bounded new batches with per-source overlap and failures |
+| 3 | Broader-scene screening sample | Up to 50 skipped images assessed; supported yield compared with the normal prefilter |
+| 4 | Instagram curation and Facebook pilot | Source-specific evidence of incremental supported groups and actual credit cost |
+| 5 | Threads and X access decisions | Working, affordable access plus useful pilot, or explicit defer reason with no wasted run |
+| 6 | Rebuild and describe handoff | Source links, exact photo evidence, context roles, age uncertainty and disagreement statuses retained |
 
-Review **all pilot images when feasible**, including noise; otherwise label a random pre-ranking sample and keep targeted challenge examples separate. Do not call useful-scene precision/recall measured when only selected successes were reviewed. Report the number inspected and source concentration.
+First-round planning target: **500–1,000 distinct recent-upload candidates → 50–100 independently passed images → at least ten additional supported issue observations**. These are goals, not predicted conversion rates. Prefer breadth across several issue types and neighbourhoods; do not fill targets with duplicates or lower the city/freshness/issue requirements.
 
-Passing scene/location gates but missing the issue target earns a **scene supplier** role, not an issue-discovery success. Failure after one focused discovery revision triggers a source switch or submission fallback. Do not fill quotas with graphics, old photos, repeated events, or unsupported Toronto claims.
+For an exploratory new source, two new supported observations is an initial continuation signal, not a quality guarantee. If an inspected sample adds none after one focused discovery revision, defer it. For tiny paid pilots, report the actual sample and uncertainty rather than demanding a statistical conclusion.
 
-Track useful scenes and distinct issue candidates **per reviewed image, per collection run, and per hour of collection/review effort**. Keep time spent reviewing noise visible. Reallocate collection capacity toward confirmed useful yield, while preserving some broad discovery and geographic diversity.
+Use roughly 70% of the next screening budget on measured winners and 30% on exploration. Compare a second collection window with the first before claiming continuing supply. A suggested future cadence is every six hours with checkpoint overlap; creating a background schedule is separate work and is not part of this draft.
 
-## 7. Deliverables and work order
-
-| Order | Work item | Concrete finish condition |
-| --- | --- | --- |
-| 1 | Mastodon visual pilot and editable inputs | Bounded sample, complete counts, reviewed contact sheet, and source-role decision |
-| 2 | Mastodon adapter if the pilot passes | Normalized batch/gallery, freshness fields, safe bounded requests, refresh/deletion behavior, and offline response checks |
-| 3 | Flickr access/date/geo pilot if a key is available | Up to 50 images reviewed; capture-date uncertainty and location precision documented |
-| 4 | Flickr adapter only if justified | Shared-format output with retained date/location/reuse evidence and source refresh |
-| 5 | Revalidate and combine selected batches | New combined gallery and model handoff; older snapshots do not become fresh through merging |
-| 6 | Select presentation examples and report gaps | 20–30 dependable examples; show scene-only, possible-issue, and reject/uncertain cases honestly |
-
-Add per-source notes under `scraping/docs/`, sanitized pilot summaries under `scraping/research/results/`, and offline checks under `scraping/tests/`. The planned collector/config filenames above do not exist yet and are not runnable commands.
-
-For each adapter, leave one small response-fixture check covering its meaningful boundaries: still-image ownership, visibility, timestamps, stable positions/identity, repeat-run duplicates, unsafe URLs, and failure preservation. Include Flickr's upload-equals-taken ambiguity and Mastodon's cross-instance identity in those checks. Ordinary tests must not make live API calls.
-
-The model owner receives images plus normalized provenance, posting/capture evidence, location claims, hashes, automatic status, and review labels when available. Keep **recent-upload candidates**, **reviewed Toronto infrastructure scenes**, and **historical/reference images** distinguishable in exports. The current `recent-candidates.jsonl` is a technical/date candidate queue, not a substitute for the reviewed Toronto-scene set.
-
-Record the combined data root so relative image paths resolve. Group evaluation splits by parent post and duplicate/event group. The collection work ends with a usable, inspectable input set and measured limitations; defect identification and location-model implementation remain with their respective owners.
-
-## 8. If organic supply is insufficient
-
-After the bounded pilots and one discovery revision per source, use the observed yield to set a realistic demo size. Keep the seven-day current-observation window. Ask the team to capture public infrastructure around confirmed Toronto locations, recording capture time and location and taking a detail view plus a wider context view. Include ordinary functioning infrastructure as well as any naturally observed problems; do not manufacture hazards.
-
-Label these as team submissions and exclude them from social-source yield metrics. A smaller verified current set plus a larger clearly labelled unverified model-input queue is more useful than hundreds of images presented as fresh Toronto issue evidence without support.
+The completed implementation should produce **one ranked source/query report and one refreshed grouped handoff**, with supported observations separated from initial passes and context photos. If organic supply falls short, report the gap and use separately labelled team photos for the demo instead of treating old or unlocatable images as current evidence.

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=1440">
+<title>CivicLens Survey Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--paper:#f6f7f5;--ink:#24282c;--ink2:#545c61;--hair:#a9b1b5;--blue:#2c5a86;--red:#c9372c;--sheet:#fff;--lake:#dfe7ea}
+*{box-sizing:border-box;margin:0;padding:0;border-radius:0}
+html,body{width:1440px;height:900px;margin:0;overflow:hidden}
+body{display:grid;grid-template-columns:232px 818px 390px;background:var(--paper);color:var(--ink);font:400 13px/20px "Public Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.25}
+svg.m{width:14px;height:14px;flex:none;overflow:visible}
+a{color:var(--blue);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;display:inline-flex;align-items:center;gap:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--ink);background:var(--sheet);color:var(--ink);font:500 13px/1 "Public Sans";white-space:nowrap}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.sq{width:32px;padding:0}
+.cv{position:relative;padding-right:28px}.cv:after{content:"";position:absolute;right:11px;top:50%;width:5px;height:5px;margin-top:-4px;border:solid var(--ink);border-width:0 1.25px 1.25px 0;transform:rotate(45deg)}
+.sc{font:600 13px/16px "Public Sans";font-variant-caps:all-small-caps;letter-spacing:.04em;color:var(--ink2)}
+.mut{color:var(--ink2)}
+/* sidebar */
+.side{border-right:1px solid var(--ink);display:flex;flex-direction:column;padding-top:16px}
+.brand{display:flex;align-items:center;gap:8px;padding:0 16px;height:32px;font:700 16px/1 "Public Sans";letter-spacing:-.01em}
+.city{margin:8px 16px 16px;height:32px;display:flex;align-items:center;gap:8px;padding:0 8px;border:1px solid var(--hair);background:var(--sheet)}
+.nav span{display:flex;align-items:center;gap:8px;height:32px;padding:0 16px;position:relative}
+.nav .on{font-weight:700}.nav .on:before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:4px;background:var(--ink)}
+.side .sc{padding:16px 16px 4px}
+.side>.btn{margin:16px}
+.foot{margin-top:auto;border-top:1px solid var(--hair);padding-top:8px}
+.user{display:flex;align-items:center;gap:8px;padding:0 16px;height:56px;border-top:1px solid var(--ink);margin-top:8px}
+.av{width:32px;height:32px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font:600 12px/1 "Public Sans"}
+/* main */
+main{display:grid;grid-template-rows:48px 852px;min-width:0}
+.hd{display:flex;align-items:center;gap:8px;padding:0 16px 0 24px;border-bottom:1px solid var(--ink)}
+.hd h1{font:700 16px/1 "Public Sans";margin-right:auto}
+.map{position:relative;overflow:hidden}
+.map>svg{position:absolute;left:0;top:0}
+.fl{position:absolute;display:flex;gap:8px;align-items:center}
+.strip{left:32px;right:32px;top:32px;gap:0;height:32px;border:1px solid var(--ink);background:var(--sheet)}
+.strip>span{display:flex;align-items:center;gap:8px;height:100%;padding:0 8px;border-left:1px solid var(--hair);white-space:nowrap}
+.strip>span.cv{padding-right:28px}.strip>span:first-child{border-left:0;flex:1;color:var(--ink2);min-width:0}
+.seg{display:flex;border:1px solid var(--ink);background:var(--sheet)}.seg span{height:30px;padding:0 12px;display:flex;align-items:center}.seg .on{background:var(--ink);color:var(--paper);font-weight:600}
+.chip{height:24px;padding:0 8px;border:1px solid var(--ink);background:var(--sheet);font-size:12px;display:inline-flex;align-items:center;gap:8px}
+.stack{position:absolute;right:32px;display:flex;flex-direction:column;border:1px solid var(--ink);background:var(--sheet)}
+.stack span{width:30px;height:32px;display:grid;place-items:center;border-top:1px solid var(--hair)}.stack span:first-child{border-top:0;height:31px}
+.box{left:32px;bottom:32px;width:384px;flex-direction:column;align-items:stretch;gap:0;border:1px solid var(--ink);background:var(--sheet)}
+.box .t{padding:6px 12px;border-bottom:1px solid var(--hair)}
+.lg{display:flex;flex-wrap:wrap;gap:4px 16px;padding:8px 12px;font-size:12px;line-height:20px}.lg span{display:inline-flex;align-items:center;gap:6px}
+.ml{font:500 12px "Public Sans";fill:var(--ink2);paint-order:stroke;stroke:var(--paper);stroke-width:3px;stroke-linejoin:round}
+.tk{font:500 12px "Barlow Semi Condensed";letter-spacing:.05em;fill:var(--ink2);text-transform:uppercase}
+/* panel */
+aside{border-left:1px solid var(--ink);display:flex;flex-direction:column;min-height:0}
+.ph{height:48px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 16px;border-bottom:1px solid var(--ink);font-weight:600}
+.ph span{display:flex;align-items:center;gap:8px}
+.pb{padding:16px;flex:1;display:flex;flex-direction:column}
+.idl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+h2{font:700 22px/28px "Public Sans";letter-spacing:-.01em;margin:4px 0 12px}
+.photo{height:136px;border:1px solid var(--hair);background:#eceeec;position:relative}.photo svg{position:absolute;inset:0;width:100%;height:100%}
+.cap{font-size:12px;line-height:16px;color:var(--ink2);margin:4px 0 12px}
+.bdg{display:flex;gap:8px}.bdg span{height:24px;padding:0 8px;border:1px solid var(--ink);font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+h3{font:600 16px/20px "Public Sans";margin:16px 0 4px}
+.blk{border-top:1px solid var(--hair);margin-top:16px;padding-top:12px}
+.lc{display:flex;gap:12px}.lc b{display:block;font-weight:600}
+.pr{display:flex;gap:16px;align-items:flex-start}
+.score{display:flex;align-items:baseline;gap:4px;min-width:88px}.score b{font:700 22px/28px "Public Sans";font-variant-numeric:tabular-nums}
+.why{flex:1}.why b{display:block;font-weight:600}.why div{display:flex;justify-content:space-between;color:var(--ink2);font-variant-numeric:tabular-nums}
+.tb{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--ink);margin-top:16px}
+.tb>div{padding:4px 8px 6px;border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tb>div:nth-child(2),.tb>div:nth-child(5){border-right:0}.tb>div:nth-child(n+3){border-bottom:0}.tb .w2{grid-column:span 2}
+.tb i{display:block;font:500 12px/16px "Barlow Semi Condensed";font-style:normal;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2)}
+.pf{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--ink)}.pf .pri{flex:1}
+</style></head>
+<body>
+<nav class="side">
+  <div class="brand"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#24282c"><circle cx="12" cy="12" r="10.5" stroke-width="1.25"/><circle cx="12" cy="12" r="6" stroke-width="2.5"/><circle cx="12" cy="12" r="2" fill="#24282c" stroke="none"/></svg>CivicLens</div>
+  <div class="city cv"><svg class="i" viewBox="0 0 16 16"><path d="M8 14.5s-4.5-4.6-4.5-8a4.5 4.5 0 0 1 9 0c0 3.4-4.5 8-4.5 8z"/><circle cx="8" cy="6.5" r="1.5"/></svg>Toronto</div>
+  <div class="nav">
+    <span class="on"><svg class="i" viewBox="0 0 16 16"><path d="M1.5 3.5l4-1.5 5 2 4-1.5v10l-4 1.5-5-2-4 1.5z M5.5 2v10 M10.5 4v10"/></svg>Map Explorer</span>
+    <span><svg class="i" viewBox="0 0 16 16"><path d="M1.5 2.5h13v11h-13z M1.5 6h13 M1.5 9.5h13 M6 2.5v11"/></svg>Data Explorer</span>
+    <span><svg class="i" viewBox="0 0 16 16"><path d="M1.5 1.5h5.5v7h-5.5z M9 1.5h5.5v4h-5.5z M9 7.5h5.5v7h-5.5z M1.5 10.5h5.5v4h-5.5z"/></svg>Dashboard</span>
+  </div>
+  <div class="sc">Your workspace</div>
+  <div class="nav">
+    <span><svg class="i" viewBox="0 0 16 16"><path d="M3.5 1.5h9v13l-4.5-3.5-4.5 3.5z"/></svg>Saved</span>
+    <span><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4.5l3 2"/></svg>Recents</span>
+  </div>
+  <span class="btn pri"><svg class="i" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>Upload new issue</span>
+  <div class="foot nav">
+    <span><svg class="i" viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/><path d="M5 2.5v3M10.5 6.5v3M7 10.5v3" stroke-width="2"/></svg>Settings</span>
+    <span><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M6 6.2a2 2 0 1 1 2.6 1.9c-.5.2-.6.6-.6 1.2V10M8 11.3v1.2"/></svg>Help &amp; methodology</span>
+  </div>
+  <div class="user"><span class="av">JD</span><span><b style="font-weight:600">Jamie Davis</b> <span class="mut">· Public</span></span></div>
+</nav>
+<main>
+  <header class="hd"><h1>Map Explorer</h1>
+    <span class="btn cv"><svg class="i" viewBox="0 0 16 16"><path d="M2 3.5h12M2 8h12M2 12.5h12"/><circle cx="5" cy="3.5" r="1.5" fill="#fff"/><circle cx="11" cy="8" r="1.5" fill="#fff"/><circle cx="7" cy="12.5" r="1.5" fill="#fff"/></svg>Pipeline output · 6</span>
+    <span class="btn sq" title="Theme"><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></span>
+    <span class="btn sq" title="Help"><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M6 6.2a2 2 0 1 1 2.6 1.9c-.5.2-.6.6-.6 1.2V10M8 11.3v1.2"/></svg></span>
+  </header>
+  <section class="map">
+<svg width="818" height="852" viewBox="0 0 818 852" role="img" aria-label="Plan of Toronto with six issue markers">
+<defs>
+  <pattern id="gA" width="40" height="16" patternUnits="userSpaceOnUse"><path d="M0 .5H40M.5 0V16" stroke="#a9b1b5" stroke-width=".6" fill="none"/></pattern>
+  <pattern id="gB" width="16" height="40" patternUnits="userSpaceOnUse"><path d="M0 .5H16M.5 0V40" stroke="#a9b1b5" stroke-width=".6" fill="none"/></pattern>
+  <pattern id="gC" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(8)"><path d="M0 .5H24M.5 0V24" stroke="#a9b1b5" stroke-width=".6" fill="none"/></pattern>
+  <pattern id="hp" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 .5H6" stroke="#a9b1b5" stroke-width=".6"/></pattern>
+  <clipPath id="nl"><rect x="24" y="24" width="770" height="804"/></clipPath>
+  <marker id="ar" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.5 8 4 0 6.5z" fill="#24282c"/></marker>
+  <marker id="arR" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.5 8 4 0 6.5z" fill="#c9372c"/></marker>
+  <g id="mk"><circle r="5.5" fill="#f6f7f5" stroke="currentColor" stroke-width="1.5"/><path d="M-9.5 0h19M0-9.5v19" stroke="currentColor" stroke-width="1.25"/></g>
+  <path id="gx" d="M-5 0h10M0-5v10" stroke="#a9b1b5" stroke-width=".75"/>
+</defs>
+<g clip-path="url(#nl)">
+  <rect x="24" y="24" width="276" height="804" fill="url(#gB)"/><rect x="300" y="24" width="370" height="804" fill="url(#gA)"/><rect x="670" y="24" width="124" height="804" fill="url(#gC)"/>
+  <path d="M150 392H236V646C210 650 180 648 160 636C150 600 146 560 150 520Z" fill="#f6f7f5" stroke="#a9b1b5" stroke-width=".6"/><path d="M150 392H236V646C210 650 180 648 160 636C150 600 146 560 150 520Z" fill="url(#hp)"/>
+  <path d="M676 24C662 120 690 200 668 300S690 440 670 520S684 640 676 690" fill="none" stroke="#f6f7f5" stroke-width="18"/><path d="M676 24C662 120 690 200 668 300S690 440 670 520S684 640 676 690" fill="none" stroke="#24282c" stroke-width=".75"/>
+  <path d="M24 210H794M24 290H794M24 380H794M236 450H660M24 420L300 500H660M24 560H794M150 600H660M24 646C200 640 400 648 560 650S740 668 794 676M80 24V700M120 24V700M236 24V392M300 24V680M340 24V680M376 24V680M420 24V690M470 380V690M505 380V690M540 24V690M580 210V690M620 24V690M704 24V700M730 24V700M772 24V700" fill="none" stroke="#24282c" stroke-width="1.25"/>
+  <path d="M24 168C150 140 300 158 420 140S640 112 794 128M694 24C680 120 708 200 686 300S706 440 690 520S700 640 692 690" fill="none" stroke="#24282c" stroke-width="2"/>
+  <path d="M24 668C70 672 96 690 130 686S190 664 236 670S300 682 340 676S400 664 440 672S520 690 560 684S620 668 660 676S700 700 730 704S770 696 794 700V828H24Z" fill="#dfe7ea" stroke="#24282c" stroke-width="1"/>
+  <path d="M432 712C456 700 510 698 540 708C528 720 470 724 432 712Z" fill="#f6f7f5" stroke="#24282c" stroke-width="1"/>
+  <g><use href="#gx" x="66" y="94"/><use href="#gx" x="227" y="94"/><use href="#gx" x="388" y="94"/><use href="#gx" x="549" y="94"/><use href="#gx" x="710" y="94"/><use href="#gx" x="66" y="316"/><use href="#gx" x="227" y="316"/><use href="#gx" x="388" y="316"/><use href="#gx" x="549" y="316"/><use href="#gx" x="710" y="316"/>
+  <use href="#gx" x="66" y="538"/><use href="#gx" x="227" y="538"/><use href="#gx" x="388" y="538"/><use href="#gx" x="549" y="538"/><use href="#gx" x="710" y="538"/><use href="#gx" x="66" y="760"/><use href="#gx" x="227" y="760"/><use href="#gx" x="388" y="760"/><use href="#gx" x="549" y="760"/><use href="#gx" x="710" y="760"/></g>
+  <text class="ml" x="330" y="139">Highway 401</text><text class="ml" x="96" y="376">Bloor St W</text><text class="ml" x="300" y="555">Queen St W</text>
+  <text class="ml" transform="rotate(-90 416 470)" x="416" y="470">Spadina Ave</text><text class="ml" transform="rotate(-90 536 330)" x="536" y="330">Yonge St</text>
+  <text class="ml" x="162" y="520" style="font-weight:600">High Park</text>
+  <text x="462" y="772" style="font:italic 500 13px 'Public Sans';letter-spacing:.16em;fill:#545c61">Lake Ontario</text>
+  <use href="#mk" x="80" y="436" style="color:#b0432f"/><circle cx="80" cy="436" r="8.5" fill="none" stroke="#b0432f" stroke-width="1"/>
+  <use href="#mk" x="236" y="470" style="color:#a8761f"/>
+  <use href="#mk" x="540" y="500" style="color:#6a4c9c"/>
+  <use href="#mk" x="772" y="380" style="color:#6b7378"/>
+  <use href="#mk" x="730" y="290" style="color:#3b7448"/>
+  <g stroke="#c9372c" fill="none" stroke-width="1.25">
+    <path d="M752 300A11 11 0 0 1 746.9 313A11 11 0 0 1 733 322.5A11 11 0 0 1 714 326A11 11 0 0 1 695 322.5A11 11 0 0 1 681.1 313A11 11 0 0 1 676 300A11 11 0 0 1 681.1 287A11 11 0 0 1 695 277.5A11 11 0 0 1 714 274A11 11 0 0 1 733 277.5A11 11 0 0 1 746.9 287A11 11 0 0 1 752 300Z"/>
+    <path d="M696 306l8 8M704 306l-8 8"/><path d="M705 308.5L718.8 298" stroke-width="1" marker-end="url(#arR)"/>
+    <path d="M642 262L652 244L662 262Z" fill="#f6f7f5"/>
+  </g>
+  <text x="652" y="259" text-anchor="middle" style="font:700 10px 'Public Sans';fill:#c9372c">1</text>
+  <text x="667" y="258" style="font:600 12px 'Public Sans';fill:#c9372c;paint-order:stroke;stroke:#f6f7f5;stroke-width:3px">location corrected</text>
+  <circle cx="420" cy="560" r="30.2" fill="none" stroke="#24282c" stroke-width="1" stroke-dasharray="4 3"/>
+  <path d="M420 560L441.4 581.4" stroke="#24282c" stroke-width=".75" marker-end="url(#ar)"/><path d="M441.4 581.4L482 622H552" fill="none" stroke="#24282c" stroke-width=".75"/>
+  <rect x="484" y="606" width="66" height="14" fill="#f6f7f5"/><text x="487" y="618" style="font:600 12px 'Public Sans';fill:#24282c">R ±252 m</text>
+  <g style="color:#2c5a86"><path d="M407 560h26M420 547v26" stroke="currentColor" stroke-width="1.5"/><circle cx="420" cy="560" r="7" fill="currentColor"/><path d="M416.5 560h7M420 556.5v7" stroke="#fff" stroke-width="1.25"/></g>
+</g>
+<rect x="24.5" y="24.5" width="769" height="803" fill="none" stroke="#24282c" stroke-width="1"/>
+<path d="M66 19V32M227 19V32M388 19V32M549 19V32M710 19V32M66 820V833M227 820V833M388 820V833M549 820V833M710 820V833M19 94H32M19 316H32M19 538H32M19 760H32M786 94H799M786 316H799M786 538H799M786 760H799" stroke="#24282c" stroke-width="1"/>
+<path d="M25.75 26.5H794M25.75 825.5H794" stroke="#24282c" stroke-width="5" stroke-dasharray="1 39.25"/><path d="M26.5 38.5V828M791.5 38.5V828" stroke="#24282c" stroke-width="5" stroke-dasharray="1 54.5"/>
+<g class="tk" text-anchor="middle"><text x="66" y="15">79°26′W</text><text x="227" y="15">79°25′W</text><text x="388" y="15">79°24′W</text><text x="549" y="15">79°23′W</text><text x="710" y="15">79°22′W</text>
+<text x="66" y="846">79°26′W</text><text x="227" y="846">79°25′W</text><text x="388" y="846">79°24′W</text><text x="549" y="846">79°23′W</text><text x="710" y="846">79°22′W</text>
+<text transform="rotate(-90 15 94)" x="15" y="94">43°41′N</text><text transform="rotate(-90 15 316)" x="15" y="316">43°40′N</text><text transform="rotate(-90 15 538)" x="15" y="538">43°39′N</text><text transform="rotate(-90 15 760)" x="15" y="760">43°38′N</text>
+<text transform="rotate(90 803 94)" x="803" y="94">43°41′N</text><text transform="rotate(90 803 316)" x="803" y="316">43°40′N</text><text transform="rotate(90 803 538)" x="803" y="538">43°39′N</text><text transform="rotate(90 803 760)" x="803" y="760">43°38′N</text></g>
+<g transform="translate(592 808)"><path d="M0-28L6 0L0-6Z" fill="#24282c"/><path d="M0-28L-6 0L0-6Z" fill="#f6f7f5" stroke="#24282c" stroke-width="1"/><text y="-32" text-anchor="middle" style="font:700 12px 'Public Sans';fill:#24282c">N</text></g>
+<rect x="616.5" y="805.5" width="120" height="5" fill="#f6f7f5" stroke="#24282c" stroke-width="1"/><path d="M616.5 808H646.5M676.5 808H736.5" stroke="#24282c" stroke-width="5"/>
+<g style="font:500 12px 'Public Sans';fill:#24282c" text-anchor="middle"><text x="617" y="800">0</text><text x="677" y="800">500 m</text><text x="733" y="800">1 km</text></g>
+</svg>
+    <div class="fl strip"><span><svg class="i" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5l4 4"/></svg>Search issues, places or IDs…</span><span class="cv">All issue types</span><span class="cv">All severities</span><span class="cv">All statuses</span><span class="cv">Last 30 days</span><span class="cv">All areas</span></div>
+    <div class="fl" style="left:32px;top:72px"><div class="seg"><span class="on">Pins</span><span>Density</span></div><span class="btn"><svg class="i" viewBox="0 0 16 16"><circle cx="3.5" cy="12.5" r="1.5"/><circle cx="12.5" cy="3.5" r="1.5"/><path d="M5 12.5h5.5a2 2 0 0 0 0-4h-5a2 2 0 0 1 0-4H11"/></svg>Plan crew route</span></div>
+    <div class="fl" style="right:32px;top:72px"><span class="chip"><svg class="m" viewBox="-7 -7 14 14" style="color:#24282c"><use href="#mk"/></svg>Infrastructure &amp; proximity · 6 issues</span></div>
+    <div class="stack" style="top:104px"><span><svg class="i" viewBox="0 0 16 16"><path d="M8 1.5v13M1.5 8h13M6 3.5l2-2 2 2M6 12.5l2 2 2-2M3.5 6l-2 2 2 2M12.5 6l2 2-2 2"/></svg></span><span><svg class="i" viewBox="0 0 16 16"><path d="M2.5 2.5h11v11h-11z" stroke-dasharray="2 2"/></svg></span><span><svg class="i" viewBox="0 0 16 16"><path d="M8 2l6.5 3.5L8 9 1.5 5.5z M1.5 8.5L8 12l6.5-3.5 M1.5 11.5L8 15l6.5-3.5"/></svg></span></div>
+    <div class="stack" style="bottom:32px"><span><svg class="i" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></span><span><svg class="i" viewBox="0 0 16 16"><path d="M3 8h10"/></svg></span><span><svg class="i" viewBox="0 0 16 16"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></span><span><svg class="i" viewBox="0 0 16 16"><path d="M2 7.5L8 2l6 5.5M3.5 6.5v7.5h9V6.5"/></svg></span></div>
+    <div class="fl box"><div class="t"><b style="font-weight:600">6 in view</b> / 6 matching · <a>View area issues</a></div>
+      <div class="lg">
+        <span><svg class="m" viewBox="-7 -7 14 14" style="color:#b0432f"><use href="#mk"/></svg>Pothole</span><span><svg class="m" viewBox="-7 -7 14 14" style="color:#a8761f"><use href="#mk"/></svg>Sidewalk damage</span><span><svg class="m" viewBox="-7 -7 14 14" style="color:#6a4c9c"><use href="#mk"/></svg>Graffiti</span><span><svg class="m" viewBox="-7 -7 14 14" style="color:#3b7448"><use href="#mk"/></svg>Litter</span>
+        <span><svg class="m" viewBox="-7 -7 14 14" style="color:#2c5a86"><use href="#mk"/></svg>Flooding</span><span><svg class="m" viewBox="-7 -7 14 14" style="color:#6b7378"><use href="#mk"/></svg>Other</span><span><svg class="m" viewBox="-9 -9 18 18" style="color:#24282c"><use href="#mk"/><circle r="8.5" fill="none" stroke="#24282c"/></svg>High severity</span>
+      </div></div>
+  </section>
+</main>
+<aside>
+  <div class="ph"><span><svg class="i" viewBox="0 0 16 16"><path d="M13 8H3M7 4L3 8l4 4"/></svg>Issue details</span><span class="btn sq" style="border-color:transparent"><svg class="i" viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+  <div class="pb">
+    <div class="idl">CL-B48D629A · <svg class="m" viewBox="-7 -7 14 14" style="color:#2c5a86"><use href="#mk"/></svg>Flooding</div>
+    <h2>Storm Drain Grate Alignment</h2>
+    <div class="photo"><svg viewBox="0 0 358 136" preserveAspectRatio="none"><path d="M0 0L358 136M358 0L0 136" stroke="#a9b1b5" stroke-width=".6" vector-effect="non-scaling-stroke"/></svg></div>
+    <div class="cap">Evidence photo · faces and plates blurred</div>
+    <div class="bdg"><span>Medium</span><span>Open</span><span>Needs review</span></div>
+    <h3>Queen St W &amp; Spadina Ave</h3>
+    <p>A storm drain grate sits out of line with its frame at the corner, leaving a gap along one edge where a bike tire could catch.</p>
+    <div class="blk lc"><svg width="40" height="40" viewBox="0 0 40 40" style="flex:none"><circle cx="20" cy="20" r="16" fill="none" stroke="#24282c" stroke-dasharray="3 2.5"/><path d="M20 20L31.3 31.3" stroke="#24282c" stroke-width=".75" marker-end="url(#ar)"/><circle cx="20" cy="20" r="3.5" fill="#2c5a86"/></svg>
+      <div><b>Approximate location · 252 m radius</b><p class="mut">The pin may be off by up to this distance.</p><a>Open in Google Street View<svg class="i" viewBox="0 0 16 16" style="width:12px;height:12px"><path d="M9 2.5h4.5V7M13.5 2.5L7 9M6 3.5H2.5v10h10V10"/></svg></a></div></div>
+    <div class="blk"><div class="pr"><div class="score"><b>27</b><span class="mut">of 100</span></div>
+      <div class="why"><b>Priority for City staff</b><div><span>Medium severity</span><span>(+25)</span></div><div><span>Open 3 days</span><span>(+1.5)</span></div></div></div>
+      <svg width="358" height="20" viewBox="0 0 358 20" style="display:block;margin-top:8px"><rect x=".5" y="4.5" width="357" height="4" fill="#fff" stroke="#24282c"/><rect x=".5" y="4.5" width="96.4" height="4" fill="#24282c"/><path d="M.5 9v4M36.2 9v2M71.9 9v2M107.6 9v2M143.3 9v2M179 9v4M214.7 9v2M250.4 9v2M286.1 9v2M321.8 9v2M357.5 9v4" stroke="#24282c" stroke-width="1"/><path d="M96.9 0v12" stroke="#24282c" stroke-width="1.25"/></svg></div>
+    <div class="tb"><div class="w2"><i>Sheet</i>CL-B48D629A</div><div><i>Rev</i>Δ0</div><div><i>Scale</i>1:5 000</div><div><i>Source</i>public post</div><div><i>Located</i>place name</div></div>
+  </div>
+  <div class="pf"><span class="btn"><svg class="i" viewBox="0 0 16 16"><path d="M3.5 1.5h9v13l-4.5-3.5-4.5 3.5z"/></svg>Save</span><span class="btn"><svg class="i" viewBox="0 0 16 16"><path d="M8 1.5v9M4.5 5L8 1.5 11.5 5M2.5 8.5v6h11v-6"/></svg>Share</span><span class="btn pri"><svg class="i" viewBox="0 0 16 16"><path d="M2 14l1-3.5 8-8 2.5 2.5-8 8z M9.5 4l2.5 2.5"/></svg>Suggest correction</span></div>
+</aside>
+</body></html>

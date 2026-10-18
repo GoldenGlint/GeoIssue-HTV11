@@ -140,6 +140,8 @@ def normalize(items):
                     caption=redact_text(item.get("caption")), alt_text=redact_text(child.get("alt")),
                     media_id=str(child["id"]) if child.get("id") else None,
                     location_evidence=evidence,
+                    post_url=item.get("url") or (
+                        f"https://www.instagram.com/p/{item['shortCode']}/" if item.get("shortCode") else None),
                 ))
             except (ValueError, TypeError, AttributeError):
                 stats["invalid_items"] += 1

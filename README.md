@@ -9,6 +9,8 @@ Start with the [collection package guide](scraping/README.md) for setup, command
 | Web app: run it, plug in data, what is implemented | [Frontend](#frontend) below |
 | Photos to map-ready issues: locate, merge, priority, area stats | [analysis/README.md](analysis/README.md) |
 | Issue fields shared by the analysis and the app | [data-contract.md](data-contract.md) |
+| Tiger Data setup, live report activity, simulated replay and benchmarks | [Tiger Data integration](tiger-data-plan.md) |
+| Vultr hosting, on-demand ingestion, deployment and demo checks | [Vultr implementation plan](vultr-plan.md), [deploy guide](deploy/README.md) |
 | Working collectors and review tools | [scraping/README.md](scraping/README.md) |
 | Current collection status, freshness policy, and model handoff | [Collection workflow](scraping/docs/COLLECTION.md) |
 | Automatic Gemini screening (Toronto / issue / locatability) | [Screening](scraping/docs/SCREENING.md) |
@@ -19,7 +21,7 @@ Start with the [collection package guide](scraping/README.md) for setup, command
 | Challenge brief | [School of Cities](2026.10%20Hack%20The%20Valley%20School%20of%20Cities.md) |
 | Civic-data references | [Toronto datasheet](2026.10%20Hack%20The%20Valley%20Datasheet.md) |
 
-Saved images, local credentials, and session files stay in ignored local storage. Research summaries in `scraping/research/results/` contain sanitized evidence rather than raw account data.
+Source image batches, local credentials, and session files stay in ignored local storage. The evidence photos referenced by the public app data are included in `data/analyzed/photos/` under the current display policy. Research summaries in `scraping/research/results/` contain sanitized evidence rather than raw account data.
 
 ## Frontend
 
@@ -36,7 +38,11 @@ python scripts/serve.py     # http://127.0.0.1:5173
 
 `scripts/serve.py` serves the app and a small local API (`/api/status`, `/api/triage`, `/api/digest`) that calls Gemini with the key from `.env`, so the key never reaches the browser. It never serves hidden files such as `.env`. Without a key, the app works and the AI features say they are off.
 
+For Tiger Data, follow [the integration guide](tiger-data-plan.md): install the optional PostgreSQL driver, set `TIGER_DATABASE_URL`, initialize the schema, then add `--tiger` to the analysis command. The same server supplies database-backed issues and hourly report activity. The dashboard refreshes every 15 seconds and clearly labels file snapshots and simulated replay. Gemini and Tiger Data work independently.
+
 With Node.js 18 or newer, `npm run dev` serves the app without the Gemini API. No installation or build step is required either way. Don't use `python -m http.server` once a `.env` exists: it would serve the key. ES modules require HTTP; opening `index.html` directly is not supported.
+
+The app opens in light mode; the header sun/moon button or Preferences → Appearance switches to dark or follows the system setting. Both themes are colour tokens at the top of `src/styles.css` (light on `:root`, dark under `[data-theme="dark"]`); use the tokens rather than raw colours, and `npm test` checks that every text token meets WCAG AA contrast in both themes. `PRODUCT.md` and `DESIGN.md` describe the product and the visual system.
 
 #### Locate a photo with Claude (optional)
 
@@ -54,15 +60,15 @@ Each photo runs as a detached background job (`research/geoloc_tests/claude_geol
 
 1. The app opens on the analysed scraping handoff: `data/analyzed/issues.public.json` (which follows `data-contract.md`), the run report for the funnel, and per-ward summaries for the digest. Refresh it with `python -m analysis --input scraping/shared/post-groups.jsonl` (see `analysis/README.md`). The **data switch** in the page header changes to 240 deterministic, fictional sample records spread over the 90 days before the fixed demo date (**October 17, 2026**), with a sample rainstorm on Oct 4–6 so the timeline has a real event in it; every sample record has `is_demo: true`. A choice made in the switch is remembered in the browser, and without analysed issues the app shows the sample. Later, replace `issueRepository.list()` with a request to your API.
 2. Replace `issueRepository.submit(draft)` with your submission endpoint. The current implementation saves metadata in browser local storage (pin rounded to about 100 m) and previews photos in memory only. Real photo transport, privacy processing, review, authentication, and publication belong on the backend.
-3. Set `evidence_thumbnail` to a privacy-processed image URL. Until then, each issue shows a credited sample photo of its category from `assets/evidence/` (CC BY / CC BY-SA, see `assets/evidence/CREDITS.md`), labelled as a sample that does not depict the record.
-4. `src/map.js` is the isolated map adapter. It renders real OpenStreetMap raster tiles styled for the dark interface with no API key, geographic markers, pixel-based clusters, panning, cursor-anchored eased zoom, pinch zoom, double-click zoom, gentle pan momentum, Shift selection and box selection. Camera animation reuses the current tile scene until destination tiles are ready, and respects reduced-motion preferences. It can be replaced by MapLibre while preserving callbacks. Network access is required for tiles and optional fonts; an explicitly labeled schematic background and system fonts remain available offline.
+3. Set `evidence_thumbnail` to the evidence photo URL. The current policy displays collected photos in full, including those flagged for face/plate blurring. Run the analysis against `scraping/data/handoff/post-groups.jsonl` to copy the local handoff's images into `data/analyzed/photos/`. Fictional records use credited sample photos from `assets/evidence/` (CC BY / CC BY-SA, see `assets/evidence/CREDITS.md`), labelled as samples that do not depict the record.
+4. `src/map.js` is the isolated map adapter. It renders real OpenStreetMap raster tiles styled for the active theme with no API key, geographic markers, pixel-based clusters, panning, cursor-anchored eased zoom, pinch zoom, double-click zoom, gentle pan momentum, Shift selection and box selection. Camera animation reuses the current tile scene until destination tiles are ready, and respects reduced-motion preferences. It can be replaced by MapLibre while preserving callbacks. Network access is required for tiles and optional fonts; an explicitly labeled schematic background and system fonts remain available offline.
 5. Infrastructure layers use real OpenStreetMap geometry for TTC subway/LRT stations and four major roads (`src/osm-infrastructure.js`, regenerated by `python scripts/fetch-osm-infrastructure.py`). School positions are an approximate sample list.
 6. Wards come from the City of Toronto's 25-ward boundaries (`src/ward-boundaries.js`, regenerated by `python scripts/fetch-ward-boundaries.py`; Open Government Licence – Toronto). Sample issues get their ward by point-in-polygon, and the map can draw ward outlines.
 
 ### Implemented interactions
 
 - **Map Explorer** uses a compact title and floating search / filter controls over the expanded map. It opens without a context panel. Pins open details; clusters open a sortable/filterable list without auto-zoom. Zoom in is explicit. Shift + click toggles issue IDs; Box select (dashed square) makes a rectangular selection; ordinary drag pans. Escape or blank-map click clears selection. High-severity pins and clusters carry a "!" badge, so severity never depends on colour alone. The selected pin is moved clear of the side panel or phone bottom sheet. Markers have contextual hover / focus previews; a single selected issue shows its uncertainty area. Fit all matching issues, keyboard map controls, and empty-result recovery are supported.
-- **Issue details** show the evidence photo, a **priority score with its reasons** (same rules as the analysis pipeline, `src/priority.js`), a "How this location was estimated" trace (method, cascade steps, visual clues, radius and confidence; from the analysis for analysed posts, illustrative for sample records), ward, last seen, nearby infrastructure and why it was flagged.
+- **Issue details** show the full evidence photo without cropping, an enlarged viewer with previous/next controls, thumbnails for available companion photos (labelled as context), original social-post links, a **priority score with its reasons** (same rules as the analysis pipeline, `src/priority.js`), a "How this location was estimated" trace (method, cascade steps, visual clues, radius and confidence; from the analysis for analysed posts, illustrative for sample records), ward, last seen, nearby infrastructure and why it was flagged.
 - **Ward outlines:** Infrastructure & proximity → Ward boundaries draws the 25 wards; clicking a ward label filters everything to that ward.
 - **Shared filters** (search, issue type, severity, status, time, ward or neighbourhood, and infrastructure proximity) apply across map, table, and dashboard. Proximity works for one asset type or "any infrastructure". Filter chips can be removed individually. Search suggestions jump to matching issues, neighbourhoods and wards; no external geocoder is connected.
 - **Data Explorer** defaults to all filtered Toronto records. View as table explicitly carries selected IDs with a removable scope chip. Columns cover priority, area and ward, location with nearest asset, detected, last seen, sightings, confidence, source and verification; they sort (including semantic severity ordering). Switching the demo role to City Staff sorts by priority. Sticky headers, selection actions, pagination, per-page sizes, map navigation, and CSV / GeoJSON downloads work. The **Query** tab shows the active filters, scope, sort and page as a read-only SQL statement plus the issue schema. Escape clears the table selection.
@@ -71,6 +77,7 @@ Each photo runs as a detached background job (`research/geoloc_tests/claude_geol
 - **Methodology** (sidebar → Help & methodology): data sources and licences, how an issue reaches the map (what is live, sample or in progress), the priority rules, privacy, and what the data can't tell you.
 - Saved bookmarks, recents, preferences, and pending submission metadata persist in this browser. The demo role selector (sidebar, or Settings on a phone) shows a sample volunteer review queue. Review decisions last for the session. It is **not authentication**. The person icon opens Google Street View in a new tab: click it for the map centre, or drag it onto the map. CivicLens links to Street View but never copies its imagery; an in-app Mapillary viewer is still future work.
 - **Density** replaces the pins with a heat surface weighted by sightings, with its own scale. Click a hot spot to list the issues under it.
+- **Crew routes** (climate action): the green *Plan crew route* button on the map plans the issues in view; a selection (box select, Shift + click, a cluster or *View area issues*) has the same button in its panel. The app orders the stops to keep driving short (nearest-next from every stop, then 2-opt), draws the route on the map, and estimates distance, driving time and CO₂ for a gas van versus an electric van, compared with visiting the issues in the order they were reported. *Directions in Google Maps* opens the first 11 stops. The assumptions are listed in the panel and in `src/route.js`; distances are straight lines × 1.3, so treat the figures as planning estimates.
 - **Corrections**: *Suggest correction* on any issue reports a wrong location, wrong issue type, a fix, or "not a public issue". A location can be set by dragging the map under a pin, pasting a Google Maps link, or typing coordinates in decimal degrees, degrees-minutes or degrees-minutes-seconds (`src/coordinates.js`, tested by `npm test`). Corrections appear under Saved and in the volunteer Verify queue; accepting one updates the issue and its location trace.
 - On phones the sidebar becomes a bottom tab bar, and the map supports pinch zoom.
 
@@ -89,7 +96,8 @@ The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSO
 | `src/views/workspace-view.js` | Saved, Recents, Verify |
 | `src/views/methodology-view.js` | Methodology page |
 | `src/modals.js` | Upload (Gemini suggestions, blurring, nearby reports), correction, Street View, infrastructure, export, settings, help, share and issue dialogs |
-| `src/coordinates.js`, `src/search.js` | Reading Google Maps links and decimal / DMS coordinates; the search box and its suggestions |
+| `src/coordinates.js`, `src/search.js` | Reading Google Maps links and decimal / DMS coordinates, directions links; the search box and its suggestions |
+| `src/route.js` | Crew route planning and its distance and CO₂ estimates (`npm test` covers it) |
 | `src/api.js`, `src/blur.js` | Calls to the local API (Gemini, geolocation jobs); face/plate pixelation on a canvas |
 | `src/state.js` | Shared UI state, browser persistence, local sightings |
 | `src/issues.js`, `src/priority.js` | Filter, sort and search logic; priority score and reasons |

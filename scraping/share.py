@@ -29,6 +29,9 @@ IMAGE_HOSTS = {
     "mastodon": ("mastodon.social", "masto.host"),
     "reddit": ("i.redd.it",),
     "flickr": ("staticflickr.com",),
+    "instagram": ("cdninstagram.com", "fbcdn.net"),
+    "facebook": ("fbcdn.net",),
+    "threads": ("cdninstagram.com", "fbcdn.net"),
 }
 
 
@@ -209,9 +212,13 @@ def pull(shared=SHARED, output=DATA / "handoff"):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=("export", "pull"))
+    parser.add_argument("--shared", type=Path, default=SHARED,
+                        help="Text export directory, including a downloaded Actions artifact's export/ folder.")
+    parser.add_argument("--output", type=Path, default=DATA / "handoff",
+                        help="Local handoff to restore into, or export from.")
     args = parser.parse_args()
     try:
-        report = export() if args.command == "export" else pull()
+        report = export(args.output, args.shared) if args.command == "export" else pull(args.shared, args.output)
     except (ValueError, OSError) as exc:
         parser.exit(1, f"Share stopped: {exc}\n")
     print(json.dumps(report, indent=2))

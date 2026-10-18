@@ -48,8 +48,9 @@ class GeolocateApiTest(unittest.TestCase):
             with urllib.request.urlopen(req, timeout=10) as resp:
                 raw = resp.read()
                 return resp.status, json.loads(raw) if resp.headers["Content-Type"] == "application/json" else raw
-        except urllib.error.HTTPError as error:
-            return error.code, json.loads(error.read() or b"{}")
+        except urllib.error.HTTPError as error:  # API errors are JSON; refused static paths are a plain 404 page
+            body = error.read()
+            return error.code, json.loads(body) if error.headers.get("Content-Type") == "application/json" else body
 
     def start(self):
         return self.request("/api/geolocate", {"image": base64.b64encode(PHOTO).decode(), "mime": "image/jpeg"})

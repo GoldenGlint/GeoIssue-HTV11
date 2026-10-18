@@ -6,9 +6,10 @@ import { state, filtered, previousPeriod, isSampleData, sampleWord } from '../st
 import { statCard, emptyHtml, issueRow } from '../ui.js';
 import { nav, updateFilteredView, render } from '../app.js';
 import { apiStatus, writeDigest } from '../api.js';
+import { activityPanelHtml, bindActivity } from '../activity.js';
 
 const SAMPLE_SPAN_DAYS = 90; // the sample data covers the 90 days up to DEMO_DATE
-const statuses = ['Open', 'In review', 'Resolved'], statusColors = ['#42a5f5', '#ffb452', '#25d5ac'];
+const statuses = ['Open', 'In review', 'Resolved'], statusColors = ['var(--accent)', 'var(--warning)', 'var(--success)'];
 const windowDays = () => Number(state.filters.days) || SAMPLE_SPAN_DAYS;
 // Only compare when the previous period is fully inside the sample data; otherwise the "change" would be invented.
 const comparison = () => state.filters.days && Number(state.filters.days) * 2 <= SAMPLE_SPAN_DAYS ? previousPeriod() : null;
@@ -36,10 +37,10 @@ function statsHtml(rows, previous) {
   const high = rows.filter(isHigh), review = rows.filter(i => i.resolution_status === 'In review').length, resolved = rows.filter(i => i.resolution_status === 'Resolved').length;
   const scope = state.filters.days ? `In the last ${state.filters.days} days` : `All ${sampleWord()}records`;
   return `<div class="stat-grid">${[
-    statCard({ icon: 'database', label: 'Total issues', value: rows.length, note: change(rows.length, previous?.length ?? null) || scope, color: 'blue', extra: sparkline(buckets(rows).counts) }),
-    statCard({ icon: 'warning', label: 'High priority', value: high.length, note: change(high.length, previous ? previous.filter(isHigh).length : null) || `${percent(high.length, rows.length)}% of filtered issues`, color: 'red', extra: sparkline(buckets(high).counts) }),
-    statCard({ icon: 'clock', label: 'In review', value: review, note: `${percent(review, rows.length)}% of filtered issues`, color: 'amber' }),
-    statCard({ icon: 'check', label: 'Resolved', value: resolved, note: `${percent(resolved, rows.length)}% resolution rate`, color: 'green' }),
+    statCard({ label: 'Total issues', value: rows.length, note: change(rows.length, previous?.length ?? null) || scope, color: 'blue', extra: sparkline(buckets(rows).counts) }),
+    statCard({ label: 'High priority', value: high.length, note: change(high.length, previous ? previous.filter(isHigh).length : null) || `${percent(high.length, rows.length)}% of filtered issues`, color: 'red', extra: sparkline(buckets(high).counts) }),
+    statCard({ label: 'In review', value: review, note: `${percent(review, rows.length)}% of filtered issues`, color: 'amber' }),
+    statCard({ label: 'Resolved', value: resolved, note: `${percent(resolved, rows.length)}% resolution rate`, color: 'green' }),
   ].join('')}</div>`;
 }
 
@@ -51,7 +52,7 @@ function timelineHtml(rows) {
   const points = counts.map((v, j) => `${x(j).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   const labels = [...new Set([0, Math.round((n - 1) / 3), Math.round(2 * (n - 1) / 3), n - 1])];
   const unit = size === 1 ? 'day' : 'week';
-  return `<section class="card trend-card"><div class="card-header"><h2>${icon('chart')} Detection timeline</h2><span class="subtle-label">${date(start(0))} – ${date(REFERENCE_DATE)} · per ${unit}</span></div><div class="trend-chart"><div class="chart-y"><span>${max}</span><span>${max / 2}</span><span>0</span></div><svg viewBox="0 0 520 170" preserveAspectRatio="none" role="img" aria-label="Issue detections per ${unit}"><defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#23adfa" stop-opacity=".32"/><stop offset="100%" stop-color="#23adfa" stop-opacity="0"/></linearGradient></defs>${[30, 90, 150].map(v => `<path d="M0 ${v}H520" stroke="#203346" stroke-dasharray="3 4"/>`).join('')}<polygon points="0,170 ${points} 520,170" fill="url(#chart-fill)"/><polyline points="${points}" fill="none" stroke="#3dbbff" stroke-width="3" vector-effect="non-scaling-stroke"/>${counts.map((v, j) => `<circle cx="${x(j).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${n > 20 ? 2.5 : 3.5}" fill="#b4e7ff" stroke="#1a90da"><title>${size === 1 ? date(start(j)) : `Week of ${date(start(j))}`}: ${v} ${sampleWord()}issues</title></circle>`).join('')}</svg></div><div class="chart-x">${labels.map(j => `<span>${date(start(j))}</span>`).join('')}</div><p class="chart-caption">Observed ${sampleWord()}detections, not a forecast.</p></section>`;
+  return `<section class="card trend-card"><div class="card-header"><h2>${icon('chart')} Detection timeline</h2><span class="subtle-label">${date(start(0))} – ${date(REFERENCE_DATE)} · per ${unit}</span></div><div class="trend-chart"><div class="chart-y"><span>${max}</span><span>${max / 2}</span><span>0</span></div><svg viewBox="0 0 520 170" preserveAspectRatio="none" role="img" aria-label="Issue detections per ${unit}"><defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.16"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>${[30, 90, 150].map(v => `<path d="M0 ${v}H520" style="stroke:var(--border)" stroke-dasharray="3 4"/>`).join('')}<polygon points="0,170 ${points} 520,170" fill="url(#chart-fill)"/><polyline points="${points}" fill="none" style="stroke:var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>${counts.map((v, j) => `<circle cx="${x(j).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${n > 20 ? 2.5 : 3.5}" style="fill:var(--surface);stroke:var(--accent)"><title>${size === 1 ? date(start(j)) : `Week of ${date(start(j))}`}: ${v} ${sampleWord()}issues</title></circle>`).join('')}</svg></div><div class="chart-x">${labels.map(j => `<span>${date(start(j))}</span>`).join('')}</div><p class="chart-caption">Observed ${sampleWord()}detections, not a forecast.</p></section>`;
 }
 
 function breakdownHtml(rows) {
@@ -63,7 +64,7 @@ function breakdownHtml(rows) {
 function resolutionHtml(rows) {
   let accumulated = 0;
   const gradient = statuses.map((s, j) => { const start = accumulated; accumulated += rows.filter(i => i.resolution_status === s).length / Math.max(1, rows.length) * 100; return `${statusColors[j]} ${start}% ${accumulated}%`; }).join(',');
-  return `<section class="card"><div class="card-header"><h2>${icon('clock')} Resolution status</h2></div><div class="donut-wrap"><div class="donut" style="background:conic-gradient(${rows.length ? gradient : '#1b2b3e 0% 100%'})"><div><strong>${rows.length}</strong><span>issues</span></div></div></div><div class="status-legend">${statuses.map((s, j) => `<span><i style="background:${statusColors[j]}"></i>${s}<strong>${rows.filter(i => i.resolution_status === s).length}</strong></span>`).join('')}</div></section>`;
+  return `<section class="card"><div class="card-header"><h2>${icon('clock')} Resolution status</h2></div><div class="donut-wrap"><div class="donut" style="background:conic-gradient(${rows.length ? gradient : 'var(--border) 0% 100%'})"><div><strong>${rows.length}</strong><span>issues</span></div></div></div><div class="status-legend">${statuses.map((s, j) => `<span><i style="background:${statusColors[j]}"></i>${s}<strong>${rows.filter(i => i.resolution_status === s).length}</strong></span>`).join('')}</div></section>`;
 }
 
 function wardDigestHtml(rows, previous) {
@@ -82,7 +83,7 @@ function wardDigestHtml(rows, previous) {
     const [topPlace, placeCount] = Object.entries(countBy(rows, 'address')).sort((a, b) => b[1] - a[1])[0];
     const high = rows.filter(isHigh).length, resolved = rows.filter(i => i.resolution_status === 'Resolved').length;
     const delta = previous ? previous.length ? ` (${rows.length >= previous.length ? 'up' : 'down'} ${Math.abs(Math.round((rows.length - previous.length) / previous.length * 100))}% from the previous ${state.filters.days} days)` : ' (none in the previous period)' : '';
-    const period = state.filters.days ? `In the last ${state.filters.days} days` : `Across all ${sampleWord()}records`;
+    const period = state.filters.days ? `In the last ${state.filters.days} days${isSampleData() ? ' of sample data' : ''}` : `Across all ${sampleWord()}records`;
     const tiles = [['Open', rows.filter(i => i.resolution_status === 'Open').length], ['In review', rows.filter(i => i.resolution_status === 'In review').length], ['Resolved', resolved], ['Needs verification', rows.filter(i => i.verification_status === 'Needs review').length]];
     body = `<p class="digest-text">${period}, <strong>${esc(wardLabel(ward))}</strong> logged <strong>${plural(rows.length, state.dataSource === 'sample' ? 'sample issue' : 'issue')}</strong>${delta}. The most common type was <strong>${esc(topType)}</strong> (${topCount}). <strong>${high}</strong> ${high === 1 ? 'is' : 'are'} high severity and <strong>${percent(resolved, rows.length)}%</strong> ${resolved === 1 ? 'is' : 'are'} resolved. The busiest location was <strong>${esc(topPlace)}</strong> (${plural(placeCount, 'issue')}).</p>${writtenDigestHtml(ward, rows)}<div class="digest-stats">${tiles.map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join('')}</div>`;
   }
@@ -117,7 +118,7 @@ function writtenDigestHtml(ward, rows) {
 }
 
 function pipelineHtml() {
-  const report = state.dataSource === 'pipeline' ? state.pipeline.report : null, verified = state.issues.filter(i => i.verification_status === 'Verified').length;
+  const report = state.dataSource !== 'sample' ? state.pipeline.report : null, verified = state.issues.filter(i => i.verification_status === 'Verified').length;
   let stages, subtitle, foot, firstNote;
   if (report?.counts) {
     // The analysis run's own counts (data/analyzed/report.json), so every number is measured.
@@ -127,6 +128,12 @@ function pipelineHtml() {
     firstNote = 'From the photo analysis';
     const reasons = Object.entries(countBy(report.dropped || [], 'reason')).map(([reason, n]) => `${n} ${reason}`).join(', ');
     foot = `Counts from the analysis report. Duplicate sightings were merged into unique issues${reasons ? `; dropped: ${reasons}` : ''}. Bars use a log scale.`;
+    if (report.simulated) {
+      stages = [['Simulated reports', c.sightings || 0, true], ['Simulated unique issues', c.issues || 0, true], ['Verified', 0, true]];
+      subtitle = 'Simulated report replay';
+      firstNote = 'Fictional reports';
+      foot = 'All replay records are fictional. No photos were collected or analysed to create these counts. Bars use a log scale.';
+    }
   } else {
     const recent = state.issues.filter(i => age(i) < demoPipeline.window_days);
     stages = [['Posts scanned', demoPipeline.posts_scanned, false], ['With images', demoPipeline.with_images, false], ['Toronto-relevant', demoPipeline.toronto_relevant, false], ['Public scenes', demoPipeline.public_scenes, false],
@@ -145,16 +152,18 @@ export function dashboardHtml() {
   const areas = Object.entries(countBy(rows, i => i.neighbourhood_id)).map(([id, count]) => ({ id, count, name: rows.find(i => i.neighbourhood_id === id).neighbourhood_name })).sort((a, b) => b.count - a.count).slice(0, 5);
   const recent = rows.slice().sort((a, b) => b.first_seen_at.localeCompare(a.first_seen_at)).slice(0, 4);
   return `<div class="dashboard-page">${statsHtml(rows, previous)}
+    ${activityPanelHtml(state.dataBackend, state.dataSource)}
     <div class="dashboard-charts">${timelineHtml(rows)}${breakdownHtml(rows)}${resolutionHtml(rows)}</div>
     <div class="dashboard-civic">${wardDigestHtml(rows, previous)}${pipelineHtml()}</div>
     <div class="dashboard-lower">
       <section class="card"><div class="card-header"><h2>${icon('pin')} Neighbourhood hotspots</h2><span class="subtle-label">${isSampleData() ? 'Sample counts' : 'Counts'}</span></div>${areas.length ? areas.map(({ id, name, count }, j) => `<button class="hotspot-row" data-area-filter="${esc(id)}"><span class="rank">${j + 1}</span><span>${esc(name)}</span><div class="bar-track"><i style="width:${count / areas[0].count * 100}%"></i></div><strong>${count}</strong>${icon('arrow')}</button>`).join('') : emptyHtml('No neighbourhoods', 'Try clearing your filters.')}</section>
       <section class="card"><div class="card-header"><h2>${icon('clock')} Recent detections</h2><button class="text-button" data-nav="data">View all ↗</button></div>${recent.map(issueRow).join('') || emptyHtml('No detections', 'Try clearing your filters.')}</section>
-      <section class="card insights-card"><div class="card-header"><h2>${icon('sun')} At a glance</h2></div><div class="insight"><span class="stat-icon red">${icon('warning')}</span><div><span>Most common issue</span><strong>${counts[0]?.count ? counts[0].type : 'No issues'}</strong><small>${counts[0]?.count || 0} of ${rows.length} filtered records</small></div></div><div class="insight"><span class="stat-icon blue">${icon('pin')}</span><div><span>Highest ${sampleWord()}activity</span><strong>${esc(areas[0]?.name || 'No areas')}</strong><small>Based on ${sampleWord()}record count</small></div></div><div class="insight-foot">${icon('shield')} ${state.dataSource === 'sample' ? 'These insights describe fictional records. Connect verified data before drawing conclusions.' : 'Counts cover issues found in public photos and uploads, not every issue in the city.'}</div></section>
+      <section class="card insights-card"><div class="card-header"><h2>${icon('sun')} At a glance</h2></div><div class="insight"><span class="stat-icon red">${icon('warning')}</span><div><strong>${counts[0]?.count ? counts[0].type : 'No issues'}</strong><small>Most common issue · ${counts[0]?.count || 0} of ${rows.length} filtered records</small></div></div><div class="insight"><span class="stat-icon blue">${icon('pin')}</span><div><strong>${esc(areas[0]?.name || 'No areas')}</strong><small>Highest ${sampleWord()}activity · by ${sampleWord()}record count</small></div></div><div class="insight-foot">${icon('shield')} ${state.dataSource === 'sample' ? 'These insights describe fictional records. Connect verified data before drawing conclusions.' : 'Counts cover issues found in public photos and uploads, not every issue in the city.'}</div></section>
     </div></div>`;
 }
 
 export function bindDashboard() {
+  bindActivity(state.dataSource, state.filters, state.dataBackend, ward => { state.filters.area = `ward:${ward}`; updateFilteredView(); });
   document.querySelectorAll('[data-type-filter]').forEach(b => b.onclick = () => { state.filters.type = b.dataset.typeFilter; nav('data'); });
   document.querySelectorAll('[data-area-filter]').forEach(b => b.onclick = () => { state.filters.area = b.dataset.areaFilter; nav('data'); });
   document.querySelectorAll('[data-ward-filter]').forEach(b => b.onclick = () => { state.filters.area = `ward:${b.dataset.wardFilter}`; updateFilteredView(); });
