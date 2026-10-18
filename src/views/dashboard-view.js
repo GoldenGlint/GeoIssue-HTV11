@@ -8,9 +8,11 @@ import { selectHtml } from '../select.js';
 import { nav, updateFilteredView, render } from '../app.js';
 import { apiStatus, writeDigest } from '../api.js';
 import { activityPanelHtml, bindActivity } from '../activity.js';
+import { mountChart, baseOption, lineOption, sparkOption, rowsOption, morphRows, bindRows, tipHtml, countTo, chartFor } from '../charts.js';
 
 const SAMPLE_SPAN_DAYS = 90; // the sample data covers the 90 days up to DEMO_DATE
 const statuses = ['Open', 'In review', 'Resolved'], statusColors = ['var(--accent)', 'var(--warning)', 'var(--success)'];
+let drawn = {}; // what the last dashboardHtml() charted, for bindDashboard() to draw
 const windowDays = () => Number(state.filters.days) || SAMPLE_SPAN_DAYS;
 // Only compare when the previous period is fully inside the sample data; otherwise the "change" would be invented.
 const comparison = () => state.filters.days && Number(state.filters.days) * 2 <= SAMPLE_SPAN_DAYS ? previousPeriod() : null;
@@ -28,44 +30,56 @@ function change(current, previous) {
   const pct = Math.round((current - previous) / previous * 100);
   return `<span class="delta ${pct > 0 ? 'up' : pct < 0 ? 'down' : ''}">${Math.abs(pct)}%</span> vs previous ${state.filters.days} days`;
 }
-function sparkline(counts) {
+function sparkline(name, counts) {
   if (counts.length < 2) return '';
-  const max = Math.max(1, ...counts), points = counts.map((n, j) => `${(j / (counts.length - 1) * 100).toFixed(1)},${(28 - n / max * 24).toFixed(1)}`).join(' ');
-  return `<svg class="stat-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline points="${points}"/></svg>`;
+  (drawn.sparks ??= {})[name] = counts;
+  return `<div class="stat-sparkline" data-spark="${name}" aria-hidden="true"></div>`;
 }
 
 function statsHtml(rows, previous) {
   const high = rows.filter(isHigh), review = rows.filter(i => i.resolution_status === 'In review').length, resolved = rows.filter(i => i.resolution_status === 'Resolved').length;
   const scope = state.filters.days ? `In the last ${state.filters.days} days` : `All ${sampleWord()}records`;
   return `<div class="stat-grid">${[
-    statCard({ label: 'Total issues', value: rows.length, note: change(rows.length, previous?.length ?? null) || scope, color: 'blue', extra: sparkline(buckets(rows).counts) }),
-    statCard({ label: 'High priority', value: high.length, note: change(high.length, previous ? previous.filter(isHigh).length : null) || `${percent(high.length, rows.length)}% of filtered issues`, color: 'red', extra: sparkline(buckets(high).counts) }),
+    statCard({ label: 'Total issues', value: rows.length, note: change(rows.length, previous?.length ?? null) || scope, color: 'blue', extra: sparkline('total', buckets(rows).counts) }),
+    statCard({ label: 'High priority', value: high.length, note: change(high.length, previous ? previous.filter(isHigh).length : null) || `${percent(high.length, rows.length)}% of filtered issues`, color: 'red', extra: sparkline('high', buckets(high).counts) }),
     statCard({ label: 'In review', value: review, note: `${percent(review, rows.length)}% of filtered issues`, color: 'amber' }),
     statCard({ label: 'Resolved', value: resolved, note: `${percent(resolved, rows.length)}% resolution rate`, color: 'green' }),
   ].join('')}</div>`;
 }
 
 function timelineHtml(rows) {
-  const { counts, size } = buckets(rows), n = counts.length;
-  const max = Math.max(2, Math.ceil(Math.max(...counts) / 2) * 2); // even, so the middle label is a whole number
-  const x = j => n === 1 ? 260 : j * 520 / (n - 1), y = v => 150 - v / max * 120;
+  const { counts, size } = buckets(rows), n = counts.length, unit = size === 1 ? 'day' : 'week';
   const start = j => new Date(Date.parse(REFERENCE_DATE) - ((n - 1 - j) * size + size - 1) * DAY);
-  const points = counts.map((v, j) => `${x(j).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  const labels = [...new Set([0, Math.round((n - 1) / 3), Math.round(2 * (n - 1) / 3), n - 1])];
-  const unit = size === 1 ? 'day' : 'week';
-  return `<section class="card trend-card"><div class="card-header"><h2>${icon('chart')} Detection timeline</h2><span class="subtle-label">${date(start(0))} – ${date(REFERENCE_DATE)} · per ${unit}</span></div><div class="trend-chart"><div class="chart-y"><span>${max}</span><span>${max / 2}</span><span>0</span></div><svg viewBox="0 0 520 170" preserveAspectRatio="none" role="img" aria-label="Issue detections per ${unit}"><defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.16"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>${[30, 90, 150].map(v => `<path d="M0 ${v}H520" style="stroke:var(--border)" stroke-dasharray="3 4"/>`).join('')}<polygon points="0,170 ${points} 520,170" fill="url(#chart-fill)"/><polyline points="${points}" fill="none" style="stroke:var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>${counts.map((v, j) => `<circle cx="${x(j).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${n > 20 ? 2.5 : 3.5}" style="fill:var(--surface);stroke:var(--accent)"><title>${size === 1 ? date(start(j)) : `Week of ${date(start(j))}`}: ${v} ${sampleWord()}issues</title></circle>`).join('')}</svg></div><div class="chart-x">${labels.map(j => `<span>${date(start(j))}</span>`).join('')}</div><p class="chart-caption">Observed ${sampleWord()}detections, not a forecast.</p></section>`;
+  const when = j => size === 1 ? date(start(j)) : `Week of ${date(start(j))}`, peak = counts.indexOf(Math.max(...counts));
+  drawn.timeline = { labels: counts.map((_, j) => date(start(j))), values: counts, tips: j => tipHtml(counts[j].toLocaleString(), `${sampleWord()}${counts[j] === 1 ? 'issue' : 'issues'} · ${when(j)}`) };
+  const summary = `Issue detections per ${unit} from ${date(start(0))} to ${date(REFERENCE_DATE)}: ${rows.length} in total${counts[peak] ? `, the most (${counts[peak]}) ${size === 1 ? 'on' : 'in the week of'} ${date(start(peak))}` : ''}.`;
+  return `<section class="card trend-card"><div class="card-header"><h2>${icon('chart')} Detection timeline</h2><span class="subtle-label">${date(start(0))} – ${date(REFERENCE_DATE)} · per ${unit}</span></div><div class="trend-chart" id="timeline-chart" role="img" aria-label="${esc(summary)}"></div><p class="chart-caption">Observed ${sampleWord()}detections, not a forecast.</p></section>`;
 }
 
 function breakdownHtml(rows) {
   const counts = Object.keys(categories).map(type => ({ type, count: rows.filter(i => i.issue_type === type).length })).sort((a, b) => b.count - a.count);
-  const max = Math.max(1, ...counts.map(c => c.count));
-  return `<section class="card"><div class="card-header"><h2>${icon('filter')} Issue breakdown</h2></div><div class="breakdown">${counts.map(({ type, count }) => `<button data-type-filter="${type}"><span style="color:${categories[type].color}">${typeIcon(type)}</span><span>${type}</span><div class="bar-track"><i style="width:${count / max * 100}%;background:${categories[type].color}"></i></div><strong>${count}</strong></button>`).join('')}</div></section>`;
+  drawn.breakdown = counts.map(({ type, count }) => ({ key: type, name: type, icon: categories[type].icon, color: categories[type].color, value: count,
+    tip: tipHtml(count.toLocaleString(), `${type} · ${percent(count, rows.length)}% of filtered issues`, categories[type].color, 'Select to open them in Data Explorer') }));
+  return `<section class="card"><div class="card-header"><h2>${icon('filter')} Issue breakdown</h2></div><div class="row-chart breakdown-chart" style="--rows:${counts.length}"><div class="chart-canvas" aria-hidden="true"></div><div class="chart-rows">${counts.map(({ type, count }) => `<button data-type-filter="${esc(type)}" aria-label="${esc(type)}: ${plural(count, 'issue')}. Open them in Data Explorer"><span>${esc(type)}</span><strong>${count}</strong></button>`).join('')}</div></div></section>`;
 }
 
 function resolutionHtml(rows) {
-  let accumulated = 0;
-  const gradient = statuses.map((s, j) => { const start = accumulated; accumulated += rows.filter(i => i.resolution_status === s).length / Math.max(1, rows.length) * 100; return `${statusColors[j]} ${start}% ${accumulated}%`; }).join(',');
-  return `<section class="card"><div class="card-header"><h2>${icon('clock')} Resolution status</h2></div><div class="donut-wrap"><div class="donut" style="background:conic-gradient(${rows.length ? gradient : 'var(--border) 0% 100%'})"><div><strong>${rows.length}</strong><span>issues</span></div></div></div><div class="status-legend">${statuses.map((s, j) => `<span><i style="background:${statusColors[j]}"></i>${s}<strong>${rows.filter(i => i.resolution_status === s).length}</strong></span>`).join('')}</div></section>`;
+  const counts = statuses.map(s => rows.filter(i => i.resolution_status === s).length);
+  drawn.status = { counts, total: rows.length };
+  return `<section class="card status-card"><div class="card-header"><h2>${icon('clock')} Resolution status</h2></div><div class="donut-wrap"><div class="donut"><div class="chart-canvas" aria-hidden="true"></div><div class="donut-center" aria-hidden="true"><strong data-donut-value>${rows.length}</strong><span data-donut-label>issues</span></div></div></div><div class="status-legend">${statuses.map((s, j) => `<button data-status-filter="${s}" aria-label="${s}: ${plural(counts[j], 'issue')}. Open them in Data Explorer"><i style="background:${statusColors[j]}"></i>${s}<strong>${counts[j]}</strong></button>`).join('')}</div></section>`;
+}
+/** The donut: a ring split by status with a 2px gap between slices; the centre label is its readout. */
+function statusOption(t, { counts, total }) {
+  const colors = [t.accent, t.warning, t.success], slices = statuses.map((name, j) => ({ name, value: counts[j], itemStyle: { color: colors[j] } })).filter(d => d.value);
+  return baseOption(t, {
+    tooltip: { show: false },
+    series: [{
+      type: 'pie', radius: ['70%', '94%'], startAngle: 90, padAngle: slices.length > 1 ? 2 : 0, itemStyle: { borderRadius: 3 }, label: { show: false }, labelLine: { show: false },
+      data: total ? slices : [{ name: 'None', value: 1, itemStyle: { color: t.surface3 }, emphasis: { disabled: true } }], silent: !total,
+      emphasis: { scale: true, scaleSize: 4, focus: 'self' }, blur: { itemStyle: { opacity: .3 } },
+      animationType: 'expansion', animationDuration: 800, animationEasing: 'cubicOut', animationDelay: 60,
+    }],
+  });
 }
 
 function wardDigestHtml(rows, previous) {
@@ -144,11 +158,14 @@ function pipelineHtml() {
     foot = 'The first four stages are sample ingestion metrics until the pipeline is connected; issues detected and verified come from the dataset. Bars use a log scale.';
   }
   const top = Math.log10(Math.max(10, stages[0][1]));
-  return `<section class="card"><div class="card-header"><h2>${icon('funnel')} Pipeline funnel</h2><span class="subtle-label">${subtitle}</span></div><div class="funnel">${stages.map(([label, value, fromData], j) => `<div class="funnel-row ${fromData ? 'derived' : ''}"><span>${label}<small>${j ? `${percent(value, stages[j - 1][1])}% of previous` : firstNote}</small></span><div class="bar-track"><i style="width:${Math.max(2, Math.log10(Math.max(1, value)) / top * 100)}%"></i></div><strong>${value.toLocaleString()}</strong></div>`).join('')}</div><p class="funnel-foot">${esc(foot)}</p></section>`;
+  drawn.funnel = stages.map(([label, value, fromData], j) => ({ key: label, name: label, note: j ? `${percent(value, stages[j - 1][1])}% of previous` : firstNote, derived: fromData,
+    value: Math.max(2, Math.log10(Math.max(1, value)) / top * 100), display: value.toLocaleString() }));
+  return `<section class="card"><div class="card-header"><h2>${icon('funnel')} Pipeline funnel</h2><span class="subtle-label">${subtitle}</span></div><div class="row-chart funnel-chart" style="--rows:${stages.length}"><div class="chart-canvas" aria-hidden="true"></div><div class="chart-rows">${drawn.funnel.map(r => `<div><span>${esc(r.name)}<small>${esc(r.note)}</small></span><strong>${r.display}</strong></div>`).join('')}</div></div><p class="funnel-foot">${esc(foot)}</p></section>`;
 }
 
 export function dashboardHtml() {
   const rows = filtered(), previous = comparison();
+  drawn = {};
   const counts = Object.keys(categories).map(type => ({ type, count: rows.filter(i => i.issue_type === type).length })).sort((a, b) => b.count - a.count);
   const areas = Object.entries(countBy(rows, i => i.neighbourhood_id)).map(([id, count]) => ({ id, count, name: rows.find(i => i.neighbourhood_id === id).neighbourhood_name })).sort((a, b) => b.count - a.count).slice(0, 5);
   const recent = rows.slice().sort((a, b) => b.first_seen_at.localeCompare(a.first_seen_at)).slice(0, 4);
@@ -163,8 +180,51 @@ export function dashboardHtml() {
     </div></div>`;
 }
 
+function drawCharts() {
+  const { sparks = {}, timeline, breakdown, status, funnel } = drawn;
+  document.querySelectorAll('[data-spark]').forEach(el => mountChart(el, `spark:${el.dataset.spark}`, t => sparkOption(t, sparks[el.dataset.spark], el.dataset.spark === 'high' ? t.dangerText : t.accentText)));
+  const trend = document.querySelector('#timeline-chart');
+  mountChart(trend, 'timeline', t => lineOption(t, { ...timeline, height: trend.clientHeight }));
+  const types = document.querySelector('.breakdown-chart');
+  mountChart(types.querySelector('.chart-canvas'), 'breakdown', (t, el) => rowsOption(t, el, breakdown, { delay: 80 }), { morph: morphRows });
+  bindRows(types);
+  const stages = document.querySelector('.funnel-chart');
+  mountChart(stages.querySelector('.chart-canvas'), 'funnel', (t, el) => rowsOption(t, el, funnel.map(r => ({ ...r, color: r.derived ? t.success : t.accent,
+    tip: tipHtml(r.display, r.name, r.derived ? t.success : t.accent, r.note) })), { max: 100 }), { morph: morphRows });
+  bindRows(stages);
+  drawDonut(status);
+}
+
+/** Hovering a slice or a legend row lifts that slice, fades the rest and turns the centre label into its readout. */
+function drawDonut({ counts, total }) {
+  const card = document.querySelector('.status-card'), ring = card.querySelector('.chart-canvas');
+  const value = card.querySelector('[data-donut-value]'), label = card.querySelector('[data-donut-label]'), rows = card.querySelectorAll('[data-status-filter]');
+  const show = name => {
+    const j = statuses.indexOf(name);
+    rows.forEach((row, k) => row.classList.toggle('is-active', k === j));
+    countTo(value, j < 0 ? total : counts[j], { duration: 260 });
+    label.textContent = j < 0 ? 'issues' : name;
+  };
+  const pick = name => { state.filters.status = name; nav('data'); };
+  mountChart(ring, 'status', t => statusOption(t, { counts, total }), { onDraw: (chart, previous) => {
+    countTo(value, total, { from: previous ? previous.series[0].data.reduce((sum, d) => sum + (d.name === 'None' ? 0 : d.value), 0) : 0, duration: 800 });
+    chart.on('mouseover', ({ name }) => show(name));
+    chart.on('mouseout', () => show(null));
+    chart.on('click', ({ name }) => statuses.includes(name) && pick(name));
+  } });
+  rows.forEach(row => {
+    const name = row.dataset.statusFilter, slice = { type: 'highlight', seriesIndex: 0, name };
+    const on = () => { if (!counts[statuses.indexOf(name)]) return; chartFor(ring)?.dispatchAction(slice); show(name); };
+    const off = () => { chartFor(ring)?.dispatchAction({ ...slice, type: 'downplay' }); show(null); };
+    row.addEventListener('pointerenter', on); row.addEventListener('pointerleave', off);
+    row.addEventListener('focus', on); row.addEventListener('blur', off);
+    row.onclick = () => pick(name);
+  });
+}
+
 export function bindDashboard() {
   bindActivity(state.dataSource, state.filters, state.dataBackend, ward => { state.filters.area = `ward:${ward}`; updateFilteredView(); });
+  drawCharts();
   document.querySelectorAll('[data-type-filter]').forEach(b => b.onclick = () => { state.filters.type = b.dataset.typeFilter; nav('data'); });
   document.querySelectorAll('[data-area-filter]').forEach(b => b.onclick = () => { state.filters.area = b.dataset.areaFilter; nav('data'); });
   document.querySelectorAll('[data-ward-filter]').forEach(b => b.onclick = () => { state.filters.area = `ward:${b.dataset.wardFilter}`; updateFilteredView(); });

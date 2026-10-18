@@ -14,6 +14,7 @@ import { methodologyHtml } from './views/methodology-view.js';
 import { uploadModal, infrastructureModal, streetModal, exportModal, settingsModal, helpModal, issueModal, tigerModal } from './modals.js';
 import { activeTheme, setTheme } from './theme.js';
 import { destroyActivity } from './activity.js';
+import { destroyCharts, loadCharts } from './charts.js';
 import { geoIndicatorHtml, initGeolocation } from './geolocate.js';
 
 const app = document.querySelector('#app');
@@ -106,6 +107,7 @@ function footerHtml() {
 let renderedView = null;
 export function render() {
   destroyActivity();
+  destroyCharts(state.view === renderedView); // a redraw morphs the charts; arriving on the page replays their entrance
   destroyMap();
   const title = headings[state.view] || headings.map, onMap = state.view === 'map', withFilters = !onMap && state.view !== 'methodology';
   app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1></div><div class="header-right">${geoIndicatorHtml()}${dataSourceHtml()}${themeButtonHtml()}<button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="Map controls and help">${icon('help')}</button></div></header>
@@ -326,6 +328,7 @@ async function start() {
     route();
     frameAnalysed();
     initGeolocation(); // picks up geolocation jobs still running from an earlier visit
+    (window.requestIdleCallback || setTimeout)(() => loadCharts().catch(() => {})); // so the dashboard opens with its charts ready
   } catch (error) {
     app.innerHTML = '<div class="load-error"><h1>Couldn’t load the workspace</h1><p>Check your issue repository connection and reload.</p><button onclick="location.reload()">Retry</button></div>';
     console.error(error);

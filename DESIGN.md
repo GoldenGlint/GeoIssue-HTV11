@@ -476,6 +476,13 @@ The signature component.
 - **Dialog:** white, 540px wide, 13px corners, Hairline border, the soft lift over the scrim. Heading, body and footer pad 24px across and are divided by rules; it enters with a 9px rise over 150ms.
 - **Toast:** white, Hairline, 8px corners, 12px text, the soft lift, centred at the bottom.
 
+### Dashboard charts
+- **Engine:** Apache ECharts 6, a trimmed build vendored at `src/vendor/echarts.js` (`scripts/vendor-echarts.mjs`), drawn as SVG through `src/charts.js` and loaded when the browser is idle. Colours are read from the theme tokens, so a theme switch repaints the charts in place.
+- **Marks:** 2px Civic Blue lines over a flat 10% wash (no gradient); solid Hairline gridlines; 8px bars with 4px round ends on a Quiet Fill track, in the category colour for issue types; a donut of status colours with a 2px gap between slices around a Faint Mist centre. The funnel's sample stages are Civic Blue and its measured stages Crew Green.
+- **Readout:** one floating card for every chart: Paper White, Hairline, 8px corners, the soft lift. The value leads at 15px/650 beside a short stroke of the mark's colour, and the label follows in Slate Ink. Lines track a snapping hairline crosshair; bars and slices answer on the mark itself.
+- **Rows that act:** breakdown rows and status legend rows are real buttons over the chart. Hover or keyboard focus tints the row, lifts its mark, fades the others to 35% and shows the readout; the donut's centre turns into the hovered status's count. Selecting opens the Data Explorer filtered to that type or status.
+- **Motion:** a chart enters when it scrolls into view: lines draw left to right, bars grow in a 45ms stagger while their counts tick up, and the donut sweeps clockwise from the top (650ms to 900ms, ease-out). A filter change or a live refresh morphs every mark from its previous value over 450ms instead of replaying the entrance. Hover states ease over 180ms. Reduced motion draws each chart finished.
+
 ### Loading mark
 The lens draws itself: the inner ring strokes in over .65s, the blue core pops in, six category dots blink in around it like pins being found, and the wordmark rises in before the screen fades once the map is ready. Under reduced motion it shows the finished mark.
 
