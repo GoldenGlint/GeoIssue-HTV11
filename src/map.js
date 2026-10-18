@@ -83,6 +83,8 @@ export class CivicMap {
     if (this.tooltip) this.tooltip.hidden = true;
   }
   setData(issues, selected = []) { this.stopMotion(); this.issues = issues; this.selected = selected; this.render(); }
+  /** Draws a crew route through these [lng, lat] stops in order, or removes it with null. */
+  setRoute(stops) { this.route = stops?.length > 1 ? stops : null; this.render(); }
   setZoom(z, anchor = [this.element.clientWidth / 2, this.element.clientHeight / 2]) {
     z = clampZoom(Math.round(z));
     const c = project(this.center, this.zoom);
@@ -291,6 +293,9 @@ export class CivicMap {
         markerFragment.append(area);
       }
     }
+    // A planned route runs under the pins; its stop numbers sit on top of them.
+    const route = this.route?.map(c => this.position(c));
+    if (route) markerFragment.append(this.routeLine(route, width, height));
     for (const group of groups) {
       const first = group.items[0], multi = group.items.length > 1, key = group.items.map(i => i.issue_id).join(',');
       // High severity gets a "!" badge, so severity never depends on colour alone.
@@ -309,9 +314,25 @@ export class CivicMap {
       button.onclick = e => { e.stopPropagation(); this.tooltip.hidden = true; this.onSelect(group.items.map(i => i.issue_id), multi ? 'cluster' : 'issue', e); };
       markerFragment.append(button);
     }
+    route?.forEach((p, i) => {
+      const stop = document.createElement('span'); stop.className = 'route-stop'; stop.textContent = i + 1;
+      stop.style.cssText = `left:${p[0]}px;top:${p[1]}px`; stop.setAttribute('aria-hidden', 'true');
+      markerFragment.append(stop);
+    });
     this.markers.replaceChildren(markerFragment);
     this.element.classList.toggle('box-mode', this.mode === 'box');
     this.renderInfrastructure();
+  }
+  routeLine(points, width, height) {
+    const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'route-line'); svg.setAttribute('width', width); svg.setAttribute('height', height);
+    svg.setAttribute('aria-hidden', 'true');
+    for (const part of ['casing', 'path']) {
+      const line = document.createElementNS(ns, 'polyline');
+      line.setAttribute('class', part); line.setAttribute('points', points.map(p => p.map(v => v.toFixed(1)).join(',')).join(' '));
+      svg.append(line);
+    }
+    return svg;
   }
   /** Kernel density surface for the current view, drawn at half resolution: each issue adds a soft disc
    * weighted by its sightings, and the summed intensity is coloured from faint blue (one report) to red. */
