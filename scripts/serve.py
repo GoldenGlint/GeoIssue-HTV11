@@ -9,6 +9,7 @@ analysis/config.toml). GEMINI_API_BASE overrides the endpoint (used by tests).
 
 Endpoints
   GET  /api/status  -> {"gemini": bool, "model": str}
+  GET  /api/issues, /api/pipeline, /api/activity, /api/tiger -> optional Tiger Data snapshots, history and storage metrics
   POST /api/triage  {"image": base64, "mime": "image/jpeg"}
                     -> suggested category, severity and description, privacy flags, and face/plate boxes
                        ([ymin, xmin, ymax, xmax], 0–1000) for blurring
@@ -27,29 +28,17 @@ import urllib.request
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from analysis.stages import summaries  # noqa: E402  (shared key lookup and digest prompt)
+from analysis import tiger
+from analysis.config import setting
 
 CATEGORIES = ["Pothole", "Sidewalk damage", "Graffiti", "Litter", "Flooding", "Other"]
 MAX_BODY = 12 * 1024 * 1024
 ENV_FILES = [".env", "spikes/.env"]
-
-
-def setting(name, default=None):
-    """Environment first, then the .env files, like analysis.stages.summaries.api_key."""
-    if os.environ.get(name):
-        return os.environ[name]
-    for file in ENV_FILES:
-        path = ROOT / file
-        if path.is_file():
-            for line in path.read_text(encoding="utf-8-sig").splitlines():
-                key, sep, value = line.partition("=")
-                if sep and key.strip().removeprefix("export ").strip() == name:
-                    return value.strip().strip("'\"") or default
-    return default
 
 
 def default_model():
@@ -168,9 +157,34 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        path = urlsplit(self.path).path
+        url = urlsplit(self.path)
+        path = url.path
         if path == "/api/status":
-            return self.send_json(200, {"gemini": bool(KEY), "model": MODEL})
+            return self.send_json(200, {"gemini": bool(KEY), "model": MODEL,
+                                        "tiger": bool(setting("TIGER_DATABASE_URL"))})
+        if path in ("/api/issues", "/api/pipeline", "/api/activity", "/api/tiger"):
+            try:
+                query = parse_qs(url.query, keep_blank_values=True, max_num_fields=8)
+                if path == "/api/tiger":
+                    if query:
+                        raise ValueError("Tiger Data service metrics do not accept filters")
+                    data = tiger.database_stats()
+                elif path == "/api/activity":
+                    data = tiger.activity(**tiger.activity_options(query))
+                else:
+                    if set(query) - {"dataset"} or any(len(v) != 1 for v in query.values()):
+                        raise ValueError("Only one dataset filter is supported")
+                    dataset = tiger.dataset_name(query.get("dataset", ["pipeline"])[0])
+                    data = tiger.issues(dataset) if path == "/api/issues" else tiger.pipeline(dataset)
+                return self.send_json(200, data)
+            except ValueError as error:
+                return self.send_json(400, {"error": str(error)})
+            except tiger.Unavailable as error:
+                return self.send_json(503, {"error": str(error)})
+            except Exception:
+                return self.send_json(503, {"error": "Tiger Data is unavailable. Check schema setup and database permissions."})
+        if path.startswith("/api/"):
+            return self.send_json(404, {"error": "Unknown API endpoint"})
         if self.hidden():
             return self.send_error(404)
         return super().do_GET()

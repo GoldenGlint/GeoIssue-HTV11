@@ -9,6 +9,8 @@ Takes the photo-analysis output (JSON records plus photos) and produces what the
 
 It needs only Python 3.11 or newer. Nothing has to be installed.
 
+Optional Tiger Data persistence: [setup, schema, replay and benchmark guide](../tiger-data-plan.md). Install `analysis/requirements-tiger.txt`, initialize the database, then add `--tiger` to the complete-handoff command. Ordinary analysis still needs no extra dependencies.
+
 ## Run
 
 ```sh

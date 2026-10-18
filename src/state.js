@@ -15,8 +15,10 @@ export const state = {
   saved: read('saved', []), recent: read('recent', []), pending: read('pending', []), corrections: read('corrections', []), historyEnabled: read('historyEnabled', true),
   role: 'Public', sort: 'first_seen_at', direction: -1, page: 1, perPage: 10, dataTab: 'records',
   layers: [], mapMode: 'pan', heat: false, center: TORONTO_CENTER, zoom: 13,
-  // 'sample' (240 generated issues) or 'pipeline' (data/analyzed from `python -m analysis`), with per-source counts.
-  dataSource: read('dataSource', null), sources: { sample: 0, pipeline: 0 }, pipeline: { report: null, areas: null },
+  mapEmptyDismissedFor: null,
+  // Samples, collected pipeline issues (Tiger Data or files), and a separate simulated Tiger replay.
+  dataSource: read('dataSource', null), sources: { sample: 0, pipeline: 0, replay: 0 }, pipeline: { report: null, areas: null },
+  dataBackend: { type: 'sample' },
 };
 
 export const filtered = (filters = state.filters) => state.issues.filter(i => issueMatches(i, filters));
@@ -27,6 +29,15 @@ export const findIssue = id => state.issues.find(i => i.issue_id === id);
 /** True when the loaded issues are fictional sample records; labels say "sample" only then. */
 export const isSampleData = () => state.issues.some(i => i.is_demo);
 export const sampleWord = () => (isSampleData() ? 'sample ' : '');
+/** Keep a dismissed map notice closed during panning, until filters/data or visible results change. */
+export function shouldShowMapEmptyNotice(visibleCount) {
+  const context = JSON.stringify([state.dataSource, state.filters]);
+  if (visibleCount || state.mapEmptyDismissedFor !== context) state.mapEmptyDismissedFor = null;
+  return visibleCount === 0 && !state.panel && state.mapEmptyDismissedFor !== context;
+}
+export function dismissMapEmptyNotice() {
+  state.mapEmptyDismissedFor = JSON.stringify([state.dataSource, state.filters]);
+}
 /** This browser's newest correction for an issue that is still waiting for review. */
 export const pendingCorrection = id => state.corrections.findLast(c => c.issue_id === id && c.status === 'Pending review');
 /** Applies an accepted correction to its issue in memory. With an API, the server does this and returns the updated issue. */

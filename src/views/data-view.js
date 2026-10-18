@@ -35,7 +35,8 @@ function statsHtml(rows) {
 function toolbarHtml(rows) {
   const records = state.dataTab !== 'query';
   const scope = state.scope ? `<span class="scope-chip">Selected issues <button data-action="clear-scope" aria-label="Clear selection scope">×</button></span>` : '<span class="subtle-label">All accessible Toronto issues</span>';
-  return `<div class="table-toolbar"><div class="table-tabs" role="tablist"><button class="table-tab ${records ? 'active' : ''}" role="tab" aria-selected="${records}" data-tab="records">${icon('database')} Issue records <span>${rows.length}</span></button><button class="table-tab ${records ? '' : 'active'}" role="tab" aria-selected="${!records}" data-tab="query">${icon('code')} Query</button></div><div class="table-actions">${scope}<button class="button small" data-action="table-map">${icon('map')} View on map</button><button class="button small" data-action="export">${icon('download')} Export</button></div></div>`;
+  const backend = state.dataBackend.type === 'tiger' ? `<button class="activity-source subtle-label" data-action="tiger-info" aria-label="About Tiger Data">${icon('database')} Tiger Data</button>` : '';
+  return `<div class="table-toolbar"><div class="table-tabs" role="tablist"><button class="table-tab ${records ? 'active' : ''}" role="tab" aria-selected="${records}" data-tab="records">${icon('database')} Issue records <span>${rows.length}</span></button><button class="table-tab ${records ? '' : 'active'}" role="tab" aria-selected="${!records}" data-tab="query">${icon('code')} Query</button></div><div class="table-actions">${backend}${scope}<button class="button small" data-action="table-map">${icon('map')} View on map</button><button class="button small" data-action="export">${icon('download')} Export</button></div></div>`;
 }
 
 function recordsHtml(rows) {

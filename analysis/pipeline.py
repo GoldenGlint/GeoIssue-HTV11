@@ -48,6 +48,8 @@ def run(input_path, config, out_dir=None, now=None, offline=False):
     for issue in issues:
         _finalise(issue, config, now, placeholder)
         _publish_evidence(issue, out, config.get("output", {}), report)
+    from .tiger import prepare_sightings
+    events = prepare_sightings(issues, sightings)
     for record in sightings + issues:
         for field in ("post_text", "source_post"):  # used to locate and merge, never written
             record.pop(field, None)
@@ -74,7 +76,7 @@ def run(input_path, config, out_dir=None, now=None, offline=False):
         (out / "areas.json").unlink()
     for name, data in outputs.items():
         (out / name).write_text(json.dumps(data, indent=1, ensure_ascii=False, default=str), encoding="utf-8")
-    return {"out": out, "public": public, "issues": issues, "sightings": sightings, "areas": areas, "report": report}
+    return {"out": out, "public": public, "issues": issues, "sightings": sightings, "events": events, "areas": areas, "report": report}
 
 
 def _keep_located(records, bbox, report):

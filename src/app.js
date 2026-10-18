@@ -10,8 +10,9 @@ import { dataHtml, bindData } from './views/data-view.js';
 import { dashboardHtml, bindDashboard } from './views/dashboard-view.js';
 import { collectionHtml, verifyHtml, bindWorkspace } from './views/workspace-view.js';
 import { methodologyHtml } from './views/methodology-view.js';
-import { uploadModal, infrastructureModal, streetModal, exportModal, settingsModal, helpModal, issueModal } from './modals.js';
+import { uploadModal, infrastructureModal, streetModal, exportModal, settingsModal, helpModal, issueModal, tigerModal } from './modals.js';
 import { activeTheme, setTheme } from './theme.js';
+import { destroyActivity } from './activity.js';
 
 const app = document.querySelector('#app');
 const headings = { map: 'Map Explorer', data: 'Data Explorer', dashboard: 'City overview', saved: 'Saved', recents: 'Recently viewed', verify: 'Verification queue', methodology: 'Methodology' };
@@ -84,16 +85,19 @@ function pageHtml() {
 }
 // Which dataset is showing, with a switch when pipeline output exists (`python -m analysis`).
 function dataSourceHtml() {
-  const { sample, pipeline } = state.sources;
-  if (!pipeline) return `<span class="data-source" title="Run python -m analysis to add pipeline output">${icon('database')} Sample data · ${sample}</span>`;
-  return `<label class="data-source">${icon('database')}<select id="data-source" aria-label="Data shown"><option value="sample" ${state.dataSource === 'sample' ? 'selected' : ''}>Sample data · ${sample}</option><option value="pipeline" ${state.dataSource === 'pipeline' ? 'selected' : ''}>Pipeline output · ${pipeline}</option></select></label>`;
+  const { sample, pipeline, replay } = state.sources;
+  if (!pipeline && !replay) return `<span class="data-source">${icon('database')} Sample data · ${sample}</span>`;
+  const options = [['sample', 'Sample data', sample], ['pipeline', issueRepository.backend('pipeline').type === 'tiger' ? 'Collected data' : 'File snapshot', pipeline], ['replay', 'Simulated replay', replay]];
+  return `<label class="data-source" title="${esc(state.dataBackend.warning || '')}">${icon('database')}<select id="data-source" aria-label="Data shown">${options.filter(([, , count]) => count).map(([value, label, count]) => `<option value="${value}" ${state.dataSource === value ? 'selected' : ''}>${label} · ${count}</option>`).join('')}</select></label>`;
 }
 function footerHtml() {
   const generated = state.pipeline.report?.generated_at;
-  const source = state.dataSource === 'pipeline' ? `Pipeline output${generated ? ` · generated ${new Date(generated).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}` : ''}` : `Fictional sample data · As of ${date(REFERENCE_DATE, { year: 'numeric' })}`;
+  const label = state.dataSource === 'replay' ? 'Simulated replay' : state.dataBackend.type === 'tiger' ? 'Collected data' : 'File snapshot';
+  const source = state.dataBackend.warning || (state.dataSource !== 'sample' ? `${label}${generated ? ` · generated ${new Date(generated).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}` : ''}` : `Fictional sample data · As of ${date(REFERENCE_DATE, { year: 'numeric' })}`);
   return `<footer class="page-footer"><span>CivicLens · Built for a more responsive city</span><span>${source}</span></footer>`;
 }
 export function render() {
+  destroyActivity();
   destroyMap();
   const title = headings[state.view] || headings.map, onMap = state.view === 'map', withFilters = !onMap && state.view !== 'methodology';
   app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1></div><div class="header-right">${dataSourceHtml()}${themeButtonHtml()}<button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="Map controls and help">${icon('help')}</button></div></header>
@@ -161,12 +165,13 @@ export function setRole(role) {
 async function loadIssues() {
   state.sources = await issueRepository.sources();
   // Analysed posts are shown when there are any, unless this browser picked a dataset in the header.
-  if (!state.dataSource || (state.dataSource === 'pipeline' && !state.sources.pipeline)) state.dataSource = state.sources.pipeline ? 'pipeline' : 'sample';
+  if (!state.sources[state.dataSource]) state.dataSource = state.sources.pipeline ? 'pipeline' : 'sample';
   state.issues = await issueRepository.list(state.dataSource);
-  const pipeline = state.dataSource === 'pipeline';
-  [state.pipeline.report, state.pipeline.areas] = pipeline ? await Promise.all([issueRepository.pipelineReport(), issueRepository.areaSummaries()]) : [null, null];
+  state.dataBackend = issueRepository.backend(state.dataSource);
+  const pipeline = state.dataSource !== 'sample';
+  [state.pipeline.report, state.pipeline.areas] = pipeline ? [issueRepository.pipelineReport(state.dataSource), issueRepository.areaSummaries(state.dataSource)] : [null, null];
   // Ages and "last N days" count back from when the pipeline ran, so newly scraped posts are never in the future.
-  setReferenceDate(pipeline ? state.pipeline.report?.generated_at || new Date().toISOString() : DEMO_DATE);
+  setReferenceDate(state.dataBackend.type === 'tiger' ? new Date().toISOString() : pipeline ? state.pipeline.report?.generated_at || new Date().toISOString() : DEMO_DATE);
   applyLocalSightings();
   // Corrections accepted in this browser stay applied across reloads (an API would return updated issues).
   state.corrections.filter(c => c.status === 'Accepted').forEach(applyCorrection);
@@ -175,10 +180,32 @@ async function switchDataSource(source) {
   state.dataSource = source; persist('dataSource', source);
   state.selected = []; state.panel = null; state.scope = null; state.page = 1;
   await loadIssues();
-  toast(source === 'pipeline' ? `Showing pipeline output: ${state.issues.length} issues` : `Showing sample data: ${state.issues.length} issues`);
+  toast(`Showing ${source === 'replay' ? 'simulated replay' : source === 'pipeline' ? 'pipeline output' : 'sample data'}: ${state.issues.length} issues`);
   render();
   frameAnalysed();
 }
+
+// Refresh only changed live issue snapshots. Activity has its own lightweight polling lifecycle.
+let refreshingIssues = false;
+setInterval(async () => {
+  if (refreshingIssues || document.hidden || state.dataBackend.type !== 'tiger' || document.querySelector('.modal-backdrop')) return;
+  const source = state.dataSource;
+  refreshingIssues = true;
+  try {
+    const before = JSON.stringify(await issueRepository.list(source));
+    const snapshot = await issueRepository.refresh(source);
+    if (source !== state.dataSource || before === JSON.stringify(snapshot.issues)) return;
+    state.issues = structuredClone(snapshot.issues);
+    state.sources[source] = snapshot.issues.length;
+    state.pipeline = { report: snapshot.report, areas: snapshot.areas };
+    setReferenceDate(new Date().toISOString());
+    applyLocalSightings();
+    state.corrections.filter(c => c.status === 'Accepted').forEach(applyCorrection);
+    if (state.view === 'map' && getMap()) refreshMapFilters();
+    else render();
+  } catch { /* The activity panel reports outages; keep the last loaded map/table intact. */ }
+  finally { refreshingIssues = false; }
+}, 15000);
 // The analysed posts are few and spread across the city, so the map starts with all of them in view. It jumps
 // there: the new map's first resize callback would stop an animation.
 function frameAnalysed() {
@@ -220,6 +247,7 @@ export function action(name) {
     case 'settings': settingsModal(); break;
     case 'theme': setTheme(activeTheme() === 'light' ? 'dark' : 'light'); app.querySelector('.theme-toggle').outerHTML = themeButtonHtml(); app.querySelector('.theme-toggle').onclick = () => action('theme'); break;
     case 'help': helpModal(); break;
+    case 'tiger-info': tigerModal(); break;
   }
 }
 
