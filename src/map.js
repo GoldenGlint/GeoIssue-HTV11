@@ -35,9 +35,11 @@ export class CivicMap {
       pointerdown: e => this.pointerDown(e),
       pointermove: e => this.pointerMove(e),
       pointerup: e => this.pointerUp(e),
-      pointercancel: e => { this.pointers.delete(e.pointerId); this.drag = null; this.pinch = null; this.box.style.display = 'none'; this.element.classList.remove('is-dragging'); },
+      pointercancel: e => { this.pointers.delete(e.pointerId); this.drag = null; this.pinch = null; this.box.style.display = 'none'; this.element.classList.remove('is-dragging', 'is-panning'); },
       // Text in the map (the offline fallback labels) must never start a native text drag: it cancels panning.
       dragstart: e => e.preventDefault(),
+      // A middle-button press pans the map rather than starting the browser's autoscroll.
+      mousedown: e => { if (e.button === 1) e.preventDefault(); },
       wheel: e => {
         e.preventDefault();
         // Trackpads emit many small wheel events; one camera step per gesture slice.
@@ -173,14 +175,18 @@ export class CivicMap {
     this.animateTo(unproject([c[0] + x - target[0], c[1] + y - target[1]], this.zoom), this.zoom, 420);
   }
   pointerDown(e) {
-    if (e.target.closest('button') || e.button !== 0) return;
+    // The middle mouse button always pans, in Box select too, and can start on a pin.
+    const middle = e.pointerType === 'mouse' && e.button === 1;
+    if (!middle && (e.target.closest('button') || e.button !== 0)) return;
     this.element.setPointerCapture(e.pointerId);
     this.pointers.set(e.pointerId, [e.clientX, e.clientY]);
     if (this.pointers.size === 2) { this.startPinch(); return; }
     if (this.pointers.size > 2) return;
     this.stopMotion(); this.render();
-    this.drag = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, lastTime: performance.now(), vx: 0, vy: 0, center: project(this.center, this.zoom), moved: false };
+    const pan = middle || this.mode === 'pan';
+    this.drag = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, lastTime: performance.now(), vx: 0, vy: 0, center: project(this.center, this.zoom), moved: false, pan, middle };
     this.element.classList.add('is-dragging');
+    this.element.classList.toggle('is-panning', pan);
   }
   pinchGeometry() {
     const [a, b] = [...this.pointers.values()], r = this.element.getBoundingClientRect();
@@ -210,7 +216,7 @@ export class CivicMap {
     d.moved ||= Math.abs(dx) + Math.abs(dy) > 5;
     d.vx = (e.clientX - d.lastX) / dt; d.vy = (e.clientY - d.lastY) / dt;
     d.lastX = e.clientX; d.lastY = e.clientY; d.lastTime = now;
-    if (this.mode === 'box') {
+    if (!d.pan) {
       const r = this.element.getBoundingClientRect();
       Object.assign(this.box.style, { display: 'block', left: Math.min(e.clientX, d.x) - r.left + 'px', top: Math.min(e.clientY, d.y) - r.top + 'px', width: Math.abs(dx) + 'px', height: Math.abs(dy) + 'px' });
     } else {
@@ -232,14 +238,16 @@ export class CivicMap {
     }
     if (!this.drag) return;
     const d = this.drag; this.drag = null; this.box.style.display = 'none';
-    this.element.classList.remove('is-dragging');
+    this.element.classList.remove('is-dragging', 'is-panning');
     cancelAnimationFrame(this.renderFrame); this.renderFrame = null;
-    if (this.mode === 'box' && d.moved) {
+    if (!d.pan && d.moved) {
       const r = this.element.getBoundingClientRect(), x1 = Math.min(d.x, e.clientX) - r.left, x2 = Math.max(d.x, e.clientX) - r.left, y1 = Math.min(d.y, e.clientY) - r.top, y2 = Math.max(d.y, e.clientY) - r.top;
       const ids = this.issues.filter(i => { const [x, y] = this.position(i.geometry.coordinates); return x >= x1 && x <= x2 && y >= y1 && y <= y2; }).map(i => i.issue_id);
       this.onSelect(ids, 'multi', e);
-    } else if (!d.moved) this.showHeat ? this.pickHeat(e) : this.onEmpty();
-    else if (this.mode === 'pan' && performance.now() - d.lastTime < 80 && Math.hypot(d.vx, d.vy) > 0.12) {
+    } else if (!d.moved) {
+      // A middle click that doesn't pan does nothing; it never clears the selection.
+      if (!d.middle) this.showHeat ? this.pickHeat(e) : this.onEmpty();
+    } else if (performance.now() - d.lastTime < 80 && Math.hypot(d.vx, d.vy) > 0.12) {
       const c = project(this.center, this.zoom), limit = v => Math.max(-170, Math.min(170, v * 140));
       this.animateTo(unproject([c[0] - limit(d.vx), c[1] - limit(d.vy)], this.zoom), this.zoom, 340);
     } else { this.render(); this.onMove?.(); }

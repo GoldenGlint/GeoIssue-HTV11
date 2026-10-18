@@ -122,9 +122,10 @@ export function clearSelection() {
   renderPanel(); map?.setData(filtered(), []); updateMapMeta();
 }
 
+const mapHint = mode => `${icon(mode === 'box' ? 'select' : 'hand')} ${mode === 'box' ? 'Drag a rectangle to select issues &middot; Middle-drag to pan' : 'Drag to pan &middot; Scroll to zoom &middot; Shift + click to select'}`;
+
 export function mapHtml() {
   const legend = Object.entries(categories).map(([type, c]) => `<button data-legend="${type}" class="${state.filters.type === type ? 'legend-active' : ''}"><span style="color:${c.color}">${typeIcon(type)}</span>${type}</button>`).join('');
-  const hint = state.mapMode === 'box' ? 'Drag a rectangle to select issues' : 'Drag to pan · Scroll to zoom · Shift + click to select';
   const emptyNotice = `<div class="map-empty" hidden>${icon('search')}<h3>No matching ${sampleWord()}issues</h3><button class="text-button" data-empty-action data-action="reset">Reset filters</button><button class="icon-button" data-dismiss-map-empty aria-label="Dismiss map notice">${icon('close')}</button></div>`;
   return `<div class="map-workspace ${state.heat ? 'density-mode' : ''}">
     <div class="map-floating-filters"><div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}</div>
@@ -133,7 +134,7 @@ export function mapHtml() {
     <div class="map-top-right"><button class="map-control ${state.mapMode === 'pan' ? 'active' : ''}" data-action="pan" title="Pan map" aria-label="Pan map">${icon('hand')}</button><button class="map-control ${state.mapMode === 'box' ? 'active' : ''}" data-action="box" title="Box select" aria-label="Box select">${icon('select')}</button><button class="map-control ${state.layers.length ? 'active' : ''}" data-action="layers" title="Infrastructure layers" aria-label="Infrastructure layers">${icon('layers')}</button></div>
     <div class="map-bottom-left">${emptyNotice}<div class="map-summary"><strong class="map-visible-count">Toronto, Ontario</strong> <span class="muted">· ${filtered().length} ${sampleWord()}issues</span><button data-action="search-area" class="text-button">View area issues</button></div><div class="map-legend">${legend}<span class="legend-severity"><i>!</i>High severity</span></div><div class="density-legend"><span>Fewer reports</span><i></i><span>More</span><small>Click a hot spot to list its issues</small></div></div>
     <div class="map-bottom-right"><button class="map-control street-person" draggable="true" data-action="street" aria-label="Street View at the map centre" title="Street View: click for the map centre, or drag onto the map">${icon('person')}</button><div class="zoom-controls"><button class="map-control" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="map-control" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button></div><button class="map-control" data-action="fit-results" title="Fit all matching issues" aria-label="Fit all matching issues">${icon('fit')}</button><button class="map-control" data-action="center" title="Reset Toronto view" aria-label="Reset Toronto view">${icon('home')}</button></div>
-    <div class="map-hint">${icon(state.mapMode === 'box' ? 'select' : 'hand')} ${hint}</div>
+    <div class="map-hint">${mapHint(state.mapMode)}</div>
     <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
     <aside id="issue-panel" class="issue-panel" aria-label="Selected issues" hidden></aside>
   </div>`;
@@ -190,7 +191,7 @@ export function refreshMapFilters() {
 export function setMapMode(mode) {
   state.mapMode = mode; map.stopMotion(); map.mode = mode; map.render();
   for (const name of ['pan', 'box']) document.querySelector(`[data-action="${name}"]`).classList.toggle('active', name === mode);
-  document.querySelector('.map-hint').innerHTML = `${icon(mode === 'box' ? 'select' : 'hand')} ${mode === 'box' ? 'Drag a rectangle to select issues' : 'Drag to pan &middot; Scroll to zoom &middot; Shift + click to select'}`;
+  document.querySelector('.map-hint').innerHTML = mapHint(mode);
 }
 export function setHeat(on) {
   state.heat = on; map.stopMotion(); map.showHeat = on; map.render();

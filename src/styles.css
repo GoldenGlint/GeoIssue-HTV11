@@ -90,6 +90,7 @@ input::placeholder,textarea::placeholder{color:var(--text-3)}
 .city-map{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none}
 .city-map:active{cursor:grabbing}
 .city-map.box-mode{cursor:crosshair}
+.city-map.is-panning{cursor:grabbing}
 .tile-layer,.marker-layer,.infrastructure-layer{position:absolute;inset:0;pointer-events:none}
 .tile-layer img{position:absolute;width:256px;height:256px;filter:var(--tile-filter);user-select:none}
 .map-fallback{position:absolute;inset:0;background:linear-gradient(155deg,transparent 0 74%,var(--surface-2) 74%),var(--surface-2);overflow:hidden}
