@@ -386,7 +386,7 @@ Data pages use white cards in grids with 16px to 18px gaps (20px at 1600px); the
 ### Named Rules
 **The Sideways Filter Rule.** Filter dropdowns size to their label. When the map is narrow its filter row scrolls sideways; labels are never clipped.
 
-**The Clear Map Rule.** Map controls hug the canvas edges and slide aside when the issue panel opens, so the panel never covers a control.
+**The Clear Map Rule.** Map controls hug the canvas edges and slide aside when the issue panel opens, so the panel never covers a control. The OpenStreetMap credit moves with them (above the sheet on phones): it must stay visible.
 
 ## Elevation & Depth
 
@@ -455,7 +455,7 @@ Plain, solid and quiet.
 The signature component.
 - **Pin:** a 26px teardrop head (2px white rim included) in the category colour with a white 14px category icon (2.25 stroke) centred on the round head, tip on the location, the pin shadow beneath. Selected pins scale to 1.25. Pins counter-scale with the camera so they hold their size while zooming.
 - **Cluster:** a 34px Civic Blue circle with a 2px white rim and a white 13px/600 count. A selected cluster turns Pressed Blue.
-- **High severity:** a 14px Alert Red "!" badge with a white rim at the pin's top-right.
+- **High severity:** a 15px Alert Red "!" badge with a white rim at the pin's top-right; the legend shows the same badge.
 - **Basemap:** OpenStreetMap tiles under `--tile-filter`: grayscale(.6) brightness(1.04) contrast(.92) in light, inverted to grey (brightness .78) in dark.
 - **Uncertainty:** a dashed 1.5px Civic Blue circle with an 8% blue fill shows how far off an unverified pin may be.
 

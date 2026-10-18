@@ -127,7 +127,7 @@ input::placeholder,textarea::placeholder{color:var(--text-3)}
 .street-person{color:var(--warning-text)}
 .map-hint{position:absolute;bottom:7px;left:18px;display:flex;align-items:center;gap:5px;color:var(--text-3);font-size:12px;pointer-events:none}
 .map-hint .icon{width:10px;height:10px}
-.map-attribution{position:absolute;bottom:4px;right:7px;color:var(--text-3);font-size:11px;background:var(--surface);z-index:5}
+.map-attribution{position:absolute;bottom:4px;right:7px;color:var(--text-3);font-size:12px;background:var(--surface);z-index:5;transition:right 240ms cubic-bezier(.2,.8,.2,1)}
 .map-attribution a:hover{text-decoration:underline}
 .coverage-preview{outline:3px dashed var(--warning);outline-offset:-8px}
 .coverage-preview:after{content:'Drop to open Street View here';position:absolute;top:40%;left:20%;padding:16px;background:var(--accent-soft);color:var(--warning-text);border:1px solid var(--warning);border-radius:10px;z-index:10;font-size:13px}
@@ -587,7 +587,7 @@ h1{font-size:22px}
 .map-legend button{font-size:12px}
 .map-legend .icon{width:11px;height:11px}
 .map-hint{font-size:12px;bottom:12px;left:10px}
-.map-attribution{font-size:11px;bottom:3px}
+.map-attribution{font-size:12px;bottom:3px}
 .issue-panel{width:100%;top:58px;bottom:0;border-top:1px solid var(--border);border-left:0;border-radius:9px 9px 0 0;box-shadow:var(--shadow-sm)}
 .panel-open .map-top-right{right:10px}
 .panel-open .map-bottom-right,.panel-open .map-bottom-left{display:none}
@@ -820,7 +820,7 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 .amber .stat-icon{color:var(--warning-text);background:var(--surface-3);border-color:var(--warning-border)}
 .map-pin.sev-high:after{content:'!';position:absolute;top:-5px;right:-5px;width:15px;height:15px;border-radius:50%;background:var(--danger);color:var(--on-color);font:700 11px/15px Inter,system-ui,sans-serif;text-align:center;border:2px solid var(--border)}
 .legend-severity{display:flex;align-items:center;gap:6px;color:var(--text-2);font-size:12px;margin-left:4px}
-.legend-severity i{width:13px;height:13px;border-radius:50%;background:var(--danger);color:var(--on-danger);font:700 9px/13px Inter,system-ui,sans-serif;font-style:normal;text-align:center}
+.legend-severity i{width:15px;height:15px;border-radius:50%;background:var(--danger);color:var(--on-danger);font:700 10px/15px Inter,system-ui,sans-serif;font-style:normal;text-align:center}
 .asset-lines{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
 .asset-lines polyline{fill:none;stroke:var(--purple);stroke-opacity:.55;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 .asset-label{display:flex;align-items:center;gap:6px}
@@ -839,7 +839,7 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 .evidence-thumbs button{position:relative;flex-shrink:0;padding:2px;border:2px solid transparent;border-radius:5px;background:var(--surface)}
 .evidence-thumbs button[aria-pressed="true"]{border-color:var(--cyan)}
 .evidence-photo .evidence-thumbs img{width:48px;height:48px;object-fit:contain}
-.evidence-thumbs span{position:absolute;bottom:2px;right:3px;padding:0 3px;border-radius:2px;background:var(--surface);font-size:11px}
+.evidence-thumbs span{position:absolute;bottom:2px;right:3px;padding:0 3px;border-radius:2px;background:var(--surface);font-size:12px;line-height:1.25}
 .evidence-count{font-weight:650;color:var(--text-2)}
 .evidence-links,.viewer-links{display:flex;flex-wrap:wrap;gap:9px 16px;margin-top:7px}
 .evidence-links a,.viewer-links a{display:inline-flex;align-items:center;gap:5px;color:var(--accent-text)}
@@ -1222,7 +1222,7 @@ th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);c
 .route-stop-row{display:flex;align-items:center;gap:11px;width:100%;padding:11px 2px;background:transparent;border-bottom:1px solid var(--border);text-align:left;color:var(--text)}
 .route-stop-row:hover{background:var(--surface-2)}
 .route-stop-row>span:nth-child(2){flex:1;min-width:0;display:grid;gap:3px}
-.route-stop-row strong{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.route-stop-row strong{font-size:13px;font-weight:600;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .route-stop-row small{font-size:12px;color:var(--text-3)}
 .route-stop-row>svg{width:15px;height:15px;color:var(--text-4);flex-shrink:0}
 .route-num{display:grid;place-items:center;min-width:24px;height:24px;border-radius:50%;background:var(--surface-3);border:1px solid var(--success-border);color:var(--success-text);font:700 12px Inter,system-ui,sans-serif;flex-shrink:0}
@@ -1466,3 +1466,25 @@ input[type=checkbox]:disabled{opacity:.45;cursor:default}
 .columns-menu .menu-item{gap:10px}
 /* Phones get thumb-sized rows, and 16px in the search field so iOS doesn't zoom in when it takes focus. */
 @media(pointer:coarse){.menu-item{min-height:40px}.menu-search input{font-size:16px}}
+
+/* UI audit fixes. The OpenStreetMap credit stays visible beside the issue panel, or above the phone sheet. */
+.panel-open .map-attribution{right:367px}
+@media(min-width:1600px){.panel-open .map-attribution{right:397px}}
+@media(max-width:650px){.panel-open .map-attribution{right:7px;bottom:calc(min(58%, 100% - 115px) + 4px)}}
+/* Upload button: Lucide's plus only fills the middle 14 of its 24 units, so its blank side bearing made the label
+   look pushed right. Pull the icon into the padding by that bearing (3.5px at 17px); the gap keeps the usual look. */
+@media(min-width:951px){.upload-button{gap:6px}.upload-button>.icon{margin-left:-3.5px}}
+/* The icon rail's upload button is square, like the nav items around it. */
+@media(min-width:651px) and (max-width:950px){.upload-button{width:44px;height:44px;min-height:0;padding:0!important}}
+/* Tablet widths: the map's filters drop their icons, as they already do beside the panel, so all five fit. */
+@media(min-width:651px) and (max-width:950px){.map-floating-filters .filter-select .select-lead{display:none}}
+/* The map hint is about mouse controls, and with the panel open on a tablet it runs under the panel. */
+@media(max-width:950px){.panel-open .map-hint{display:none}}
+@media(max-width:650px){
+  .map-hint{display:none}
+  /* Data pages: the filter row scrolls to the screen edge rather than stopping at the page margin. */
+  .filter-selects{margin-right:-12px;padding-right:12px}
+  /* Thumb-sized hit areas for small text controls, without changing how they look or sit. */
+  .map-legend button,.text-button,.select.pill .select-trigger{position:relative}
+  .map-legend button::after,.text-button::after,.select.pill .select-trigger::after{content:'';position:absolute;inset:-5px -3px}
+}
