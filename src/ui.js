@@ -15,7 +15,7 @@ export function toast(message) {
 }
 
 /** Opens (or replaces) the modal. `onClose` runs when this content is closed or replaced. */
-export function showModal(content, { wide = false, label = 'CivicLens dialog', onClose = null } = {}) {
+export function showModal(content, { wide = false, label = 'GeoIssue dialog', onClose = null } = {}) {
   runModalCleanup();
   document.body.style.overflow = 'hidden';
   const root = document.querySelector('#modal-root');

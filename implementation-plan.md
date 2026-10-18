@@ -1,4 +1,4 @@
-# CivicLens implementation plan and priorities
+# GeoIssue implementation plan and priorities
 
 **Draft for review · 2026-10-17 · based on commit `9321865`** (frontend improvements + analysis pipeline). Supporting research: [`research/competitors.md`](research/competitors.md) and [`research/popular-features.md`](research/popular-features.md).
 
@@ -65,7 +65,7 @@
 ## 4. What the research says
 
 **What we can credibly own** ([competitors](research/competitors.md) §C–D)
-1. "311 waits for a report; CivicLens finds the issues people post about but never file." Toronto's open 311 data covers about 30–35% of contacts.
+1. "311 waits for a report; GeoIssue finds the issues people post about but never file." Toronto's open 311 data covers about 30–35% of contacts.
 2. "We show our uncertainty." No competitor shows a confidence radius or explains how a photo was located; GeoSpy is the cautionary black box.
 3. "One issue, many sightings": cross-source deduplication and an "already in 311?" check.
 4. "A ward digest, with evidence, before October 26." The City's ward dashboards are internal.
@@ -146,7 +146,7 @@
 
 ### Not doing (and why)
 
-- **Replacing 311.** Pitch CivicLens as a feeder into 311; incumbents do intake and case tracking better.
+- **Replacing 311.** Pitch GeoIssue as a feeder into 311; incumbents do intake and case tracking better.
 - **Pavement condition scores (PCI/PASER).** Vehicle AI does this systematically; don't claim it.
 - **Google Street View scraping or Street View imagery for ML.** The terms forbid it; use Mapillary.
 - **Showing poster identities or linking photos to accounts.** Clearview precedent; the GeoSpy misuse risk.
@@ -167,7 +167,7 @@ Set a **feature freeze** about 3 hours before submission. After that, only fixes
 
 ## 7. Demo outline (about 3 minutes, half of it live)
 
-1. **0:00 One sentence:** "311 waits for a report. CivicLens finds the issues Torontonians post about but never file, and shows how sure it is."
+1. **0:00 One sentence:** "311 waits for a report. GeoIssue finds the issues Torontonians post about but never file, and shows how sure it is."
 2. **0:15 Map:** cluster → issue → "how this location was estimated" with the radius (differentiator 2).
 3. **0:45 Live upload:** photo → Gemini fills it in and blurs a plate → "2 neighbours already reported this" → join (P0-3, P0-4, P0-5).
 4. **1:30 City Staff:** priority queue with reasons → verify (P0-2; P1-1 if built).

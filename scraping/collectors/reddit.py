@@ -184,7 +184,7 @@ def run(*, config_path=DEFAULT_CONFIG, output=DEFAULT_OUTPUT):
     started = datetime.now(timezone.utc)
     since = started - timedelta(days=config["days"])
     with requests.Session() as session:
-        session.headers["User-Agent"] = "CivicLens-Reddit/0.1"
+        session.headers["User-Agent"] = "GeoIssue-Reddit/0.1"
         posts, sources = collect(session, config, since=since, until=started)
     if not any(source["pages"] for source in sources):
         raise ValueError("All subreddit requests failed. " +

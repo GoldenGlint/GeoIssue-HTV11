@@ -1,4 +1,4 @@
-"""CivicLens geolocation agent on Modal, split by compute need. Billing is per second and every container
+"""GeoIssue geolocation agent on Modal, split by compute need. Billing is per second and every container
 scales to zero after SCALEDOWN_S idle, so nothing keeps running (or billing) after a run; the workspace
 budget in Modal's Usage & Billing is the hard spending cap.
 
@@ -46,8 +46,8 @@ def with_files(image, files):
     return image
 
 
-app = modal.App("civiclens-geoloc")
-models = modal.Volume.from_name("civiclens-models", create_if_missing=True)  # Ollama models + vision weights
+app = modal.App("geoissue-geoloc")
+models = modal.Volume.from_name("geoissue-models", create_if_missing=True)  # Ollama models + vision weights
 mapillary = modal.Secret.from_dict({"MAPILLARY_TOKEN": local_env("MAPILLARY_TOKEN")})
 
 cpu_image = with_files(

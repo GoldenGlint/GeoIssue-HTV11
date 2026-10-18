@@ -11,7 +11,7 @@ import datetime, json, math, pathlib, urllib.request
 
 PACKAGE = "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/package_show?id=city-wards"
 RESOURCE_NAME = "City Wards Data - 4326.geojson"
-HEADERS = {"User-Agent": "CivicLens-HTV-prototype/0.1 (hackathon demo)"}
+HEADERS = {"User-Agent": "GeoIssue-HTV-prototype/0.1 (hackathon demo)"}
 OUT = pathlib.Path(__file__).resolve().parent.parent / "src" / "ward-boundaries.js"
 
 

@@ -58,7 +58,7 @@ class DescribeTest(unittest.TestCase):
 
 class ProgressTest(unittest.TestCase):
     def setUp(self):
-        tmp = tempfile.TemporaryDirectory()
+        tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)  # Windows: a just-killed process may still hold it
         self.addCleanup(tmp.cleanup)
         self.dir = Path(tmp.name)
 
@@ -66,9 +66,9 @@ class ProgressTest(unittest.TestCase):
         status = {"id": "j", "steps": []}
         progress = claude_geoloc.Progress(self.dir, status)
         progress.event({"type": "system", "subtype": "init", "session_id": "s", "model": "m",
-                        "mcp_servers": [{"name": "civiclens", "status": "connected"}]})
+                        "mcp_servers": [{"name": "geoissue", "status": "connected"}]})
         progress.event({"type": "assistant", "message": {"content": [
-            {"type": "tool_use", "id": "a", "name": "mcp__civiclens__find_intersection",
+            {"type": "tool_use", "id": "a", "name": "mcp__geoissue__find_intersection",
              "input": {"street_a": "Bathurst", "street_b": "Dundas"}}]}})
         progress.event({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "a",
             "content": [{"type": "text", "text": json.dumps([{"streets": "Bathurst & Dundas", "lat": 1, "lon": 2}])}]}]}})
@@ -83,13 +83,13 @@ class ProgressTest(unittest.TestCase):
     def test_tools_that_failed_to_start_are_reported(self):
         status = {"steps": []}
         claude_geoloc.Progress(self.dir, status).event({"type": "system", "subtype": "init",
-                                                        "mcp_servers": [{"name": "civiclens", "status": "failed"}]})
+                                                        "mcp_servers": [{"name": "geoissue", "status": "failed"}]})
         self.assertIn("did not start (failed)", status["error"])
 
 
 class RunTest(unittest.TestCase):
     def setUp(self):
-        tmp = tempfile.TemporaryDirectory()
+        tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)  # Windows: a just-killed process may still hold it
         self.addCleanup(tmp.cleanup)
         self.tmp = Path(tmp.name)
         self.image = self.tmp / "photo.jpg"
@@ -255,7 +255,7 @@ class McpServerTest(unittest.TestCase):
         if not (HERE.parent / "data" / "places.duckdb").is_file():
             self.skipTest("needs data/places.duckdb")
         from PIL import Image
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
             photo = Path(tmp) / "p.jpg"
             Image.new("RGB", (4000, 3000), "gray").save(photo)
             args = mock.Mock(image=str(photo), out=str(Path(tmp) / "job"), minutes=5, truth=None,

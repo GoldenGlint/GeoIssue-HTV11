@@ -1,6 +1,6 @@
 """Publish one bounded Bluesky collection. A failed run leaves the last good snapshot in place.
 
-Usage:  CIVICLENS_PUBLISHED_DIR=/var/lib/civiclens/published python scripts/ingest.py
+Usage:  GEOISSUE_PUBLISHED_DIR=/var/lib/geoissue/published python scripts/ingest.py
         python scripts/ingest.py --republish 20261018T041500Z
 """
 import argparse
@@ -250,7 +250,7 @@ def prune(published, keep=KEEP_GENERATIONS):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--published-dir", default=os.environ.get("CIVICLENS_PUBLISHED_DIR"))
+    parser.add_argument("--published-dir", default=os.environ.get("GEOISSUE_PUBLISHED_DIR"))
     parser.add_argument("--allow-empty", action="store_true",
                         help="Publish a snapshot with zero issues even when the current one has some.")
     parser.add_argument("--republish", help="Point the site at this existing generation and do nothing else.")
@@ -258,7 +258,7 @@ def main(argv=None):
     parser.add_argument("--max-description-requests", type=int, default=20)
     args = parser.parse_args(argv)
     if not args.published_dir:
-        parser.error("Set CIVICLENS_PUBLISHED_DIR or pass --published-dir.")
+        parser.error("Set GEOISSUE_PUBLISHED_DIR or pass --published-dir.")
     try:
         result = execute(
             args.published_dir,

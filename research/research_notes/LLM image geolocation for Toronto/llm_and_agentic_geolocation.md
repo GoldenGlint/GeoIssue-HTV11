@@ -5,7 +5,7 @@ Scope note: per the coordinator's correction, the draft plan's assumptions (LLM 
 ## Q0. Is "frontier VLMs alone ≈ 10–17% within 1 km on generic street views" correct?
 
 ### Takeaway
-Not as stated. The 10–17% @1 km range matches the **Im2GPS3k (Flickr, worldwide)** numbers for **retrieval-augmented** LLM pipelines (Img2Loc 15.3%, G3 16.7%) and for a zero-shot open 8B VLM (Qwen3-VL-8B 10.5%). It does not describe frontier VLMs on street views. Frontier-model accuracy at ~1 km ranges from about 0% to over 60% depending on the image distribution. On **social-media-style images with visible text**, the case closest to CivicLens, frontier VLMs alone reach **50–61% within 1 km**.
+Not as stated. The 10–17% @1 km range matches the **Im2GPS3k (Flickr, worldwide)** numbers for **retrieval-augmented** LLM pipelines (Img2Loc 15.3%, G3 16.7%) and for a zero-shot open 8B VLM (Qwen3-VL-8B 10.5%). It does not describe frontier VLMs on street views. Frontier-model accuracy at ~1 km ranges from about 0% to over 60% depending on the image distribution. On **social-media-style images with visible text**, the case closest to GeoIssue, frontier VLMs alone reach **50–61% within 1 km**.
 
 ### Cited Findings
 - Im2GPS3k @1 km/25 km: Img2Loc (GPT-4V + RAG) 15.34/39.83; G3 16.65/40.94; GeoRanker (Qwen2-VL-7B re-ranker) 18.79/45.05; PIGEON 11.3/36.7; GeoCLIP 14.11/34.47. — [GeoRanker, arXiv 2505.13731 (NeurIPS 2025)](https://arxiv.org/html/2505.13731v3)
@@ -19,7 +19,7 @@ Not as stated. The 10–17% @1 km range matches the **Im2GPS3k (Flickr, worldwid
 
 ### Inferences
 - The draft's figure is approximately the Im2GPS3k RAG-pipeline number, and the label "frontier VLMs alone on street views" is wrong. Measured frontier-alone results run from about 0% (MAPBench hard @500 m) to about 60% (social-media images @1 km).
-- For CivicLens the city is known in advance, so worldwide @1 km numbers overstate the difficulty of the coarse part and say nothing about 25–100 m. Social-media civic-issue photos (potholes, graffiti, broken signals) often lack storefront or landmark text, so the textless OSV5/MAPBench-hard regime may be the more relevant one for many images.
+- For GeoIssue the city is known in advance, so worldwide @1 km numbers overstate the difficulty of the coarse part and say nothing about 25–100 m. Social-media civic-issue photos (potholes, graffiti, broken signals) often lack storefront or landmark text, so the textless OSV5/MAPBench-hard regime may be the more relevant one for many images.
 
 ### Gaps
 - No source measures VLM accuracy within a single pre-specified city at 25–100 m.
@@ -115,7 +115,7 @@ Several RL-trained 4–7B geolocators exist, and GeoVista-7B has public weights.
 - VRAM: one estimate puts Qwen2.5-VL-7B-Instruct-AWQ (INT4) at about 4.5 GB, against about 18 GB at FP16. — [Spheron GPU guide](https://www.spheron.network/tools/gpu-recommender/Qwen/Qwen2.5-VL-7B-Instruct-AWQ/). Another puts the GGUF Q4_K_M build at about 6 GB, so it fits 8 GB, while Q8_0 needs about 10 GB. — [bestllmfor.com](https://bestllmfor.com/catalog/qwen25-vl-7b/). Both are third-party estimates, not measurements.
 
 ### Inferences
-- GeoVista-7B at 4-bit is technically runnable on the RTX 4060. The evidence suggests it adds little for 25–100 m inside Toronto, because it is trained to name the city, which CivicLens already knows.
+- GeoVista-7B at 4-bit is technically runnable on the RTX 4060. The evidence suggests it adds little for 25–100 m inside Toronto, because it is trained to name the city, which GeoIssue already knows.
 - A 30B-A3B MoE at 4-bit would need roughly 15+ GB for weights. This is my arithmetic, not a sourced figure, and it means Thinking with Map is not practical locally.
 - A local 7B VLM is more plausible as a cheap OCR or clue tagger than as the geolocator.
 
@@ -141,7 +141,7 @@ VLMs exploit text and signage heavily: social-media images with text get about 6
 - Claude docs: hallucination risk rises on low-quality, rotated or very small images (<200 px). Claude does not read image metadata such as EXIF. Claude 4.7+ models accept up to a 2576 px long edge (4,784 visual tokens) against 1568 px for others, which helps with small signage. Heavy JPEG compression hurts text reading. — [Claude vision docs](https://platform.claude.com/docs/en/build-with-claude/vision)
 
 ### Inferences
-- For CivicLens, any text clue (street name, business name, TTC route) should be confirmed against a deterministic Toronto gazetteer or POI index before it is trusted. This guards against the KICKZ-type failure and the chain-store problem.
+- For GeoIssue, any text clue (street name, business name, TTC route) should be confirmed against a deterministic Toronto gazetteer or POI index before it is trusted. This guards against the KICKZ-type failure and the chain-store problem.
 - An abstain or "needs review" output should fire when samples disagree or when no deterministic match corroborates the clue.
 
 ### Gaps

@@ -1,4 +1,4 @@
-# CivicLens: collecting fresh, useful social images
+# GeoIssue: collecting fresh, useful social images
 
 Draft researched on October 17, 2026. This is a proposed experiment and implementation plan; no collectors, paid runs, or image-quality benchmarks have been executed for this document.
 
@@ -23,7 +23,7 @@ The useful-scene pool is initially a temporary evaluation buffer. Scene-only ima
 
 Read alongside this proposal:
 
-- `initial-unfinalized-plans.md`: CivicLens collects public posts, detects civic issues, locates them, and helps residents, volunteers, and staff respond. Its important early tests are collection yield and geolocation feasibility.
+- `initial-unfinalized-plans.md`: GeoIssue collects public posts, detects civic issues, locates them, and helps residents, volunteers, and staff respond. Its important early tests are collection yield and geolocation feasibility.
 - `2026.10 Hack The Valley Datasheet.md`: the Toronto Civic Data Starter Guide, including 311, geography, transit, infrastructure, permits, and demographic sources.
 - `2026.10 Hack The Valley School of Cities.md`: a usable Toronto civic prototype, grounded in urban data, with clear users and responsible interpretation.
 - The supplied challenge and sponsor text: Gemini, Tiger Data, Vultr, GoDaddy, DEV, and the broader themes.

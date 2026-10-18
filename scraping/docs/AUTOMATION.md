@@ -69,11 +69,11 @@ Restoration fetches the original CDN URLs and checks image fingerprints. Deleted
 
 ## Vultr host: daily timer installed, not enabled
 
-[deploy/civiclens-ingest.timer](../../deploy/civiclens-ingest.timer) runs `scripts/ingest.py` once a day. Install the unit with the app and do not enable it. Hosted collection stays manual until someone turns the timer on:
+[deploy/geoissue-ingest.timer](../../deploy/geoissue-ingest.timer) runs `scripts/ingest.py` once a day. Install the unit with the app and do not enable it. Hosted collection stays manual until someone turns the timer on:
 
 ```sh
-sudo systemctl enable --now civiclens-ingest.timer
-sudo systemctl disable --now civiclens-ingest.timer
+sudo systemctl enable --now geoissue-ingest.timer
+sudo systemctl disable --now geoissue-ingest.timer
 ```
 
 A missed day is not replayed (`Persistent=false`). Enabling it needs a Gemini quota check and an explicit decision; the GitHub Actions schedule below stays commented out either way. Setup, the first manual run and rollback are in [deploy/README.md](../../deploy/README.md).

@@ -1,4 +1,4 @@
-/** Fictional demo dataset for the CivicLens prototype.
+/** Fictional demo dataset for the GeoIssue prototype.
  * Replace issueRepository.list() with your API; data-contract.md documents the issue shape.
  * Records are generated deterministically, so every reload (and every teammate) sees the same data.
  * Coordinates are coarse and fictional. Wards come from the City of Toronto ward boundaries (point-in-polygon).

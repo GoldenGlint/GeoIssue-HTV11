@@ -1,4 +1,4 @@
-# CivicLens analysis
+# GeoIssue analysis
 
 Takes the photo-analysis output (JSON records plus photos) and produces what the map, table and ward pages need:
 

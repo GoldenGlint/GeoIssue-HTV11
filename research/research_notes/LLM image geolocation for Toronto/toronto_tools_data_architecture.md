@@ -43,7 +43,7 @@ Mapillary is the only practical, legally usable, API-accessible street-level sou
 
 ### Inferences
 - **GSV cannot be the index.** Building a VPR index, computing embeddings, storing thumbnails, or even using GSV images to test or validate the model (§3.2.3(c)(vii)) is prohibited. That rules out a GSV-based evaluation set too.
-- **GSV for human verification only, under conditions.** A moderator could open the predicted coordinate in Google's own UI (a Maps URL link-out or the Maps Embed/JS Street View in a separate view). The CivicLens moderator screen must not show Street View next to a Leaflet/OSM/MapLibre map (§3.2.3(e)). Sending Street View frames to Claude or Gemini as "candidate images" would likely count as using Maps Content outside the Services, so avoid it. This is legal interpretation, not legal advice. Flag it to the team.
+- **GSV for human verification only, under conditions.** A moderator could open the predicted coordinate in Google's own UI (a Maps URL link-out or the Maps Embed/JS Street View in a separate view). The GeoIssue moderator screen must not show Street View next to a Leaflet/OSM/MapLibre map (§3.2.3(e)). Sending Street View frames to Claude or Gemini as "candidate images" would likely count as using Maps Content outside the Services, so avoid it. This is legal interpretation, not legal advice. Flag it to the team.
 - **Enumerating Toronto Mapillary coverage cheaply.** The Toronto bbox (about -79.64..-79.11, 43.58..43.86) spans about 25 × 18 = 450 z14 tiles (my own slippy-map calculation). One pass over the `mly1_computed_public` image layer is well under the 50,000 tiles/day limit. It yields image ids, captured_at, compass angle and is_pano without touching the 0.01-degree bbox limit on the search API.
 - **Storage budget on 15 GB free disk.** 1024-px JPEG thumbnails are typically 150–300 KB (my estimate, not measured). That puts 50k images at roughly 7–15 GB, so it is tight. Prefer storing only descriptors plus re-fetching `thumb_1024_url` on demand for the top-K. MegaLoc's 8,448-d descriptor in float16 is about 16.9 KB per image, so 100k images is about 1.7 GB. PCA or PQ to 512–1024 dims reduces that 8–16x.
 - **Mapillary's precomputed map features are a free Toronto-wide street-furniture layer** (traffic signs, poles, hydrants and so on, at z14). They complement City open data. Treat object positions as approximate (SfM-triangulated).
@@ -114,7 +114,7 @@ Sources for the table: [CKAN package_search: street furniture](https://ckan0.cf.
   5. Overture places for storefront names seen in OCR.
 
   The repo already has parquet anchors for streets, intersections, stops, routes, shelters and places under `spikes/data/anchors/`.
-- **Asset co-occurrence search** (Bellingcat-style) for Toronto works better on City asset layers than on OSM tags alone. Shelters, benches, bins, poster boards, signals, PXOs and red-light cameras have near-complete City inventories, while OSM tagging of street furniture is uneven. Implement it locally as a DuckDB-spatial or GeoPandas STRtree query over City, OSM and Overture layers clipped to Toronto (all fit in RAM), not via public Overpass. A production CivicLens would exceed the "<100 queries/day for regular use" guidance.
+- **Asset co-occurrence search** (Bellingcat-style) for Toronto works better on City asset layers than on OSM tags alone. Shelters, benches, bins, poster boards, signals, PXOs and red-light cameras have near-complete City inventories, while OSM tagging of street furniture is uneven. Implement it locally as a DuckDB-spatial or GeoPandas STRtree query over City, OSM and Overture layers clipped to Toronto (all fit in RAM), not via public Overpass. A production GeoIssue would exceed the "<100 queries/day for regular use" guidance.
 - **Do not use street trees for fine localisation** (parcel-snapped coordinates). Building outlines and 3D massing are usable for skyline or occlusion reasoning but are expensive to exploit.
 - **The 311 data is a weak prior only** (FSA-level). It can tell which neighbourhoods generate many graffiti or pothole requests, not where a given photo is.
 - **Commons and Wikidata matter mainly for landmarks** (churches, murals, named buildings). Filter out Commons files at the exact city-centroid coordinate, and respect per-file licences (mostly CC BY-SA or CC BY; I did not verify per-file mixes).
@@ -157,7 +157,7 @@ For civic-issue photos in a single city, the biggest wins are text-driven: OCR (
 - Mapillary already serves per-image detections and triangulated map features (traffic signs and point objects such as utility poles) through its API (see Q1). — [Mapillary API docs](https://www.mapillary.com/developer/api-documentation)
 
 ### Inferences
-Ranked catalogue of tools for the orchestrator, by expected value for CivicLens. Expected values are my judgement, not measured.
+Ranked catalogue of tools for the orchestrator, by expected value for GeoIssue. Expected values are my judgement, not measured.
 
 | # | Tool (callable function) | Backing data / model | When it fires | Typical precision when it fires | Cost / latency (est.) |
 |---|---|---|---|---|---|
@@ -236,7 +236,7 @@ A fully agentic ReAct loop costs about 5–10x more per image with higher varian
 
 **A. Pattern comparison (judgement, grounded in the pricing above)**
 
-| Pattern | How it works | Pros | Cons | Fit for CivicLens |
+| Pattern | How it works | Pros | Cons | Fit for GeoIssue |
 |---|---|---|---|---|
 | P1. Deterministic cascade, LLM only at choke points | Fixed stages; LLM for clue extraction (and maybe a final check) | Cheapest; predictable latency; easy to evaluate and calibrate | Rigid; wastes compute running VPR on hopeless images; weak on odd cases | Good backbone, but needs routing |
 | P2. LLM orchestrator (ReAct / Claude tool use) | LLM chooses tools turn by turn until it answers | Flexible; handles long-tail clues (murals, festivals, construction signs); traces are explainable | 5–10x tokens (context resent each turn); latency 15–60 s; variance; may hallucinate coordinates instead of calling tools; hard to calibrate | Fallback for hard cases only, with a strict tool budget |
@@ -389,7 +389,7 @@ Fetching Static API images at candidate locations, feature-matching them against
 - **Q7.1, on-the-fly fetch, match and discard.**
   - It avoids §3.2.3(a)(i)'s "pre-fetch, index, store" and §3.2.3(b) caching if images never persist.
   - It still (1) extracts Street View pixels into a non-Google computer-vision pipeline ("for use outside the Services", §3.2.3(a)), and (2) produces location data derived from Street View imagery. That is structurally the same as example (v), "index of tree locations ... from Street View imagery", under §3.2.3(c).
-  - Results would then be shown on CivicLens's own (non-Google) map, which brushes against §3.2.3(e).
+  - Results would then be shown on GeoIssue's own (non-Google) map, which brushes against §3.2.3(e).
   - Evaluating accuracy against GSV-matched results is "test, validate" (§3.2.3(c)(vii)).
   - Map Tiles API Street View tiles are Google Maps Content under the same ToS, so switching from Static to Tiles does not change the analysis.
   - Bottom line: **do not make GSV comparison an automated core step.** If the team insists, get written confirmation from Google sales or legal. This is not legal advice.
@@ -405,7 +405,7 @@ Fetching Static API images at candidate locations, feature-matching them against
   - (c) pano share;
   - (d) the share of images in large `merge_cc` components (better poses).
 
-  If (b) is below about 50% for the issue types CivicLens cares about, live Mapillary comparison cannot be the core step. Asset snapping (Q8) plus City traffic-camera views and orthophotos must carry the 10 m claim, with Mapillary as a bonus where present. My prior is dense coverage on arterials and downtown, sparse on residential side streets, laneways, parks and campuses. That is typical of crowd-sourced imagery, but I have not verified it for Toronto.
+  If (b) is below about 50% for the issue types GeoIssue cares about, live Mapillary comparison cannot be the core step. Asset snapping (Q8) plus City traffic-camera views and orthophotos must carry the 10 m claim, with Mapillary as a bonus where present. My prior is dense coverage on arterials and downtown, sparse on residential side streets, laneways, parks and campuses. That is typical of crowd-sourced imagery, but I have not verified it for Toronto.
 - **Apple Look Around and Bing Streetside are not usable sources** for automated comparison. Look Around is a display widget in MapKit JS with no image download. Streetside is being retired with Bing Maps.
 
 ### Gaps

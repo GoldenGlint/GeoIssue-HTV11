@@ -1,4 +1,4 @@
-// Retire a worker left behind on this development address; CivicLens does not cache the app offline.
+// Retire a worker left behind on this development address; GeoIssue does not cache the app offline.
 self.addEventListener('install', event => event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {

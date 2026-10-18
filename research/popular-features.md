@@ -4,10 +4,10 @@ Researched 2026-10-17 for the implementation plan (`implementation-plan.md`). So
 
 ## 1. Ranked features (# = overall rank)
 
-Effort is hackathon / production. "CivicLens" is the status as of commit `9321865`.
+Effort is hackathon / production. "GeoIssue" is the status as of commit `9321865`.
 
 ### Residents
-| # | Feature | Evidence | How common | Pain if missing | CivicLens | Effort | Wow |
+| # | Feature | Evidence | How common | Pain if missing | GeoIssue | Effort | Wow |
 |---|---|---|---|---|---|---|---|
 | 1 | **Closed-loop status updates** (timeline; notice when acknowledged and fixed) | FixMyStreet users whose first report was fixed were 57% more likely to report again (399k users) [Sjoberg 2017][sj]; Boston users shown photos of their fix sent 60% more requests [Buell 2021][bu]; poor communication is Ombudsman Toronto's top fairness issue [Ombudsman][om] | Every 311 app | People feel ignored and stop reporting | Lacks | S (simulated) / L | Med |
 | 2 | **Photo-first, ~10-second reporting** (location from GPS/EXIF, few fields, guest mode) | Snap Send Solve 4.8★/12K, "takes me about 10 seconds" [SSS][sss]; Toronto 311 app 2.8★/80 with complaints about too many questions and photo permissions [T311][t311]; Toronto cut questions in 2025 [staff report][tor1] | Every app | Abandoned reports, wrong locations | Partial | S / M | Med |
@@ -20,7 +20,7 @@ Effort is hackathon / production. "CivicLens" is the status as of commit `932186
 | 18 | **"My reports" history** and optional account | Toronto is assessing logins for request history [staff report][tor1]; FixMyStreet users dislike logging in per report [FMS][fms] | Every app | Can't follow up | Partial (Saved) | S / M | Low |
 
 ### Volunteers and verifiers
-| # | Feature | Evidence | How common | Pain if missing | CivicLens | Effort | Wow |
+| # | Feature | Evidence | How common | Pain if missing | GeoIssue | Effort | Wow |
 |---|---|---|---|---|---|---|---|
 | 14 | **Multi-person consensus** with confidence levels | Zooniverse retires items after N classifications [TESS][tess]; volunteer consensus matched experts >97% on Snapshot Serengeti [overview][zoo]; Ushahidi found plain verified/unverified tags unmanageable [Ushahidi][ush] | Standard in citizen science | One person's error or gaming slips through | Partial (single confirm) | S / M | Med |
 | 15 | **"Still there?" re-check and reopen** | FixMyStreet questionnaires; complaints about "fixed" notices while the problem remains [Bristol][bri]; SeeClickFix users ask to reopen [review][scf1] | Rare | False closures erode trust | Lacks | S / M | Med |
@@ -29,7 +29,7 @@ Effort is hackathon / production. "CivicLens" is the status as of commit `932186
 | 25 | **Bite-sized tasks** with quality feedback | Most volunteers are short-burst "dabblers" [Eveleigh 2014][eve] | Common | Drop-off | Partial | S / M | Low |
 
 ### City staff
-| # | Feature | Evidence | How common | Pain if missing | CivicLens | Effort | Wow |
+| # | Feature | Evidence | How common | Pain if missing | GeoIssue | Effort | Wow |
 |---|---|---|---|---|---|---|---|
 | 5 | **Explainable priority queue** ("why this is #1") | Philadelphia names manual processing as a bottleneck [RFI][phl]; staff needing reasons is *(inference)* | Rare | Triage favours the loudest | Has in pipeline, not in UI | S / M | High |
 | 6 | **Proof of resolution** (status notes + "after" photo) | Showing the work raised trust 14% [Buell][bu]; NYC closure notes often "ambiguous" [NYC Council][nyc]; DC shows the full life cycle [DC311][dc] | Growing | "Closed" means nothing | Partial | S / M | Med-High |
@@ -40,7 +40,7 @@ Effort is hackathon / production. "CivicLens" is the status as of commit `932186
 | 24 | **Anti-abuse controls** | Philadelphia wants "blocking bad actors" [RFI][phl] | Common | Spam, harassment | Lacks | S / M | Low |
 
 ### Journalists, researchers and councillors
-| # | Feature | Evidence | How common | Pain if missing | CivicLens | Effort | Wow |
+| # | Feature | Evidence | How common | Pain if missing | GeoIssue | Effort | Wow |
 |---|---|---|---|---|---|---|---|
 | 10 | **Ward digest / councillor brief** | Toronto's election is Oct 26, 2026 [toronto.ca][elec]; the City will send 311 trend reports to Council twice a year from Q2 2026 [report][tor2] | Rare | No ward-level picture | Has | S (polish) / M | High |
 | 21 | **Shareable permalinks** of filtered views | Reporters need a stable view to cite *(inference)* | Common in portals | Can't cite | Lacks (issue links only) | S / S | Med |

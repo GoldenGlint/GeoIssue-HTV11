@@ -82,7 +82,7 @@ def call_gemini(prompt, model, key, timeout_s):
 def template(area, label, placeholder_areas, trend_days):
     name = display_name(area, label)
     types = ", ".join(f"{t.lower()} ({n})" for t, n in list(area["by_type"].items())[:3])
-    parts = [f"{name} has {area['total']} {'issue' if area['total'] == 1 else 'issues'} in CivicLens data, "
+    parts = [f"{name} has {area['total']} {'issue' if area['total'] == 1 else 'issues'} in GeoIssue data, "
              f"{area['open']} still open. By type: {types}."]
     parts.append(f"{area['new_recent']} first seen in the last {trend_days} days, compared with {area['new_previous']} "
                  f"in the {trend_days} days before.")

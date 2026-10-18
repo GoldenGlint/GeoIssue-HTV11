@@ -153,7 +153,7 @@ export function initMap() {
   });
   document.querySelectorAll('[data-legend]').forEach(b => b.onclick = () => { state.filters.type = state.filters.type === b.dataset.legend ? '' : b.dataset.legend; updateFilteredView(); });
   const person = document.querySelector('.street-person');
-  person.ondragstart = e => { e.dataTransfer.setData('text/plain', 'civiclens-street'); element.classList.add('coverage-preview'); };
+  person.ondragstart = e => { e.dataTransfer.setData('text/plain', 'geoissue-street'); element.classList.add('coverage-preview'); };
   person.ondragend = () => element.classList.remove('coverage-preview');
   element.ondragover = e => e.preventDefault();
   element.ondrop = e => {

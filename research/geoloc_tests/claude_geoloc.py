@@ -1,4 +1,4 @@
-"""Geolocate one photo with Claude Code running headless on this machine, driving the CivicLens tools.
+"""Geolocate one photo with Claude Code running headless on this machine, driving the GeoIssue tools.
 
 Claude Code runs with its built-in tools switched off and the user's settings, plugins and hooks not
 loaded; its only tools come from geoloc_mcp.py (place, map and asset search, Mapillary matching, pose,
@@ -38,7 +38,7 @@ HEARTBEAT_S, STALE_S, START_S = 5, 60, 120  # worker heartbeat period; dead afte
 WINDOWS = os.name == "nt"
 FINAL_STATES = ("done", "no_answer", "failed", "cancelled")
 
-SYSTEM = """You are an OSINT geolocation analyst for CivicLens, a Toronto civic-issue map. The photo was taken somewhere \
+SYSTEM = """You are an OSINT geolocation analyst for GeoIssue, a Toronto civic-issue map. The photo was taken somewhere \
 in the City of Toronto. Find where the camera was, ideally within 10 m. Locate the place, never the people in it.
 
 Work deductively from what is visible. Do not assume a type of place in advance and do not pick a place from \
@@ -193,7 +193,7 @@ def list_jobs(jobs_dir, limit=20):
 
 # ---------- progress from Claude Code's stream ----------
 def short_name(tool):
-    return tool.removeprefix("mcp__civiclens__")
+    return tool.removeprefix("mcp__geoissue__")
 
 
 def describe_step(tool, args):
@@ -259,8 +259,8 @@ class Progress:
             s["session_id"] = e.get("session_id")
             s["model_id"] = e.get("model")
             servers = {m["name"]: m["status"] for m in e.get("mcp_servers") or []}
-            if servers.get("civiclens") != "connected":
-                s["error"] = f"the geolocation tools did not start ({servers.get('civiclens', 'missing')})"
+            if servers.get("geoissue") != "connected":
+                s["error"] = f"the geolocation tools did not start ({servers.get('geoissue', 'missing')})"
         elif e.get("type") == "assistant":
             for block in e.get("message", {}).get("content") or []:
                 if block.get("type") == "tool_use":
@@ -335,7 +335,7 @@ def claude_command(job_dir, model, effort, minutes):
             "--system-prompt-file", str(job_dir / "system.md"),
             "--tools", "",                                   # no built-in tools: no shell, files or web
             "--mcp-config", str(job_dir / "mcp.json"), "--strict-mcp-config",
-            "--allowedTools", "mcp__civiclens", "--permission-mode", "dontAsk",
+            "--allowedTools", "mcp__geoissue", "--permission-mode", "dontAsk",
             "--setting-sources", "",                         # no user hooks, plugins or permission rules
             "--no-session-persistence"]
 
@@ -367,7 +367,7 @@ def run_job(job_dir, image, minutes, model, effort, truth, max_running):
     (job_dir / "system.md").write_text(SYSTEM, encoding="utf-8")
     server = [str(HERE / "geoloc_mcp.py"), "--image", str(Path(image).resolve()), "--out", str(job_dir),
               "--minutes", str(minutes), "--model", f"claude-code:{model}"]
-    (job_dir / "mcp.json").write_text(json.dumps({"mcpServers": {"civiclens": {
+    (job_dir / "mcp.json").write_text(json.dumps({"mcpServers": {"geoissue": {
         "type": "stdio", "command": sys.executable, "args": server}}}, indent=1), encoding="utf-8")
     (job_dir / "result.json").unlink(missing_ok=True)
 
@@ -432,7 +432,7 @@ def run_job(job_dir, image, minutes, model, effort, truth, max_running):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Geolocate a Toronto photo with Claude Code and the CivicLens tools")
+    ap = argparse.ArgumentParser(description="Geolocate a Toronto photo with Claude Code and the GeoIssue tools")
     ap.add_argument("--image", required=True)
     ap.add_argument("--minutes", type=float, default=10, help="tool budget; the run is stopped 3 min after it")
     ap.add_argument("--model", default="opus")

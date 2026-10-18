@@ -1,5 +1,5 @@
 ---
-name: CivicLens
+name: GeoIssue
 description: One civic issue dataset on a familiar map, table and dashboard. Quiet white surfaces, one blue accent, the map and the data doing the talking.
 colors:
   # Light theme (default): :root in src/styles.css
@@ -258,13 +258,13 @@ components:
     padding: "13px 19px"
 ---
 
-# Design System: CivicLens
+# Design System: GeoIssue
 
 ## Overview
 
 **Creative North Star: "The Quiet Civic Map"**
 
-CivicLens is the familiar civic map-and-data tool, built with care rather than novelty. White working surfaces sit on a cool grey ground, one blue carries every action and selection, Inter sets everything, and the map and the data do the talking. The bar is the category's best: Google Maps for the map, Linear and Stripe for panels and tables, city open-data portals and 311 tools for the civic register, Mapbox and Felt for overlays.
+GeoIssue is the familiar civic map-and-data tool, built with care rather than novelty. White working surfaces sit on a cool grey ground, one blue carries every action and selection, Inter sets everything, and the map and the data do the talking. The bar is the category's best: Google Maps for the map, Linear and Stripe for panels and tables, city open-data portals and 311 tools for the civic register, Mapbox and Felt for overlays.
 
 The density is that of a working tool. Controls read at 13px, filter fields are 32px tall, borders are neutral hairlines, and a single soft shadow lifts whatever floats over the map. Saturated colour belongs to the data: category pins on a muted basemap, tinted chips for severity, status and verification, and a blue-to-red density ramp. Light is the default theme; dark is the same system in neutral graphite.
 

@@ -1,6 +1,6 @@
-# CivicLens geolocation: findings so far
+# GeoIssue geolocation: findings so far
 
-As of 2026-10-17 · exported from the Claude doc [CivicLens geolocation: findings so far](https://claude.ai/code/artifact/a0613494-17cc-454d-a524-52bb089403f8)
+As of 2026-10-17 · exported from the Claude doc [GeoIssue geolocation: findings so far](https://claude.ai/code/artifact/a0613494-17cc-454d-a524-52bb089403f8)
 
 The image path works: the UTSC test photo was placed **5.04 m** from its true camera position in about 8 seconds, using Mapillary street imagery, image matching and pose estimation. Language models alone don't get close. On photo 2, the best of four model answers was 391 m off and the worst 13 km. Photo 2 also showed two limits: the true spot was outside the search area, and a construction site that postdates the reference imagery blocked the match. The newest photo (photo 3) is not placed yet; the first Qwen3.8-27B agent run on Modal ended without an answer when its context filled up.
 
@@ -17,7 +17,7 @@ The image path works: the UTSC test photo was placed **5.04 m** from its true ca
 
 ## Goal and constraints
 
-CivicLens must place a public social-media photo of a civic issue in Toronto to **within 10 m**, fast enough to run on every post.
+GeoIssue must place a public social-media photo of a civic issue in Toronto to **within 10 m**, fast enough to run on every post.
 
 - **Hybrid, not purely agentic.** An LLM (Claude, Gemini or an open model such as Qwen or GLM) reads the photo and steers. Deterministic tools and identification data generate and verify the location.
 - **Toronto only.** Every tool can assume the photo is inside the city, which turns a planet-scale search into a city-scale one.
@@ -29,7 +29,7 @@ CivicLens must place a public social-media photo of a civic issue in Toronto to 
 
 Nothing that guesses a location from the image alone reaches 10 m. Metre-level answers come from geometry: matching against street imagery whose positions are known, or snapping to surveyed City assets. Six research threads covered prior art, LLM benchmarks, commercial tools, Toronto data, metre-level localization, and a live case study. The full report is in this folder: `LLM image geolocation for Toronto.md`.
 
-| Finding | Evidence | What it means for CivicLens |
+| Finding | Evidence | What it means for GeoIssue |
 | --- | --- | --- |
 | Global geolocators stop at about 1 km | [GeoCLIP](https://arxiv.org/html/2309.16020): 14% within 1 km on Im2GPS3k, trained with 150 m GPS noise. The best published systems reach about 20–33% within 1 km | GeoCLIP is at most a cheap coarse prior; its [GPS gallery](https://github.com/VicenteVivan/geo-clip) can be swapped for a Toronto grid |
 | Picarta's headline is vendor-only | Claims 44.8% within 1 km ([Picarta V2](https://picarta.ai/picarta-v2)); its API is Enterprise-only ([Picarta API](https://picarta.ai/api)) | Copy its interface (hard area constraint plus a text hint, ranked candidates), not its numbers |

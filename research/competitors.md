@@ -45,9 +45,9 @@ Researched 2026-10-17 for the implementation plan (`implementation-plan.md`). Mo
 ### 4. Crowdsourced mapping and verification
 
 - **Ushahidi:** open-source crowd-reporting map with admin review before publishing; AI classification/translation with Dataminr ([case](https://www.dataminr.com/resources/case-study/ushahidi-creates-new-ai-models-with-dataminr-to-improve-data-management/)).
-- **Mapillary (Meta):** crowdsourced street-level imagery, CC BY-SA 4.0, free API, automatic face/plate blurring, 1,500+ sign types ([licence](https://help.mapillary.com/hc/en-us/articles/115001770409), [tech](https://www.mapillary.com/technology)). The legally cleanest reference imagery for CivicLens's matching step. Toronto coverage not checked.
+- **Mapillary (Meta):** crowdsourced street-level imagery, CC BY-SA 4.0, free API, automatic face/plate blurring, 1,500+ sign types ([licence](https://help.mapillary.com/hc/en-us/articles/115001770409), [tech](https://www.mapillary.com/technology)). The legally cleanest reference imagery for GeoIssue's matching step. Toronto coverage not checked.
 - **Waze for Cities:** Toronto joined in 2017 ([CP24](https://www.cp24.com/news/city-of-toronto-begins-sharing-data-with-popular-traffic-app-waze-1.3685878)). Since April 2026 Waymo feeds pothole detections into it in 5 US metros (~500 potholes, location only, verified by Waze users) ([Waymo](https://waymo.com/blog/2026/04/partnering-with-waze-to-help-cities-patch-their-potholes/)).
-- **Project Sidewalk (University of Washington):** volunteers label sidewalk accessibility problems in Street View, ML validates; ~40 cities, none in Canada; the remote crowd found 92% of problems in a DC study ([arXiv 2026](https://arxiv.org/abs/2602.09216v2)). The best precedent for CivicLens's volunteer queue.
+- **Project Sidewalk (University of Washington):** volunteers label sidewalk accessibility problems in Street View, ML validates; ~40 cities, none in Canada; the remote crowd found 92% of problems in a DC study ([arXiv 2026](https://arxiv.org/abs/2602.09216v2)). The best precedent for GeoIssue's volunteer queue.
 - **OSM Notes / MapRoulette:** general micro-tasking, ~40k tasks/month ([OSM US](https://openstreetmap.us/news/2023/03/MapRoulette_Announcement/)).
 
 ### 5. Civic data dashboards
@@ -58,7 +58,7 @@ Researched 2026-10-17 for the implementation plan (`implementation-plan.md`). Mo
 
 ## B. Feature matrix
 
-CL = CivicLens today. T311 = 311 Toronto; SCF = SeeClickFix; FMS = FixMyStreet; SSS = Snap Send Solve; VEH = vehicle pavement AI (Vialytics, RoadBotics, StreetScan, RoadAI); BLY = Blyncsy/Payver; CYC = Cyclomedia; CD = City Detect; ZC = Zencity; DMR = Dataminr; USH = Ushahidi; MAP = Mapillary; WAZE = Waze for Cities; PS = Project Sidewalk; DASH = public 311 dashboards.
+CL = GeoIssue today. T311 = 311 Toronto; SCF = SeeClickFix; FMS = FixMyStreet; SSS = Snap Send Solve; VEH = vehicle pavement AI (Vialytics, RoadBotics, StreetScan, RoadAI); BLY = Blyncsy/Payver; CYC = Cyclomedia; CD = City Detect; ZC = Zencity; DMR = Dataminr; USH = Ushahidi; MAP = Mapillary; WAZE = Waze for Cities; PS = Project Sidewalk; DASH = public 311 dashboards.
 
 | Feature | CL | T311 | SCF | FMS | SSS | VEH | BLY | CYC | CD | ZC | DMR | USH | MAP | WAZE | PS | DASH |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -83,7 +83,7 @@ CL = CivicLens today. T311 = 311 Toronto; SCF = SeeClickFix; FMS = FixMyStreet; 
 
 ¹ Offline in the analysis pipeline from the photo-analysis output; not live in the app. ² No competitor's WCAG/AODA conformance could be verified, which leaves an open lane.
 
-## C. Gaps CivicLens can credibly own
+## C. Gaps GeoIssue can credibly own
 
 1. **Issues that never reach 311.** Every reporting app waits for a resident to file; Toronto's open 311 data covers about 30–35% of contacts and 6 of 45 divisions. Zencity mines social posts for sentiment, not geolocated, photo-backed issue records.
 2. **Geolocating untagged photos, honestly.** Only 0.3–3% of tweets carry a geotag (Francalanci et al., 2018) and platforms strip EXIF; matching social photos to street imagery is still preliminary research ([ISPRS 2026](https://isprs-archives.copernicus.org/articles/XLIX-B3-2026/1277/2026/)). Nothing found shows a confidence radius.
@@ -91,15 +91,15 @@ CL = CivicLens today. T311 = 311 Toronto; SCF = SeeClickFix; FMS = FixMyStreet; 
 4. **Election-ready ward digests backed by evidence.** The City's ward dashboards are internal; NYC/LA district dashboards show no photos or severity. Voters choose a mayor and 25 councillors on Oct 26.
 5. **Sidewalks, parks, transit and flooding without new hardware.** Vehicle AI covers roads fleets drive; resident photos already cover sidewalks, laneways, TTC stations and flooding.
 6. **Social signal that is transparent and private by design**, the opposite of the Zencity, GeoSpy and City Detect controversies.
-7. **Open, queryable data.** Competitors are closed and Toronto retired its Open311 API dataset; CivicLens already exports CSV, GeoJSON and SQL, and could emit Open311 GeoReport v2.
+7. **Open, queryable data.** Competitors are closed and Toronto retired its Open311 API dataset; GeoIssue already exports CSV, GeoJSON and SQL, and could emit Open311 GeoReport v2.
 
-## D. What judges will compare CivicLens to
+## D. What judges will compare GeoIssue to
 
 - "Isn't this 311 Toronto or SeeClickFix with AI?" (SeeClickFix now does AI photo categorisation.)
 - Waze, Google Street View, Blyncsy, City Detect; Zencity or Dataminr if social media comes up; GeoSpy if geolocation comes up; Toronto's 311 dashboard for the ward digest; multimodal reasoning quality for the Gemini track.
 
 **Five differentiators to say out loud:**
-1. "311 waits for a report; CivicLens finds the issues people post about but never file." (30–35% coverage; 0.3–3% geotags.)
+1. "311 waits for a report; GeoIssue finds the issues people post about but never file." (30–35% coverage; 0.3–3% geotags.)
 2. "We show our uncertainty." (Radius plus the "how this was located" trace, the opposite of GeoSpy's black box.)
 3. "One issue, many sightings." (Cross-source dedup, linked to existing 311 records.)
 4. "A ward digest, with evidence, before October 26." (Public and exportable; the City's ward views are internal.)
@@ -107,7 +107,7 @@ CL = CivicLens today. T311 = 311 Toronto; SCF = SeeClickFix; FMS = FixMyStreet; 
 
 ## E. Risks
 
-1. **Incumbents handle intake and case tracking better.** Position CivicLens as a feeder into 311, not a replacement.
+1. **Incumbents handle intake and case tracking better.** Position GeoIssue as a feeder into 311, not a replacement.
 2. **Vehicle AI is more systematic for pavement.** Don't claim pavement condition scores (PCI/PASER).
 3. **Sampling bias.** Wards with fewer people posting look "healthier" ([Street Sense, arXiv](https://arxiv.org/pdf/1807.06075)). Show sample sizes, normalise, label outputs "signals, not ground truth".
 4. **Scraping and privacy law.** Platform terms prohibit scraping; Canada's Privacy Commissioner ruled in the Clearview AI case that PIPEDA's "publicly available" exception does not cover reusing social-media images for unrelated purposes ([PIPEDA Findings #2021-001](https://priv.gc.ca/en/opc-actions-and-decisions/investigations/investigations-into-businesses/2021/pipeda-2021-001)); the BC Court of Appeal upheld the BC finding in February 2026. Use official APIs and consented uploads, blur, store derived data only, offer takedown.

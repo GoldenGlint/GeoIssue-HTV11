@@ -1,6 +1,6 @@
 # Commercial image-geolocation tools and professional OSINT geolocation practice
 
-Research date: 2026-10-17. Scope: how Picarta, GeoSpy/Raven and related tools work and how accurate they are; independent comparisons; expert OSINT workflow; failure modes, confidence presentation and ethics. Per the coordinator's correction, tools and workflows are judged on the evidence, not against any existing CivicLens design. Items from before 2025 are marked **[older]**. Vendor claims are labelled **(vendor claim)**.
+Research date: 2026-10-17. Scope: how Picarta, GeoSpy/Raven and related tools work and how accurate they are; independent comparisons; expert OSINT workflow; failure modes, confidence presentation and ethics. Per the coordinator's correction, tools and workflows are judged on the evidence, not against any existing GeoIssue design. Items from before 2025 are marked **[older]**. Vendor claims are labelled **(vendor claim)**.
 
 ---
 

@@ -9,7 +9,7 @@ analysis/config.toml). GEMINI_API_BASE overrides the endpoint (used by tests).
 
 Static files are an allowlist: the entry page, sw.js, frontend scripts and styles, credited evidence
 assets, and the public analysis snapshot (issues.public.json, report.json, areas.json, photos/).
-When CIVICLENS_PUBLISHED_DIR is set, /data/analyzed/* is read from $CIVICLENS_PUBLISHED_DIR/current
+When GEOISSUE_PUBLISHED_DIR is set, /data/analyzed/* is read from $GEOISSUE_PUBLISHED_DIR/current
 instead of the repository. Everything else, including raw batches and full-precision JSON, is 404.
 
 Endpoints
@@ -79,7 +79,7 @@ GEMINI_SLOTS = threading.BoundedSemaphore(4)
 PUBLIC_ANALYSIS = {"issues.public.json", "report.json", "areas.json"}
 INGEST_STAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
 
-TRIAGE_PROMPT = f"""You review photos submitted to CivicLens, a Toronto civic-issue map. Look at the photo and answer in JSON.
+TRIAGE_PROMPT = f"""You review photos submitted to GeoIssue, a Toronto civic-issue map. Look at the photo and answer in JSON.
 - is_civic_issue: does it clearly show a problem in a public space that a city would fix?
 - category: one of {", ".join(CATEGORIES)}. Pothole = road surface holes or broken asphalt. Sidewalk damage = cracked,
   heaved or broken sidewalks, curbs or ramps. Graffiti = tags or paint on public or private surfaces. Litter = trash,
@@ -251,7 +251,7 @@ def repo_file(path):
 
 
 def published_dir():
-    raw = os.environ.get("CIVICLENS_PUBLISHED_DIR")
+    raw = os.environ.get("GEOISSUE_PUBLISHED_DIR")
     return Path(raw) if raw else None
 
 
@@ -474,11 +474,11 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Serve CivicLens with a local Gemini API")
+    parser = argparse.ArgumentParser(description="Serve GeoIssue with a local Gemini API")
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 5173)))
     port = parser.parse_args().port
     server = ThreadingHTTPServer(("127.0.0.1", port), partial(Handler, directory=str(ROOT)))
-    print(f"CivicLens ready at http://127.0.0.1:{port}  ·  Gemini {'on (' + MODEL + ')' if KEY else 'off: add GEMINI_API_KEY to .env'}")
+    print(f"GeoIssue ready at http://127.0.0.1:{port}  ·  Gemini {'on (' + MODEL + ')' if KEY else 'off: add GEMINI_API_KEY to .env'}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

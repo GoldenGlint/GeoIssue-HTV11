@@ -202,7 +202,7 @@ def run(*, config_path=DEFAULT_CONFIG, output=DEFAULT_OUTPUT):
     started = datetime.now(timezone.utc)
     since = started - timedelta(days=config["days"])
     with requests.Session() as session:
-        session.headers["User-Agent"] = "CivicLens-Mastodon/0.1"
+        session.headers["User-Agent"] = "GeoIssue-Mastodon/0.1"
         statuses, sources = collect(session, config, since=since)
     if not any(source["pages"] for source in sources):
         raise ValueError("All Mastodon sources failed. " +

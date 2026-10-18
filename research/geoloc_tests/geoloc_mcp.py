@@ -1,4 +1,4 @@
-"""MCP server that gives Claude Code the CivicLens geolocation tools (stdio JSON-RPC, no SDK needed).
+"""MCP server that gives Claude Code the GeoIssue geolocation tools (stdio JSON-RPC, no SDK needed).
 
 claude_geoloc.py starts Claude Code with this server as its only source of tools. The tools are the
 geoloc_agent.Agent tools, so the Qwen and Claude agents search, match and verify the same way, and
@@ -205,7 +205,7 @@ def serve(host, stdin, proto):
             if method == "initialize":
                 respond(proto, msg_id, {"protocolVersion": msg.get("params", {}).get("protocolVersion", PROTOCOL),
                                         "capabilities": {"tools": {}},
-                                        "serverInfo": {"name": "civiclens-geoloc", "version": "0.1.0"}})
+                                        "serverInfo": {"name": "geoissue-geoloc", "version": "0.1.0"}})
             elif method == "tools/list":
                 respond(proto, msg_id, {"tools": TOOL_SPECS})
             elif method == "tools/call":

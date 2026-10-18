@@ -112,7 +112,7 @@ wheels = [
 ]
 
 [[package]]
-name = "civiclens-spikes"
+name = "geoissue-spikes"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

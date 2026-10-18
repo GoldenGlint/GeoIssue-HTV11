@@ -23,7 +23,7 @@ AVAILABLE = {"available": True, "model": "opus", "minutes": 10, "missing": [], "
 
 class GeolocateApiTest(unittest.TestCase):
     def setUp(self):
-        tmp = tempfile.TemporaryDirectory()
+        tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)  # Windows: a just-killed process may still hold it
         self.addCleanup(tmp.cleanup)
         self.jobs = Path(tmp.name)
         self.started = []

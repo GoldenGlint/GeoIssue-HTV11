@@ -322,7 +322,7 @@ def run(*, queries=(), authors=(), output=DEFAULT_OUTPUT, days=7,
         started = datetime.now(timezone.utc)
         since = started - timedelta(days=days)
         with requests.Session() as session:
-            session.headers["User-Agent"] = "CivicLens-Bluesky/0.1"
+            session.headers["User-Agent"] = "GeoIssue-Bluesky/0.1"
             refreshed = refresh_posts(session, existing)
             posts, sources = collect(session, queries, authors, since=since, until=started,
                                      max_posts=max_posts, max_pages=max_pages)

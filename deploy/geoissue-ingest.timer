@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily GeoIssue ingestion (install disabled; enable only when a daily run is wanted)
+
+[Timer]
+OnCalendar=daily
+Persistent=false
+RandomizedDelaySec=15min
+Unit=geoissue-ingest.service
+
+[Install]
+WantedBy=timers.target

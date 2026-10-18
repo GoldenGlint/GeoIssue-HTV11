@@ -1,10 +1,10 @@
-# CivicLens — Complete Hackathon Implementation Blueprint
+# GeoIssue — Complete Hackathon Implementation Blueprint
 
 > **Hack the Valley 11 · School of Cities · Toronto 2026 civic-tech challenge**  
 > **Version:** 1.0 · **Prepared:** 2026-10-16 · **Build window:** 36 hours · **Default team:** 3 developers  
 > **Status:** Technical implementation plan, not an assertion that any services or integrations are already deployed.
 
-**One-line pitch:** CivicLens converts appropriately licensed, geotagged street imagery into *reviewable* infrastructure observations, locates them on a Toronto map, connects them to historical 311 context, and helps residents turn evidence into responsible action.
+**One-line pitch:** GeoIssue converts appropriately licensed, geotagged street imagery into *reviewable* infrastructure observations, locates them on a Toronto map, connects them to historical 311 context, and helps residents turn evidence into responsible action.
 
 ---
 
@@ -79,7 +79,7 @@ A Toronto resident may see a damaged road or sidewalk but lack the time, knowled
 
 > The HTV11 Devpost currently lists the six MLH-related submission categories mentioned in the supplied prize page. Prize page banners can display historical quarter labels: **verify current event-specific eligibility, mandatory criteria and submission procedures with organizers**. Do not represent winning or eligibility as guaranteed.
 
-| Technology / prize | Concrete CivicLens application | Priority | Demonstration to judges |
+| Technology / prize | Concrete GeoIssue application | Priority | Demonstration to judges |
 |---|---|---|---|
 | **Google Gemini API** | Multimodal detection from real street images; schema-constrained issue classification, bounding boxes when credible, plain-language explanations and ward brief copy grounded in SQL | **P0 core** | Click image → show Gemini structured output + source image |
 | **Tiger Data** | Single managed PostgreSQL source of truth; PostGIS ward joins; TimescaleDB append-only event log and historical daily rollups | **P0 core / P1 analytics** | SQL tables + live ward chart + continuous aggregate query |
@@ -191,7 +191,7 @@ flowchart TD
 ### Setup commands (reference; adapt paths)
 
 ```bash
-mkdir civiclens && cd civiclens
+mkdir geoissue && cd geoissue
 git init
 npx create-next-app@latest web --ts --tailwind --eslint --app --src-dir --import-alias '@/*'
 cd web
@@ -727,7 +727,7 @@ Use capture age to display `captured X months ago`. Flag images over 12 months a
 
 ### Main navigation
 
-- `/` — CivicLens overview + Explore Toronto map (default).
+- `/` — GeoIssue overview + Explore Toronto map (default).
 - `/issues/[id]` — deep-linkable issue evidence page.
 - `/wards/[wardNumber]` — ward-level 311 context and observation coverage briefing.
 - `/review` — authenticated candidate queue and moderation actions.
@@ -737,7 +737,7 @@ Use capture age to display `captured X months ago`. Flag images over 12 months a
 
 ```text
 +--------------------------------------------------------------------+
-| CivicLens       Explore | Ward insights | Methodology    Sign in    |
+| GeoIssue       Explore | Ward insights | Methodology    Sign in    |
 +----------------------+---------------------------------------------+
 | Filters              | MAPLIBRE MAP                                |
 | - Ward               |   circles: potential / confirmed / rejected|
@@ -942,7 +942,7 @@ Use Auth.js GitHub provider with JWT session strategy. Map GitHub numeric user I
 }
 ```
 
-Implement `canonicalize = JSON.stringify` with **stable sorted keys** (nested canonicalization if nested objects), UTF-8 encode, `sha256` hash, create Solana **Devnet** transaction containing only a short memo such as `CIVICLENS_V1:<hex_sha256>` through the Memo program. The actual manifest stays server-side and can be re-hashed to compare to the chain record. Store tx signature and cluster in `evidence_anchors`. A reviewer initiates anchoring once; idempotently refuse a second anchor of a different manifest without an explicit versioned amendment. Never put names, contact info, raw images, addresses, or precise private upload coordinates in immutable public data.
+Implement `canonicalize = JSON.stringify` with **stable sorted keys** (nested canonicalization if nested objects), UTF-8 encode, `sha256` hash, create Solana **Devnet** transaction containing only a short memo such as `GEOISSUE_V1:<hex_sha256>` through the Memo program. The actual manifest stays server-side and can be re-hashed to compare to the chain record. Store tx signature and cluster in `evidence_anchors`. A reviewer initiates anchoring once; idempotently refuse a second anchor of a different manifest without an explicit versioned amendment. Never put names, contact info, raw images, addresses, or precise private upload coordinates in immutable public data.
 
 **Required explanatory label:** “Hash anchored on Solana Devnet. This shows that a matching manifest was recorded; it does **not** confirm the issue's existence or official acceptance.”
 
@@ -1008,7 +1008,7 @@ Official VM access guide: https://docs.vultr.com/products/compute/instances/clou
 ## 15. Project files, ownership and branching
 
 ```text
-civiclens/
+geoissue/
 ├── README.md
 ├── LICENSE
 ├── .gitignore
@@ -1064,7 +1064,7 @@ civiclens/
 ├── data/fixtures/{manifest.json,README.md}
 ├── docs/{methodology.md,data-lineage.md,demo-script.md,api.md}
 ├── compose.yml
-└── CIVICLENS_BUILD_PLAN.md
+└── GEOISSUE_BUILD_PLAN.md
 ```
 
 **Do not check in third-party images or large 311 files without a clear redistribution basis.** The fixture manifest can link to authorized assets instead.
@@ -1233,7 +1233,7 @@ Set environment-based per-run maximum images, model calls, bytes and estimated c
 ### Five likely judge questions
 
 **Q: Is this replacing the City's 311 app?**  
-A: No. CivicLens turns visual evidence into reviewable candidate issues, enriches it with historical public data and guides the resident to official reporting.
+A: No. GeoIssue turns visual evidence into reviewable candidate issues, enriches it with historical public data and guides the resident to official reporting.
 
 **Q: How do you know this pothole is still there?**  
 A: We don't from an old photo. The captured-at date and stale warning are prominent; a person must confirm current condition.
@@ -1347,7 +1347,7 @@ PR description must specify changed schemas/endpoints, screenshot or curl output
 
 ## 24. Final product contract
 
-CivicLens is **fully functioning at hackathon-MVP level** only when real or clearly identified licensed fixture imagery can be ingested; Gemini classification is validated and persisted; issue pins and details are served from Tiger Data; a reviewer can act on candidates; Toronto 311 context is genuinely imported with limitations; a resident can prepare a report **without a false submission claim**; and the public web deployment can be demonstrated end-to-end.
+GeoIssue is **fully functioning at hackathon-MVP level** only when real or clearly identified licensed fixture imagery can be ingested; Gemini classification is validated and persisted; issue pins and details are served from Tiger Data; a reviewer can act on candidates; Toronto 311 context is genuinely imported with limitations; a resident can prepare a report **without a false submission claim**; and the public web deployment can be demonstrated end-to-end.
 
 **Suggested build order:** `DB + DTO → mock map → Mapillary/licensed imagery → Gemini → real map → 311 → review → draft → deploy → evaluate → Vultr/Tiger showcase → optional Solana/domain/DEV`.
 

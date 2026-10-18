@@ -67,7 +67,7 @@ Live requests verify the Free plan, zero subscription price, non-paying status, 
 Export an approved set using downloaded labels:
 
 ```sh
-.venv/bin/python -m scraping.demo export --out scraping/data/review-demo --labels ~/Downloads/civiclens-labels.json
+.venv/bin/python -m scraping.demo export --out scraping/data/review-demo --labels ~/Downloads/geoissue-labels.json
 ```
 
 This writes `accepted.jsonl`. Unknown batch/image identifiers and invalid labels are rejected. Only explicitly useful images that passed the automatic checks enter the accepted set. A useful street photo can have **no visible issue**.

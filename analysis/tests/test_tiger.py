@@ -173,12 +173,12 @@ class TigerDatabaseTest(unittest.TestCase):
             report = {"generated_at": tiger.iso(now)}
             tiger.sync(public, events, report)
             with tiger.connection() as conn:
-                before = conn.execute("SELECT sighting_id, reported_at, ingested_at FROM civiclens.sightings WHERE dataset = 'pipeline' ORDER BY sighting_id").fetchall()
+                before = conn.execute("SELECT sighting_id, reported_at, ingested_at FROM geoissue.sightings WHERE dataset = 'pipeline' ORDER BY sighting_id").fetchall()
             self.assertGreaterEqual(tiger.compress_history()["converted_or_already_columnstore_chunks"], 1)
             tiger.sync(public, events, report)
             with tiger.connection() as conn:
-                self.assertEqual(before, conn.execute("SELECT sighting_id, reported_at, ingested_at FROM civiclens.sightings WHERE dataset = 'pipeline' ORDER BY sighting_id").fetchall())
-                self.assertEqual(conn.execute("SELECT sum(reports) FROM civiclens.ward_activity_hourly WHERE dataset = 'pipeline'").fetchone()[0], 2)
+                self.assertEqual(before, conn.execute("SELECT sighting_id, reported_at, ingested_at FROM geoissue.sightings WHERE dataset = 'pipeline' ORDER BY sighting_id").fetchall())
+                self.assertEqual(conn.execute("SELECT sum(reports) FROM geoissue.ward_activity_hourly WHERE dataset = 'pipeline'").fetchone()[0], 2)
             self.assertEqual(tiger.issues(), public)
             self.assertEqual(tiger.activity()["reports"], 1)
             bad = copy.deepcopy(events)
@@ -188,7 +188,7 @@ class TigerDatabaseTest(unittest.TestCase):
             self.assertEqual(tiger.pipeline()["reports"], 2)
             tiger.sync(public, events[1:], report)
             with tiger.connection() as conn:
-                self.assertEqual(conn.execute("SELECT sum(reports) FROM civiclens.ward_activity_hourly WHERE dataset = 'pipeline'").fetchone()[0], 1)
+                self.assertEqual(conn.execute("SELECT sum(reports) FROM geoissue.ward_activity_hourly WHERE dataset = 'pipeline'").fetchone()[0], 1)
             self.assertTrue(tiger.benchmark("pipeline")["results_match"])
 
 

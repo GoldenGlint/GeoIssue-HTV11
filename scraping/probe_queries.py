@@ -30,7 +30,7 @@ def score(records):
 def probe_bluesky(queries, *, since, now):
     results = []
     with requests.Session() as session:
-        session.headers["User-Agent"] = "CivicLens-Probe/0.1"
+        session.headers["User-Agent"] = "GeoIssue-Probe/0.1"
         for query in queries:
             posts, sources = bluesky.collect(session, [query], [], since=since, until=now,
                                              max_posts=100, max_pages=1)
@@ -43,7 +43,7 @@ def probe_bluesky(queries, *, since, now):
 def probe_mastodon(config, *, since, now):
     results = []
     with requests.Session() as session:
-        session.headers["User-Agent"] = "CivicLens-Probe/0.1"
+        session.headers["User-Agent"] = "GeoIssue-Probe/0.1"
         for tag in config["tags"]:
             statuses, sources = mastodon.collect(session, {**config, "tags": [tag]}, since=since)
             records, _, _ = mastodon.normalize(statuses, since=since, now=now)
@@ -55,7 +55,7 @@ def probe_mastodon(config, *, since, now):
 def probe_reddit(config, *, since, now):
     results = []
     with requests.Session() as session:
-        session.headers["User-Agent"] = "CivicLens-Probe/0.1"
+        session.headers["User-Agent"] = "GeoIssue-Probe/0.1"
         for sub in config["subreddits"]:
             posts, sources = reddit.collect(session, {**config, "subreddits": [sub]},
                                             since=since, until=now)

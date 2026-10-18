@@ -165,7 +165,7 @@ def main():
     request = urllib.request.Request(
         "https://overpass-api.de/api/interpreter",
         data=urllib.parse.urlencode({"data": QUERY}).encode(),
-        headers={"User-Agent": "CivicLens-HTV-prototype/0.1 (hackathon demo)"},
+        headers={"User-Agent": "GeoIssue-HTV-prototype/0.1 (hackathon demo)"},
     )
     for attempt in range(3):  # the public Overpass server answers 429 / 502 / 504 when it is busy
         try:

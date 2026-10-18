@@ -1,0 +1,18 @@
+[Unit]
+Description=GeoIssue web
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=geoissue
+Group=geoissue
+WorkingDirectory=/opt/geoissue
+EnvironmentFile=/etc/geoissue/env
+ExecStart=/opt/geoissue/.venv/bin/python scripts/serve.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

@@ -16,7 +16,7 @@ All three weigh in; the role switch in the app decides what each sees.
 
 ## Product Purpose
 
-CivicLens turns public photos of civic issues (potholes, broken sidewalks, graffiti, dumping, flooding) into one shared, privacy-protected dataset that people can explore on a map, in a table and on a dashboard, verify and correct, and act on. Success: a resident sees what is already reported nearby, and staff can see where issues cluster and plan the work.
+GeoIssue turns public photos of civic issues (potholes, broken sidewalks, graffiti, dumping, flooding) into one shared, privacy-protected dataset that people can explore on a map, in a table and on a dashboard, verify and correct, and act on. Success: a resident sees what is already reported nearby, and staff can see where issues cluster and plan the work.
 
 ## Positioning
 
@@ -35,7 +35,7 @@ Hackathon prototype for the School of Cities challenge on Toronto's 2026 municip
 
 ## Brand Commitments
 
-- The CivicLens name and the lens mark, including the short loading animation where the lens draws itself.
+- The GeoIssue name and the lens mark, including the short loading animation where the lens draws itself.
 - Light/dark theme switching stays.
 - Identity is civic and public-service, not tied to Toronto alone.
 - Must not look AI-generated (glows, neon accents, gradient sheen).

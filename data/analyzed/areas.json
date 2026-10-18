@@ -247,7 +247,7 @@
     ],
     "label": "Scarborough Centre",
     "summary": {
-     "text": "Ward 21 (Scarborough Centre) has 2 issues in CivicLens data, 2 still open. By type: other (2). 2 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at Ellesmere Station (closed). Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "text": "Ward 21 (Scarborough Centre) has 2 issues in GeoIssue data, 2 still open. By type: other (2). 2 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at Ellesmere Station (closed). Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
      "method": "template"
     }
    },
@@ -279,7 +279,7 @@
     ],
     "label": "Etobicoke—Lakeshore",
     "summary": {
-     "text": "Ward 3 (Etobicoke—Lakeshore) has 1 issue in CivicLens data, 1 still open. By type: other (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at Bloor St W & Islington Ave. Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "text": "Ward 3 (Etobicoke—Lakeshore) has 1 issue in GeoIssue data, 1 still open. By type: other (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at Bloor St W & Islington Ave. Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
      "method": "template"
     }
    },
@@ -311,7 +311,7 @@
     ],
     "label": "Parkdale—High Park",
     "summary": {
-     "text": "Ward 4 (Parkdale—High Park) has 1 issue in CivicLens data, 1 still open. By type: other (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at High Park (approximate). Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "text": "Ward 4 (Parkdale—High Park) has 1 issue in GeoIssue data, 1 still open. By type: other (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at High Park (approximate). Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
      "method": "template"
     }
    },
@@ -343,7 +343,7 @@
     ],
     "label": "Spadina—Fort York",
     "summary": {
-     "text": "Ward 10 (Spadina—Fort York) has 1 issue in CivicLens data, 1 still open. By type: flooding (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: flooding at Queen St W & Spadina Ave. Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "text": "Ward 10 (Spadina—Fort York) has 1 issue in GeoIssue data, 1 still open. By type: flooding (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: flooding at Queen St W & Spadina Ave. Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
      "method": "template"
     }
    },
@@ -375,7 +375,7 @@
     ],
     "label": "Toronto Centre",
     "summary": {
-     "text": "Ward 13 (Toronto Centre) has 1 issue in CivicLens data, 1 still open. By type: other (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at Dundas St & Yonge St. Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
+     "text": "Ward 13 (Toronto Centre) has 1 issue in GeoIssue data, 1 still open. By type: other (1). 1 first seen in the last 7 days, compared with 0 in the 7 days before. Highest priority: other at Dundas St & Yonge St. Counts cover issues found in public photos and community submissions, not every issue in the area. Area boundaries are approximate placeholders.",
      "method": "template"
     }
    }

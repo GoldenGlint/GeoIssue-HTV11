@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Destroy expired or over-budget CivicLens instances
+      - name: Destroy expired or over-budget GeoIssue instances
         run: python research/geoloc_tests/cloud/vultr_guard.py --budget-usd 10
         env:
           VULTR_API_KEY: ${{ secrets.VULTR_API_KEY }}

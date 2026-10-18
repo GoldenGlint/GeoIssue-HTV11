@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-10-18T05:09:56+00:00",
-  "title": "Design System: CivicLens",
+  "title": "Design System: GeoIssue",
   "extensions": {
     "colorMeta": {
       "bg": {
@@ -1555,7 +1555,7 @@
   ],
   "narrative": {
     "northStar": "The Quiet Civic Map",
-    "overview": "CivicLens is the familiar civic map-and-data tool, built with care rather than novelty. White working surfaces sit on a cool grey ground, one blue carries every action and selection, Inter sets everything, and the map and the data do the talking. The bar is the category's best: Google Maps for the map, Linear and Stripe for panels and tables, city open-data portals and 311 tools for the civic register, Mapbox and Felt for overlays.\n\nThe density is that of a working tool. Controls read at 13px, filter fields are 32px tall, borders are neutral hairlines, and a single soft shadow lifts whatever floats over the map. Saturated colour belongs to the data: category pins on a muted basemap, tinted chips for severity, status and verification, and a blue-to-red density ramp. Light is the default theme; dark is the same system in neutral graphite.\n\nThe world was chosen against the dark neon command-centre look the app used to have. It carries no glows, no cyan halos, no gradient sheen, no backdrop blur and no gradient text, and nothing in it should read as AI-generated.",
+    "overview": "GeoIssue is the familiar civic map-and-data tool, built with care rather than novelty. White working surfaces sit on a cool grey ground, one blue carries every action and selection, Inter sets everything, and the map and the data do the talking. The bar is the category's best: Google Maps for the map, Linear and Stripe for panels and tables, city open-data portals and 311 tools for the civic register, Mapbox and Felt for overlays.\n\nThe density is that of a working tool. Controls read at 13px, filter fields are 32px tall, borders are neutral hairlines, and a single soft shadow lifts whatever floats over the map. Saturated colour belongs to the data: category pins on a muted basemap, tinted chips for severity, status and verification, and a blue-to-red density ramp. Light is the default theme; dark is the same system in neutral graphite.\n\nThe world was chosen against the dark neon command-centre look the app used to have. It carries no glows, no cyan halos, no gradient sheen, no backdrop blur and no gradient text, and nothing in it should read as AI-generated.",
     "keyCharacteristics": [
       "White surfaces on a cool grey ground, separated by neutral hairline borders.",
       "One blue for actions, selection, links and status chips; never for plain text.",

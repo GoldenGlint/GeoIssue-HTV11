@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 API = "https://api.vultr.com/v2"
-TAG = "civiclens-gpu"
+TAG = "geoissue-gpu"
 HERE = Path(__file__).parent
 LEDGER = HERE / "ledger.json"
 LOCK = HERE / "BUDGET_LOCK"
@@ -87,7 +87,7 @@ def get_server(kind, server_id):
 
 
 def tagged_servers():
-    """All CivicLens servers of both kinds, each with a 'kind' key added."""
+    """All GeoIssue servers of both kinds, each with a 'kind' key added."""
     found = []
     for kind, (path, _, plural) in KINDS.items():
         for s in call("GET", f"{path}?per_page=500")[plural]:

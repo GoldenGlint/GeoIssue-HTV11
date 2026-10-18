@@ -21,7 +21,7 @@ ENDPOINTS = [
     "https://overpass.private.coffee/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
 ]
-USER_AGENT = "CivicLens-hackathon-geoloc-test/0.1 (research)"
+USER_AGENT = "GeoIssue-hackathon-geoloc-test/0.1 (research)"
 
 
 def overpass(query):

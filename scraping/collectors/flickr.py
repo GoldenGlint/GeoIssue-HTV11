@@ -176,7 +176,7 @@ def run(*, config_path=DEFAULT_CONFIG, output=DEFAULT_OUTPUT, key=None):
     started = datetime.now(timezone.utc)
     since = started - timedelta(days=config["days"])
     with requests.Session() as session:
-        session.headers["User-Agent"] = "CivicLens-Flickr/0.1"
+        session.headers["User-Agent"] = "GeoIssue-Flickr/0.1"
         photos, sources = collect(session, key, config, since=since)
     packed, normalization = normalize(photos, since=since, now=started)
     packed = packed[:config["max_images"]]

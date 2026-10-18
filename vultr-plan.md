@@ -1,10 +1,10 @@
-# Vultr implementation plan for CivicLens
+# Vultr implementation plan for GeoIssue
 
 Created October 18, 2026; revised the same day. Status: planned; no cloud resources provisioned.
 
 ## Outcome and scope
 
-Run the CivicLens website, Python API, and an on-demand collection/analysis job on one Vultr Cloud Compute instance. Keep Gemini for photo analysis and Tiger Data for issue snapshots and report activity. The demo keeps working after the development laptop closes.
+Run the GeoIssue website, Python API, and an on-demand collection/analysis job on one Vultr Cloud Compute instance. Keep Gemini for photo analysis and Tiger Data for issue snapshots and report activity. The demo keeps working after the development laptop closes.
 
 First release: hosting, a safe public file policy, and one bounded ingestion command that is run manually. A daily schedule ships as an installed-but-disabled systemd timer, so the team can turn it on later with one command. Evidence photos stay on the instance. Object Storage, shared submissions, and Vultr inference are follow-up work.
 
@@ -16,7 +16,7 @@ flowchart LR
     Caddy --> App["serve.py on 127.0.0.1:5173"]
     App --> Gemini[Gemini]
     App --> Tiger[Tiger Data]
-    App --> Published["/var/lib/civiclens/published/current"]
+    App --> Published["/var/lib/geoissue/published/current"]
     Ingest["scripts/ingest.py (manual; timer disabled)"] --> Workflow["scraping.workflow.run"]
     Workflow --> Analysis["analysis.pipeline.run into candidate"]
     Analysis --> Validate[Validate]
@@ -35,7 +35,7 @@ This step is required before the server is reachable from the internet. Today `s
   - `/assets/evidence/*`
   - `/data/analyzed/issues.public.json`, `report.json`, `areas.json`, `photos/*`
   - Everything else returns 404, including directory listings, encoded traversal, and symlinks that resolve outside the allowed roots.
-- When `CIVICLENS_PUBLISHED_DIR` is set, serve `/data/analyzed/*` from `$CIVICLENS_PUBLISHED_DIR/current/` instead of the repository. Unset keeps today's local behaviour.
+- When `GEOISSUE_PUBLISHED_DIR` is set, serve `/data/analyzed/*` from `$GEOISSUE_PUBLISHED_DIR/current/` instead of the repository. Unset keeps today's local behaviour.
 - Add `GET /api/health` (process readiness only; no Gemini or database call).
 - Extend `GET /api/status` with an `ingest` object read from `current/ingest-status.json`: last successful run time, status, issue count. No paths or errors that reveal configuration.
 - Cap concurrent Gemini POSTs with a small semaphore (for example 4) and return 429 when full. Keep the existing 12 MB body limit. Per-client rate limiting is deferred.
@@ -55,7 +55,7 @@ Small supporting changes:
 
 `ingest.py` steps:
 
-1. Take an exclusive `flock` on `$CIVICLENS_PUBLISHED_DIR/ingest.lock`. While holding it, remove a stale `.workflow.lock` left by a killed run (the workflow's own lock is not cleaned up on SIGKILL).
+1. Take an exclusive `flock` on `$GEOISSUE_PUBLISHED_DIR/ingest.lock`. While holding it, remove a stale `.workflow.lock` left by a killed run (the workflow's own lock is not cleaned up on SIGKILL).
 2. Call `workflow.run(output=scraping/data/vultr-workflow, config_path=workflow-vultr.json, max_screen_requests=20, max_description_requests=20, exploration_images=0)`. Budgets are CLI flags so the first manual run can use larger ones.
 3. Stop without publishing unless the workflow status is `ok`. Caches are kept for the next attempt.
 4. Create `generations/<UTC timestamp>/`, copy the previous generation's `.summary_cache.json` into it, and call `analysis.pipeline.run(handoff/post-groups.jsonl, config, out_dir=candidate, photo_url_prefix="./data/analyzed/")`.
@@ -72,21 +72,21 @@ Done when: a manual run updates files, photos, and Tiger Data; repeating it does
 
 ## 3. Deployment package (`deploy/`)
 
-- `deploy/Caddyfile`: `{$CIVICLENS_DOMAIN} { reverse_proxy 127.0.0.1:5173 }`.
-- `deploy/civiclens.service`: dedicated `civiclens` user, `WorkingDirectory=/opt/civiclens`, `EnvironmentFile=/etc/civiclens/env`, `ExecStart=/opt/civiclens/.venv/bin/python scripts/serve.py`, `Restart=on-failure`, enabled at boot.
-- `deploy/civiclens-ingest.service`: `Type=oneshot`, same user, environment and directory, `ExecStart=.../python scripts/ingest.py`, `TimeoutStartSec=45min`.
-- `deploy/civiclens-ingest.timer`: `OnCalendar=daily`, `Persistent=false`, `RandomizedDelaySec=15min`. Installed but **not enabled**. systemd does not start a oneshot that is still running, and `ingest.py` holds a lock, so runs never overlap.
+- `deploy/Caddyfile`: `{$GEOISSUE_DOMAIN} { reverse_proxy 127.0.0.1:5173 }`.
+- `deploy/geoissue.service`: dedicated `geoissue` user, `WorkingDirectory=/opt/geoissue`, `EnvironmentFile=/etc/geoissue/env`, `ExecStart=/opt/geoissue/.venv/bin/python scripts/serve.py`, `Restart=on-failure`, enabled at boot.
+- `deploy/geoissue-ingest.service`: `Type=oneshot`, same user, environment and directory, `ExecStart=.../python scripts/ingest.py`, `TimeoutStartSec=45min`.
+- `deploy/geoissue-ingest.timer`: `OnCalendar=daily`, `Persistent=false`, `RandomizedDelaySec=15min`. Installed but **not enabled**. systemd does not start a oneshot that is still running, and `ingest.py` holds a lock, so runs never overlap.
 - `deploy/README.md`: instance setup, dependencies (`scraping/requirements.txt`, `analysis/requirements-tiger.txt`), environment file, DNS, service install, updates, logs, rollback, teardown, and the timer commands:
 
 ```sh
-sudo systemctl start civiclens-ingest.service        # one manual run
-sudo systemctl enable --now civiclens-ingest.timer   # turn on the daily run
-sudo systemctl disable --now civiclens-ingest.timer  # turn it off again
+sudo systemctl start geoissue-ingest.service        # one manual run
+sudo systemctl enable --now geoissue-ingest.timer   # turn on the daily run
+sudo systemctl disable --now geoissue-ingest.timer  # turn it off again
 ```
 
-The environment file `/etc/civiclens/env` holds `GEMINI_API_KEY`, `TIGER_DATABASE_URL`, `CIVICLENS_PUBLISHED_DIR=/var/lib/civiclens/published`, and `CIVICLENS_DOMAIN`. Both services read it; both existing key loaders check environment variables first. It is never committed.
+The environment file `/etc/geoissue/env` holds `GEMINI_API_KEY`, `TIGER_DATABASE_URL`, `GEOISSUE_PUBLISHED_DIR=/var/lib/geoissue/published`, and `GEOISSUE_DOMAIN`. Both services read it; both existing key loaders check environment variables first. It is never committed.
 
-Because published output lives outside the Git working tree, `git pull` on the server never conflicts with ingested data. Updates: stop any running ingest, `git pull`, run checks, restart `civiclens.service`.
+Because published output lives outside the Git working tree, `git pull` on the server never conflicts with ingested data. Updates: stop any running ingest, `git pull`, run checks, restart `geoissue.service`.
 
 Update [`scraping/docs/AUTOMATION.md`](scraping/docs/AUTOMATION.md) to note that the Vultr daily timer exists and is disabled, consistent with its current "no daily job is enabled" policy.
 

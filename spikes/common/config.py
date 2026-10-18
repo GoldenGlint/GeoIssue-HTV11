@@ -14,15 +14,15 @@ RESULTS = SPIKES / "results"
 load_dotenv(SPIKES / ".env")
 
 # Large data and model caches can live on another drive (C: is nearly full):
-# set CIVICLENS_DATA_DIR / CIVICLENS_CACHE_DIR in spikes/.env.
-DATA = Path(os.environ.get("CIVICLENS_DATA_DIR") or SPIKES / "data")
-CACHE = Path(os.environ.get("CIVICLENS_CACHE_DIR") or ROOT / ".cache")
+# set GEOISSUE_DATA_DIR / GEOISSUE_CACHE_DIR in spikes/.env.
+DATA = Path(os.environ.get("GEOISSUE_DATA_DIR") or SPIKES / "data")
+CACHE = Path(os.environ.get("GEOISSUE_CACHE_DIR") or ROOT / ".cache")
 
 # Keep model weights inside the project so they can be deleted in one go (disk is tight).
 os.environ.setdefault("HF_HOME", str(CACHE / "hf"))
 os.environ.setdefault("TORCH_HOME", str(CACHE / "torch"))
 
-USER_AGENT = "CivicLensSpike/0.1 (Hack the Valley 11 civic-tech research prototype)"
+USER_AGENT = "GeoIssueSpike/0.1 (Hack the Valley 11 civic-tech research prototype)"
 
 # Toronto city bounding box (west, south, east, north)
 TORONTO_BBOX = (-79.6393, 43.5810, -79.1152, 43.8555)

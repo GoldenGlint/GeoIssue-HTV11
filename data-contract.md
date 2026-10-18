@@ -1,4 +1,4 @@
-# CivicLens data contract (frontend ⇄ issue API)
+# GeoIssue data contract (frontend ⇄ issue API)
 
 The frontend reads everything through `issueRepository` in `src/data.js`. It supports generated samples, public analysis snapshots, and Tiger Data-backed issues. See [Tiger Data setup and activity semantics](tiger-data-plan.md). Submissions and corrections remain browser-local.
 

@@ -1,10 +1,10 @@
 > **Historical.** This is the first plan. The folders it names (`spikes/`, `pipeline/`) were never created: collection lives in `scraping/` and analysis in `analysis/`. See `README.md` for what exists now.
 
-# CivicLens v2: stepwise plan with feasibility tests first
+# GeoIssue v2: stepwise plan with feasibility tests first
 
 ## Context
 
-CivicLens works in four stages:
+GeoIssue works in four stages:
 1. It sweeps recent **public social media posts**, most of which are not complaints.
 2. It detects **civic issues** in their images.
 3. It **geolocates** each image inside Toronto with an AI OSINT pipeline we build. The heavy models are skipped when the post already carries a location.

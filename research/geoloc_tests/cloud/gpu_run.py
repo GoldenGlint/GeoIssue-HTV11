@@ -62,7 +62,7 @@ def wait_for_ip(kind, server_id, timeout_s):
 def wait_for_ssh(base, timeout_s):
     start = time.time()
     while time.time() - start < timeout_s:
-        if subprocess.run(base + ["cloud-init status --wait >/dev/null 2>&1; systemctl is-active civiclens-reaper.timer"],
+        if subprocess.run(base + ["cloud-init status --wait >/dev/null 2>&1; systemctl is-active geoissue-reaper.timer"],
                           capture_output=True, text=True).stdout.strip() == "active":
             return
         time.sleep(15)
@@ -95,7 +95,7 @@ def run_remote(base, setup, job, log_path):
     body = " && ".join(c for c in (setup, job) if c)
     # the cd must not share a list with the backgrounded heartbeat loop, or it only happens in that subshell
     remote = ("mkdir -p /root/work; cd /root/work || exit 1; "
-              "(while sleep 60; do touch /var/lib/civiclens/heartbeat; done) >/dev/null 2>&1 & HB=$!; "
+              "(while sleep 60; do touch /var/lib/geoissue/heartbeat; done) >/dev/null 2>&1 & HB=$!; "
               f"bash -c {shlex.quote(body)}; rc=$?; kill $HB; exit $rc")
     log_path.parent.mkdir(parents=True, exist_ok=True)
     with open(log_path, "w", encoding="utf-8") as log:
@@ -126,7 +126,7 @@ def main():
                     help="test mode: skip the controller's destroy so the dead-man switch and guard must do it")
     ap.add_argument("--attach", help="id of a server deployed by hand in the console (label must start with "
                                      f"{vultr.TAG}); skips creation but still runs, pulls and destroys")
-    ap.add_argument("--key", default=str(KEYS / "civiclens-gpu-manual"), help="private key for --attach")
+    ap.add_argument("--key", default=str(KEYS / "geoissue-gpu-manual"), help="private key for --attach")
     args = ap.parse_args()
     vultr.load_env()
 
@@ -190,7 +190,7 @@ def main():
                 print(f"[pull] {remote} -> {local}")
             except subprocess.CalledProcessError as err:
                 print(f"[pull] FAILED {remote}: {err.stderr.decode(errors='replace').strip()[:200]}")
-        subprocess.run(base + ["touch /var/lib/civiclens/job.done"])
+        subprocess.run(base + ["touch /var/lib/geoissue/job.done"])
     finally:
         if server_id and not args.leave_for_reaper:
             try:

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Prepare a fresh Vultr GPU server (x86_64 or ARM64, e.g. GH200) for the CivicLens geolocation agent.
+# Prepare a fresh Vultr GPU server (x86_64 or ARM64, e.g. GH200) for the GeoIssue geolocation agent.
 # Runs from /root/work after gpu_run.py has pushed the code, images and the assets database.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive

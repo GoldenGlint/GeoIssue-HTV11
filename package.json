@@ -1,9 +1,9 @@
 {
-  "name": "civiclens-frontend",
+  "name": "geoissue-frontend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "CivicLens frontend prototype with replaceable demo data",
+  "description": "GeoIssue frontend prototype with replaceable demo data",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "dev:gemini": "python scripts/serve.py",

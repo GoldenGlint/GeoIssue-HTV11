@@ -13,7 +13,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location("civiclens_serve", ROOT / "scripts" / "serve.py")
+spec = importlib.util.spec_from_file_location("geoissue_serve", ROOT / "scripts" / "serve.py")
 serve = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(serve)
 
@@ -84,7 +84,7 @@ class ServeTests(unittest.TestCase):
             (generation / "photos" / "leak.jpg").symlink_to(secret)
             (generation / "photos" / "via.jpg").symlink_to(Path("..") / "issues.json")
             (published / "current").symlink_to(Path("generations") / "20261018T000000Z", target_is_directory=True)
-            os.environ["CIVICLENS_PUBLISHED_DIR"] = str(published)
+            os.environ["GEOISSUE_PUBLISHED_DIR"] = str(published)
             try:
                 status, body = self.request("/data/analyzed/issues.public.json")
                 self.assertEqual(status, 200)
@@ -98,11 +98,11 @@ class ServeTests(unittest.TestCase):
                     self.assertNotIn(b"full-precision", body)
                 missing = root / "empty-published"
                 missing.mkdir()
-                os.environ["CIVICLENS_PUBLISHED_DIR"] = str(missing)
+                os.environ["GEOISSUE_PUBLISHED_DIR"] = str(missing)
                 status, _ = self.request("/data/analyzed/issues.public.json")
                 self.assertEqual(status, 404)
             finally:
-                os.environ.pop("CIVICLENS_PUBLISHED_DIR", None)
+                os.environ.pop("GEOISSUE_PUBLISHED_DIR", None)
 
     def test_health_makes_no_upstream_call_and_status_hides_ingest_details(self):
         with patch.object(serve, "gemini", side_effect=AssertionError("gemini")), \
@@ -119,20 +119,20 @@ class ServeTests(unittest.TestCase):
             generation.mkdir(parents=True)
             (generation / "ingest-status.json").write_text(json.dumps({
                 "last_success_at": "2026-10-18T04:15:00Z", "status": "ok", "issue_count": 3,
-                "secret_path": "/etc/civiclens/env",
+                "secret_path": "/etc/geoissue/env",
             }), encoding="utf-8")
             (published / "current").symlink_to(Path("generations") / "20261018T000000Z", target_is_directory=True)
-            os.environ["CIVICLENS_PUBLISHED_DIR"] = str(published)
+            os.environ["GEOISSUE_PUBLISHED_DIR"] = str(published)
             try:
                 _, body = self.request("/api/status")
             finally:
-                os.environ.pop("CIVICLENS_PUBLISHED_DIR", None)
+                os.environ.pop("GEOISSUE_PUBLISHED_DIR", None)
         payload = json.loads(body)
         self.assertEqual(payload["ingest"], {
             "last_success_at": "2026-10-18T04:15:00Z", "status": "ok", "issue_count": 3,
         })
         self.assertNotIn(b"secret_path", body)
-        self.assertNotIn(b"/etc/civiclens", body)
+        self.assertNotIn(b"/etc/geoissue", body)
 
     def test_gemini_concurrency_limit_returns_429_and_releases_the_slot(self):
         body = json.dumps({"image": base64.b64encode(b"img").decode(), "mime": "image/jpeg"}).encode()

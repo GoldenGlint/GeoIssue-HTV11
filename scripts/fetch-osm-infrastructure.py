@@ -61,7 +61,7 @@ def main():
     request = urllib.request.Request(
         "https://overpass-api.de/api/interpreter",
         data=urllib.parse.urlencode({"data": QUERY}).encode(),
-        headers={"User-Agent": "CivicLens-HTV-prototype/0.1 (hackathon demo)"},
+        headers={"User-Agent": "GeoIssue-HTV-prototype/0.1 (hackathon demo)"},
     )
     with urllib.request.urlopen(request, timeout=120) as response:
         elements = json.load(response)["elements"]

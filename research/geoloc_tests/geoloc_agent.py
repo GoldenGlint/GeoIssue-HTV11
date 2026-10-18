@@ -31,7 +31,7 @@ UNVERIFIED_MAX_CONFIDENCE = 0.3
 
 # Kept deliberately neutral: no site types, place names or tag examples drawn from the test photos, so any
 # conclusion the model reaches is deduced from the photo and tool output, not suggested by the prompt.
-SYSTEM = """You are an OSINT geolocation analyst for CivicLens. The photo was taken somewhere in the City of Toronto.
+SYSTEM = """You are an OSINT geolocation analyst for GeoIssue. The photo was taken somewhere in the City of Toronto.
 Goal: find where the camera was, ideally within 10 m. Locate the place, never the people in it.
 
 Work deductively from what is visible. Do not assume a type of place in advance and do not pick a place from

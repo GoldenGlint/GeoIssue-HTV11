@@ -1,4 +1,4 @@
-"""Dynamic guard for CivicLens Vultr servers: there is no fixed lifetime; it destroys a tagged server when
+"""Dynamic guard for GeoIssue Vultr servers: there is no fixed lifetime; it destroys a tagged server when
   - budget: total spend has reached the cap, or the server is within 5 minutes of starting another billed
     hour that would push spend past the cap;
   - done or idle: over SSH (key from the ledger), the job wrote job.done more than 2 min ago, or the job
@@ -19,8 +19,8 @@ import time
 
 import vultr
 
-STATE_CMD = ("now=$(date +%s); d=0; [ -f /var/lib/civiclens/job.done ] && d=$(stat -c %Y /var/lib/civiclens/job.done); "
-             "b=$(stat -c %Y /var/lib/civiclens/heartbeat 2>/dev/null || echo 0); echo $now $d $b")
+STATE_CMD = ("now=$(date +%s); d=0; [ -f /var/lib/geoissue/job.done ] && d=$(stat -c %Y /var/lib/geoissue/job.done); "
+             "b=$(stat -c %Y /var/lib/geoissue/heartbeat 2>/dev/null || echo 0); echo $now $d $b")
 
 
 def ssh_state(key, ip):

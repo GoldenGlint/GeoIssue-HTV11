@@ -7,8 +7,8 @@ import { distanceMetres } from './coordinates.js';
 import { toast } from './ui.js';
 
 export const DEFAULT_FILTERS = { query: '', type: '', severity: '', status: '', days: '30', area: '', infra: '', radius: '500' };
-export const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(`civiclens:${key}`)) ?? fallback; } catch { return fallback; } };
-export const persist = (key, value) => { try { localStorage.setItem(`civiclens:${key}`, JSON.stringify(value)); } catch { toast('Browser storage is unavailable. Changes will last for this session.'); } };
+export const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(`geoissue:${key}`)) ?? fallback; } catch { return fallback; } };
+export const persist = (key, value) => { try { localStorage.setItem(`geoissue:${key}`, JSON.stringify(value)); } catch { toast('Browser storage is unavailable. Changes will last for this session.'); } };
 
 export const state = {
   issues: [], view: 'map', filters: { ...DEFAULT_FILTERS }, selected: [], scope: null, panel: null,

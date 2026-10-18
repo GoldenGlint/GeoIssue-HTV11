@@ -21,14 +21,14 @@ def emit(event):
 def main():
     argv = sys.argv[1:]
     config = json.loads(Path(argv[argv.index("--mcp-config") + 1]).read_text(encoding="utf-8"))
-    server = config["mcpServers"]["civiclens"]["args"]
+    server = config["mcpServers"]["geoissue"]["args"]
     out = Path(server[server.index("--out") + 1])
     mode = os.environ.get("FAKE_CLAUDE_MODE", "ok")
     if mode == "fail":
         print("Invalid API key", file=sys.stderr)
         sys.exit(2)
     emit({"type": "system", "subtype": "init", "session_id": "s1", "model": "claude-opus-test",
-          "mcp_servers": [{"name": "civiclens", "status": "connected"}]})
+          "mcp_servers": [{"name": "geoissue", "status": "connected"}]})
     if mode == "slow":
         time.sleep(60)
         return
@@ -36,14 +36,14 @@ def main():
         emit({"type": "result", "subtype": "success", "is_error": True, "result": "Claude usage limit reached"})
         return
     emit({"type": "assistant", "message": {"content": [
-        {"type": "tool_use", "id": "t1", "name": "mcp__civiclens__search_places", "input": {"query": "Highland Hall"}}]}})
+        {"type": "tool_use", "id": "t1", "name": "mcp__geoissue__search_places", "input": {"query": "Highland Hall"}}]}})
     emit({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "t1", "content": [
         {"type": "text", "text": json.dumps([{"name": "Highland Hall", "lat": 43.78, "lon": -79.18}])}]}]}})
     final = {"lat": 43.7858, "lon": -79.1873, "radius_m": 8.0, "confidence": 0.9, "place_description": "UTSC",
              "evidence": "accepted match", "verified": True}
     (out / "result.json").write_text(json.dumps({"final": final, "audit": {"image_matches_run": 1}, "error_m": 3.0}))
     emit({"type": "assistant", "message": {"content": [
-        {"type": "tool_use", "id": "t2", "name": "mcp__civiclens__final_answer", "input": final}]}})
+        {"type": "tool_use", "id": "t2", "name": "mcp__geoissue__final_answer", "input": final}]}})
     emit({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "t2", "content": "Recorded"}]}})
     emit({"type": "assistant", "message": {"content": [{"type": "text", "text": "It is at UTSC."}]}})
     emit({"type": "result", "subtype": "success", "is_error": False, "total_cost_usd": 0.01, "num_turns": 3,

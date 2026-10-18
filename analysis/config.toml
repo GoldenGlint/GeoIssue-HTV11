@@ -1,4 +1,4 @@
-# CivicLens analysis settings.
+# GeoIssue analysis settings.
 #
 # Everything that depends on the shape of the photo-analysis output lives in [input], [fields] and
 # [values], so when that output changes this file should be the only thing to edit. After a run,

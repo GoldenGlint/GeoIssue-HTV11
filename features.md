@@ -1,4 +1,4 @@
-# CivicLens — Product Features & Interface Plan (v4 — decisions finalized)
+# GeoIssue — Product Features & Interface Plan (v4 — decisions finalized)
 
 Status: Four core UX decisions approved on 2026-10-17; remaining questions identified separately. Planning specification for Hack the Valley 11. Audience: Public residents, volunteers, City staff. Core principle: One civic issue dataset, two synchronized workspaces: Map Explorer and Data Explorer.
 

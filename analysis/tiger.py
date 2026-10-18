@@ -89,9 +89,9 @@ def sync(public, events, report, areas=None, dataset="pipeline"):
     now = datetime.now(UTC)
     with connection() as conn:
         with conn.transaction():
-            conn.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", ("civiclens:" + dataset,))
+            conn.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", ("geoissue:" + dataset,))
             previous = {row[0]: row[1:] for row in conn.execute(
-                "SELECT sighting_id, reported_at, ingested_at FROM civiclens.sightings WHERE dataset = %s",
+                "SELECT sighting_id, reported_at, ingested_at FROM geoissue.sightings WHERE dataset = %s",
                 (dataset,)).fetchall()}
             rows = []
             for event in events:
@@ -104,20 +104,20 @@ def sync(public, events, report, areas=None, dataset="pipeline"):
             if len({row[2] for row in rows}) != len(rows):
                 raise ValueError("Duplicate sighting keys in the handoff")
             # ponytail: complete snapshots keep reconciliation small; use incremental CDC for large live feeds.
-            conn.execute("DELETE FROM civiclens.sightings WHERE dataset = %s", (dataset,))
+            conn.execute("DELETE FROM geoissue.sightings WHERE dataset = %s", (dataset,))
             with conn.cursor() as cursor:
-                cursor.executemany("""INSERT INTO civiclens.issues VALUES (%s, %s, %s::jsonb)
+                cursor.executemany("""INSERT INTO geoissue.issues VALUES (%s, %s, %s::jsonb)
                     ON CONFLICT (dataset, issue_id) DO UPDATE SET public_issue = EXCLUDED.public_issue""",
                     [(dataset, issue["issue_id"], json.dumps(issue)) for issue in public])
-                cursor.executemany("""INSERT INTO civiclens.sightings
+                cursor.executemany("""INSERT INTO geoissue.sightings
                     (reported_at, dataset, sighting_id, issue_id, ward_id, issue_type, timestamp_basis, ingested_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""", rows)
-            conn.execute("DELETE FROM civiclens.issues WHERE dataset = %s AND NOT (issue_id = ANY(%s::text[]))",
+            conn.execute("DELETE FROM geoissue.issues WHERE dataset = %s AND NOT (issue_id = ANY(%s::text[]))",
                          (dataset, [issue["issue_id"] for issue in public]))
             metadata = {"report": report, "areas": areas, "imported_at": iso(now),
                         "dataset": dataset, "simulated": dataset == "replay" or any(i.get("is_demo") for i in public),
                         "reports": len(rows), "coverage_start": iso(min(row[0] for row in rows)) if rows else None}
-            conn.execute("""INSERT INTO civiclens.pipeline_state VALUES (%s, %s::jsonb)
+            conn.execute("""INSERT INTO geoissue.pipeline_state VALUES (%s, %s::jsonb)
                 ON CONFLICT (dataset) DO UPDATE SET metadata = EXCLUDED.metadata""", (dataset, json.dumps(metadata)))
         # Refresh removed/changed historical buckets too, including data outside the policy's 90-day window.
         times = [row[0] for row in rows] + [value[0] for value in previous.values()]
@@ -126,20 +126,20 @@ def sync(public, events, report, areas=None, dataset="pipeline"):
             end = min(max(times).replace(minute=0, second=0, microsecond=0) + HOUR,
                       now.replace(minute=0, second=0, microsecond=0))
             if start < end:
-                conn.execute("CALL refresh_continuous_aggregate('civiclens.ward_activity_hourly', %s, %s)", (start, end))
+                conn.execute("CALL refresh_continuous_aggregate('geoissue.ward_activity_hourly', %s, %s)", (start, end))
     return metadata
 
 
 def issues(dataset="pipeline"):
     with connection() as conn:
-        return [row[0] for row in conn.execute("""SELECT public_issue FROM civiclens.issues
+        return [row[0] for row in conn.execute("""SELECT public_issue FROM geoissue.issues
             WHERE dataset = %s ORDER BY (public_issue->>'priority_score')::integer DESC NULLS LAST, issue_id""",
             (dataset_name(dataset),)).fetchall()]
 
 
 def pipeline(dataset="pipeline"):
     with connection() as conn:
-        row = conn.execute("SELECT metadata FROM civiclens.pipeline_state WHERE dataset = %s",
+        row = conn.execute("SELECT metadata FROM geoissue.pipeline_state WHERE dataset = %s",
                            (dataset_name(dataset),)).fetchone()
         return row[0] if row else {"dataset": dataset, "report": None, "areas": None, "reports": 0}
 
@@ -194,9 +194,9 @@ def activity(dataset="pipeline", days=30, ward="", category=""):
     now = datetime.now(UTC)
     with connection() as conn, conn.transaction():
         conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
-        metadata = conn.execute("SELECT metadata FROM civiclens.pipeline_state WHERE dataset = %s", (dataset,)).fetchone()
+        metadata = conn.execute("SELECT metadata FROM geoissue.pipeline_state WHERE dataset = %s", (dataset,)).fetchone()
         rows = conn.execute("""SELECT bucket, ward_id, sum(reports), sum(undated_reports)
-            FROM civiclens.ward_activity_hourly
+            FROM geoissue.ward_activity_hourly
             WHERE dataset = %s AND bucket >= %s AND bucket < %s
               AND (%s = '' OR ward_id = %s) AND (%s = '' OR issue_type = %s)
             GROUP BY bucket, ward_id ORDER BY bucket, ward_id""",
@@ -211,7 +211,7 @@ def activity(dataset="pipeline", days=30, ward="", category=""):
 def columnstore_stats(conn):
     chunks, compressed, before, after = conn.execute("""SELECT total_chunks, number_compressed_chunks,
         before_compression_total_bytes, after_compression_total_bytes
-        FROM hypertable_columnstore_stats('civiclens.sightings')""").fetchone()
+        FROM hypertable_columnstore_stats('geoissue.sightings')""").fetchone()
     return {"total_chunks": chunks, "compressed_chunks": compressed, "before_bytes": before, "after_bytes": after,
             "storage_reduction_percent": round((1 - after / before) * 100, 2) if before and after is not None else None}
 
@@ -220,7 +220,7 @@ def database_stats():
     """Public, read-only proof of the integration; no connection details or source records."""
     with connection() as conn, conn.transaction():
         conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
-        counts = dict(conn.execute("SELECT dataset, (metadata->>'reports')::bigint FROM civiclens.pipeline_state").fetchall())
+        counts = dict(conn.execute("SELECT dataset, (metadata->>'reports')::bigint FROM geoissue.pipeline_state").fetchall())
         storage = columnstore_stats(conn)
     return {"backend": "tiger", "as_of": iso(datetime.now(UTC)),
             "reports_by_dataset": counts, "shared_columnstore": storage}
@@ -266,10 +266,10 @@ def replay(events=10000):
 def benchmark(dataset="replay"):
     params = (dataset_name(dataset), datetime.now(UTC) - timedelta(days=90))
     raw = """SELECT time_bucket('1 hour', reported_at) AS bucket, ward_id, issue_type, count(*)
-        FROM civiclens.sightings WHERE dataset = %s AND reported_at >= time_bucket('1 hour', %s::timestamptz)
+        FROM geoissue.sightings WHERE dataset = %s AND reported_at >= time_bucket('1 hour', %s::timestamptz)
         GROUP BY bucket, ward_id, issue_type ORDER BY bucket, ward_id, issue_type"""
     aggregate = """SELECT bucket, ward_id, issue_type, sum(reports)
-        FROM civiclens.ward_activity_hourly WHERE dataset = %s AND bucket >= time_bucket('1 hour', %s::timestamptz)
+        FROM geoissue.ward_activity_hourly WHERE dataset = %s AND bucket >= time_bucket('1 hour', %s::timestamptz)
         GROUP BY bucket, ward_id, issue_type ORDER BY bucket, ward_id, issue_type"""
     timings = {"raw": [], "aggregate": []}
     with connection() as conn, conn.transaction():
@@ -282,7 +282,7 @@ def benchmark(dataset="replay"):
                 timings[label].append((perf_counter() - start) * 1000)
             if results[0] != results[1]:
                 raise ValueError("Raw and aggregate counts differ; refresh the continuous aggregate before benchmarking.")
-        size = conn.execute("SELECT hypertable_size('civiclens.sightings')").fetchone()[0]
+        size = conn.execute("SELECT hypertable_size('geoissue.sightings')").fetchone()[0]
         storage = columnstore_stats(conn)
     return {"dataset": dataset, "results_match": True, "buckets": len(results[0]),
             "median_ms": {label: round(statistics.median(times), 3) for label, times in timings.items()},
@@ -293,7 +293,7 @@ def benchmark(dataset="replay"):
 def compress_history():
     """Run columnstore conversion now for chunks older than one day; data remains queryable."""
     with connection() as conn:
-        chunks = conn.execute("SELECT show_chunks('civiclens.sightings', older_than => INTERVAL '1 day')").fetchall()
+        chunks = conn.execute("SELECT show_chunks('geoissue.sightings', older_than => INTERVAL '1 day')").fetchall()
         for (chunk,) in chunks:
             conn.execute("CALL convert_to_columnstore(%s::regclass)", (chunk,))
     return {"converted_or_already_columnstore_chunks": len(chunks)}
