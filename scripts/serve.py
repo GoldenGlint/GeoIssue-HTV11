@@ -13,6 +13,16 @@ Endpoints
                     -> suggested category, severity and description, privacy flags, and face/plate boxes
                        ([ymin, xmin, ymax, xmax], 0–1000) for blurring
   POST /api/digest  {"area": {...areas.json-style stats}, "label": "ward"} -> {"text", "method"}
+
+Photo geolocation with Claude Code (research/geoloc_tests/claude_geoloc.py) runs as a background job on
+this machine, using the local Claude Code login, so it keeps going if the page or this server closes:
+  POST /api/geolocate               {"image": base64, "mime"} -> the new job's status
+  GET  /api/geolocate               -> {"jobs": [...]}, newest first
+  GET  /api/geolocate/<id>          -> status: state, steps so far, result
+  GET  /api/geolocate/<id>/photo    and /<id>/references/<m1>  -> the photo and the reference contact sheets
+  POST /api/geolocate/<id>/cancel
+GEOLOC_PYTHON is the Python with the vision tools installed (default: research/geoloc_tests/.venv, then .venv in the repo root);
+GEOLOC_MODEL (default opus), GEOLOC_EFFORT (high), GEOLOC_MINUTES (10) and GEOLOC_MAX_RUNNING (1) tune it.
 Hidden files and folders (.env, .git, …) are never served.
 """
 import argparse
@@ -20,6 +30,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import sys
 import tomllib
 import urllib.error
@@ -30,8 +41,11 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
+GEOLOC = ROOT / "research" / "geoloc_tests"
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(GEOLOC))
 from analysis.stages import summaries  # noqa: E402  (shared key lookup and digest prompt)
+import claude_geoloc  # noqa: E402  (standard library only: job files and the background worker)
 
 CATEGORIES = ["Pothole", "Sidewalk damage", "Graffiti", "Litter", "Flooding", "Other"]
 MAX_BODY = 12 * 1024 * 1024
@@ -151,6 +165,49 @@ def digest(body):
     return {"text": digest_cache[key], "method": f"gemini:{MODEL}"}
 
 
+# ---- Photo geolocation with Claude Code ----
+GEOLOC_JOBS = ROOT / "data" / "geolocate"
+VENV_PYTHON = "Scripts/python.exe" if os.name == "nt" else "bin/python"
+GEOLOC_PYTHON = Path(setting("GEOLOC_PYTHON", next(
+    (p for p in (GEOLOC / ".venv" / VENV_PYTHON, ROOT / ".venv" / VENV_PYTHON) if p.is_file()), GEOLOC / ".venv" / VENV_PYTHON)))
+GEOLOC_MODEL = setting("GEOLOC_MODEL", "opus")
+GEOLOC_EFFORT = setting("GEOLOC_EFFORT", "high")
+GEOLOC_MINUTES = float(setting("GEOLOC_MINUTES", 10))
+GEOLOC_MAX_RUNNING = int(setting("GEOLOC_MAX_RUNNING", 1))
+JOB_ID = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{6}$")
+SUFFIX = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
+
+
+def geolocate_status():
+    """Whether this machine can run a geolocation job, and if not, what is missing."""
+    missing = [label for label, ok in (
+        ("Claude Code (the claude command)", claude_geoloc.claude_bin()),
+        (f"the vision tools' Python ({GEOLOC_PYTHON}; set GEOLOC_PYTHON)", GEOLOC_PYTHON.is_file()),
+        ("the place index (research/geoloc_tests/data/places.duckdb)", (GEOLOC / "data" / "places.duckdb").is_file()),
+    ) if not ok]
+    return {"available": not missing, "model": GEOLOC_MODEL, "minutes": GEOLOC_MINUTES,
+            "missing": missing, "street_imagery": (GEOLOC / ".env").is_file()}
+
+
+def job_dir(job_id):
+    if not JOB_ID.match(job_id or "") or not (GEOLOC_JOBS / job_id / "status.json").is_file():
+        raise LookupError("no such geolocation job")
+    return GEOLOC_JOBS / job_id
+
+
+def start_geolocation(body):
+    status = geolocate_status()
+    if not status["available"]:
+        raise PermissionError("Geolocation needs " + " and ".join(status["missing"]))
+    image, mime = body.get("image"), body.get("mime", "image/jpeg")
+    if not image or mime not in SUFFIX:
+        raise ValueError("send a base64 JPEG, PNG or WebP image")
+    job = claude_geoloc.new_job(GEOLOC_JOBS, base64.b64decode(image, validate=True), SUFFIX[mime],
+                                GEOLOC_MINUTES, GEOLOC_MODEL, GEOLOC_EFFORT)
+    claude_geoloc.start_background(job, python=str(GEOLOC_PYTHON), max_running=GEOLOC_MAX_RUNNING)
+    return claude_geoloc.job_status(job)
+
+
 class Handler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache")
@@ -167,10 +224,38 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_file(self, path, content_type):
+        body = path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def geolocate_get(self, parts):
+        if not parts:
+            return self.send_json(200, {"jobs": claude_geoloc.list_jobs(GEOLOC_JOBS)})
+        try:
+            folder = job_dir(parts[0])
+        except LookupError as error:
+            return self.send_json(404, {"error": str(error)})
+        if len(parts) == 1:
+            return self.send_json(200, claude_geoloc.job_status(folder))
+        if parts[1:] == ["photo"]:
+            photo = folder / claude_geoloc.read_status(folder)["image"]
+            return self.send_file(photo, {".png": "image/png", ".webp": "image/webp"}.get(photo.suffix, "image/jpeg"))
+        if len(parts) == 3 and parts[1] == "references" and re.fullmatch(r"m\d{1,3}", parts[2]):
+            sheet = folder / f"{parts[2]}_references.jpg"
+            if sheet.is_file():
+                return self.send_file(sheet, "image/jpeg")
+        return self.send_json(404, {"error": "not found"})
+
     def do_GET(self):
         path = urlsplit(self.path).path
         if path == "/api/status":
-            return self.send_json(200, {"gemini": bool(KEY), "model": MODEL})
+            return self.send_json(200, {"gemini": bool(KEY), "model": MODEL, "geolocate": geolocate_status()})
+        if path == "/api/geolocate" or path.startswith("/api/geolocate/"):
+            return self.geolocate_get([p for p in path.split("/")[3:] if p])
         if self.hidden():
             return self.send_error(404)
         return super().do_GET()
@@ -181,17 +266,26 @@ class Handler(SimpleHTTPRequestHandler):
         return super().do_HEAD()
 
     def do_POST(self):
-        routes = {"/api/triage": triage, "/api/digest": digest}
-        route = routes.get(urlsplit(self.path).path)
+        path = urlsplit(self.path).path
+        cancel = re.fullmatch(r"/api/geolocate/([^/]+)/cancel", path)
+        if cancel:
+            try:
+                return self.send_json(200, claude_geoloc.request_cancel(job_dir(cancel.group(1))))
+            except LookupError as error:
+                return self.send_json(404, {"error": str(error)})
+        routes = {"/api/triage": triage, "/api/digest": digest, "/api/geolocate": start_geolocation}
+        route = routes.get(path)
         if not route:
             return self.send_json(404, {"error": "not found"})
-        if not KEY:
+        if not KEY and route is not start_geolocation:
             return self.send_json(503, {"error": "GEMINI_API_KEY is not set. Add it to .env and restart the server."})
         length = int(self.headers.get("Content-Length") or 0)
         if not 0 < length <= MAX_BODY:
             return self.send_json(413, {"error": "request body missing or too large"})
         try:
             return self.send_json(200, route(json.loads(self.rfile.read(length))))
+        except PermissionError as error:
+            return self.send_json(503, {"error": str(error)})
         except (ValueError, KeyError, TypeError) as error:
             return self.send_json(400, {"error": str(error)})
         except urllib.error.HTTPError as error:

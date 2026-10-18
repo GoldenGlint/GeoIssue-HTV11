@@ -38,6 +38,16 @@ python scripts/serve.py     # http://127.0.0.1:5173
 
 With Node.js 18 or newer, `npm run dev` serves the app without the Gemini API. No installation or build step is required either way. Don't use `python -m http.server` once a `.env` exists: it would serve the key. ES modules require HTTP; opening `index.html` directly is not supported.
 
+#### Locate a photo with Claude (optional)
+
+`scripts/serve.py` can also find where a photo was taken by running [Claude Code](https://claude.com/claude-code) headless on this computer, with Opus driving the geolocation tools in `research/geoloc_tests/` (place, map and City-asset search, Mapillary image matching, pose estimation). It needs:
+
+- the `claude` command, logged in (it uses your Claude Code login; no API key);
+- the tools' Python environment, `research/geoloc_tests/.venv` (or set `GEOLOC_PYTHON` in `.env`), its data indexes in `research/geoloc_tests/data/` and a `MAPILLARY_TOKEN` in `research/geoloc_tests/.env`;
+- a CUDA GPU for image matching (a laptop RTX 4060 works; other GPU work on the same machine slows matches down a lot).
+
+Each photo runs as a detached background job (`research/geoloc_tests/claude_geoloc.py`), so it keeps going when the dialog, the page or the server closes; jobs wait their turn so matches don't share the GPU. Claude Code starts with its built-in tools off and your settings, plugins and hooks unloaded; its only tools come from `research/geoloc_tests/geoloc_mcp.py`. Only an accepted image match (75+ verified points) counts as verified; otherwise the harness widens the radius to 1 km and caps confidence at 0.3. `GEOLOC_MODEL` (default `opus`), `GEOLOC_EFFORT` (`high`), `GEOLOC_MINUTES` (time budget, `10`) and `GEOLOC_MAX_RUNNING` (`1`) tune it. The same runner works from the command line: `research/geoloc_tests/.venv/Scripts/python research/geoloc_tests/claude_geoloc.py --image photo.jpg`.
+
 ### Plug in your data
 
 `data-contract.md` documents the issue shape, the submission draft and the infrastructure format.
@@ -57,7 +67,7 @@ With Node.js 18 or newer, `npm run dev` serves the app without the Gemini API. N
 - **Shared filters** (search, issue type, severity, status, time, ward or neighbourhood, and infrastructure proximity) apply across map, table, and dashboard. Proximity works for one asset type or "any infrastructure". Filter chips can be removed individually. Search suggestions jump to matching issues, neighbourhoods and wards; no external geocoder is connected.
 - **Data Explorer** defaults to all filtered Toronto records. View as table explicitly carries selected IDs with a removable scope chip. Columns cover priority, area and ward, location with nearest asset, detected, last seen, sightings, confidence, source and verification; they sort (including semantic severity ordering). Switching the demo role to City Staff sorts by priority. Sticky headers, selection actions, pagination, per-page sizes, map navigation, and CSV / GeoJSON downloads work. The **Query** tab shows the active filters, scope, sort and page as a read-only SQL statement plus the issue schema. Escape clears the table selection.
 - **Dashboard** cards, timeline (daily up to 30 days, weekly beyond), category bars, resolution chart and hotspots derive from the same filtered sample records. With a 7- or 30-day filter, cards compare against the previous period of the same length computed from the data; no invented growth. The **ward digest** summarizes one of the 25 wards from the filtered records with a fixed, labelled template and counts down to the October 26 municipal election; with a Gemini key, "Write a summary with Gemini" adds a neutral written digest from the same counts (using the analysis pipeline's prompt), and on pipeline data it shows the pipeline's own summary. The **pipeline funnel** shows sample ingestion metrics (labelled as such) on sample data, and the real stage counts from the latest run on pipeline data.
-- **Upload** supports up to 3 JPEG / PNG / WebP photos, size validation, previews, removal, a drag-the-map pin picker limited to Toronto, nearest address, review, and a local receipt. With a Gemini key, adding a photo **fills in category, severity and description** (editable, marked "Suggested by Gemini"), **refuses photos where a person is the subject** or that show a private space, and **pixelates faces and licence plates**; "Blur an area" lets anyone blur more by hand, with or without Gemini. "**Already reported nearby**" lists open issues of the same type within 150 m; "This is the same issue" adds a sighting (raising its priority) instead of filing a duplicate. Submissions and sightings appear under Saved.
+- **Upload** supports up to 3 JPEG / PNG / WebP photos, size validation, previews, removal, a drag-the-map pin picker limited to Toronto, nearest address, review, and a local receipt. With a Gemini key, adding a photo **fills in category, severity and description** (editable, marked "Suggested by Gemini"), **refuses photos where a person is the subject** or that show a private space, and **pixelates faces and licence plates**; "Blur an area" lets anyone blur more by hand, with or without Gemini. "**Already reported nearby**" lists open issues of the same type within 150 m; "This is the same issue" adds a sighting (raising its priority) instead of filing a duplicate. Submissions and sightings appear under Saved. With Claude Code set up (see [Run](#locate-a-photo-with-claude-optional)), **Locate with Claude** under the pin picker finds where the first photo was taken in the background, shows each step as it runs, and offers **Move the pin here** with the radius and whether street imagery verified it; the review and the saved submission record that the pin came from Claude. **Photo locations** in the page header lists every job (running, finished or failed) with its evidence, the street-level references it compared, Show on map, Street View and Cancel, and a toast says when a job finishes.
 - **Methodology** (sidebar → Help & methodology): data sources and licences, how an issue reaches the map (what is live, sample or in progress), the priority rules, privacy, and what the data can't tell you.
 - Saved bookmarks, recents, preferences, and pending submission metadata persist in this browser. The demo role selector (sidebar, or Settings on a phone) shows a sample volunteer review queue. Review decisions last for the session. It is **not authentication**. The person icon opens Google Street View in a new tab: click it for the map centre, or drag it onto the map. CivicLens links to Street View but never copies its imagery; an in-app Mapillary viewer is still future work.
 - **Density** replaces the pins with a heat surface weighted by sightings, with its own scale. Click a hot spot to list the issues under it.
@@ -66,7 +76,7 @@ With Node.js 18 or newer, `npm run dev` serves the app without the Gemini API. N
 
 ### Limits and production integration
 
-The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSON exports approximate uncertainty areas with a minimum 250m radius. Authorization and coordinate precision must be enforced on a real backend, including exports, rather than trusted to this client. Sample ingestion funnel numbers, geolocation traces and explanations are illustrative. Gemini is used only through the local server and only when a key is in `.env`; photos are sent to Gemini for suggestions and blurring but never stored or published by this prototype. Scraping runs separately (`scraping/`) and reaches the app through the analysis pipeline. No 311 requests, street-address geocoding, in-app Mapillary imagery or saved query builder is connected; corrections and reviews are stored in this browser only.
+The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSON exports approximate uncertainty areas with a minimum 250m radius. Authorization and coordinate precision must be enforced on a real backend, including exports, rather than trusted to this client. Sample ingestion funnel numbers, geolocation traces and explanations are illustrative. Gemini is used only through the local server and only when a key is in `.env`; photos are sent to Gemini for suggestions and blurring but never stored or published by this prototype. Locate with Claude sends the photo to Anthropic through Claude Code and keeps it, with the job's log, in `data/geolocate/` on this computer (ignored by git). Scraping runs separately (`scraping/`) and reaches the app through the analysis pipeline. No 311 requests, street-address geocoding, in-app Mapillary imagery or saved query builder is connected; corrections and reviews are stored in this browser only.
 
 ### Code layout
 
@@ -80,7 +90,7 @@ The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSO
 | `src/views/methodology-view.js` | Methodology page |
 | `src/modals.js` | Upload (Gemini suggestions, blurring, nearby reports), correction, Street View, infrastructure, export, settings, help, share and issue dialogs |
 | `src/coordinates.js`, `src/search.js` | Reading Google Maps links and decimal / DMS coordinates; the search box and its suggestions |
-| `src/api.js`, `src/blur.js` | Calls to the local Gemini API; face/plate pixelation on a canvas |
+| `src/api.js`, `src/blur.js` | Calls to the local API (Gemini, geolocation jobs); face/plate pixelation on a canvas |
 | `src/state.js` | Shared UI state, browser persistence, local sightings |
 | `src/issues.js`, `src/priority.js` | Filter, sort and search logic; priority score and reasons |
 | `src/ui.js`, `src/format.js`, `src/icons.js` | Shared components, formatting helpers, icons |
@@ -88,10 +98,13 @@ The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSO
 | `src/ward-boundaries.js`, `src/osm-infrastructure.js` | Generated geodata (see scripts/) |
 | `src/map.js` | Map engine |
 | `src/styles.css` | Responsive styles |
-| `scripts/serve.py` | Dev server with the Gemini API (recommended) |
+| `scripts/serve.py` | Dev server with the Gemini API and the Claude geolocation jobs (recommended) |
+| `src/geolocate.js` | Claude geolocation jobs: polling, the header indicator, the Photo locations dialog |
+| `research/geoloc_tests/claude_geoloc.py`, `geoloc_mcp.py` | One geolocation job: Claude Code headless, and the MCP server that gives it the tools |
 | `scripts/serve.mjs` | Static Node dev server |
 | `scripts/export-analysis-reference.mjs` | Exports the frontend's neighbourhoods, wards and infrastructure for the analysis |
 | `scripts/fetch-ward-boundaries.py`, `scripts/fetch-osm-infrastructure.py`, `scripts/fetch-osm-places.py` | Regenerate the ward and OpenStreetMap geodata, and the analysis's place gazetteer |
 | `tests/` | `npm test`: coordinate parsing (needs Node 21 or newer) |
+| `research/geoloc_tests/tests/` | Geolocation jobs, their MCP server and the server endpoints, with a fake `claude`: `research/geoloc_tests/.venv/Scripts/python -m unittest discover -s research/geoloc_tests/tests -t research/geoloc_tests` |
 
 `npm run check` validates module syntax. Both dev servers bind to loopback only and refuse hidden files.

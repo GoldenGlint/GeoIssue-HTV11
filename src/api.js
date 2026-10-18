@@ -1,4 +1,4 @@
-// Calls to the local dev server's Gemini API (scripts/serve.py). The key never reaches the browser.
+// Calls to the local dev server's API (scripts/serve.py): Gemini, and photo geolocation with Claude Code. The key never reaches the browser.
 // Every call fails soft: a static server or a missing key simply turns the AI features off.
 let statusPromise;
 export const apiStatus = () => statusPromise ||= fetch('/api/status', { cache: 'no-store' })
@@ -30,3 +30,13 @@ export async function triagePhoto(file) {
 
 /** A short, neutral area summary written by Gemini from areas.json-style stats. */
 export const writeDigest = (area, label = 'ward', trendDays = 7) => post('/api/digest', { area, label, trend_days: trendDays });
+
+// ---- Photo geolocation: Claude Code jobs run in the background by the local server ----
+/** Starts a job for a photo and returns its status. Sent larger than for triage: small signs matter. */
+export async function startGeolocation(file) {
+  const { base64, mime } = await photoForUpload(file, 2048);
+  return post('/api/geolocate', { image: base64, mime });
+}
+export const geolocationJobs = () => fetch('/api/geolocate', { cache: 'no-store' })
+  .then(r => r.ok ? r.json() : { jobs: [] }).then(d => d.jobs || []).catch(() => []);
+export const cancelGeolocation = id => post(`/api/geolocate/${encodeURIComponent(id)}/cancel`, {});

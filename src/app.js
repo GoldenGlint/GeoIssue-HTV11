@@ -11,6 +11,7 @@ import { dashboardHtml, bindDashboard } from './views/dashboard-view.js';
 import { collectionHtml, verifyHtml, bindWorkspace } from './views/workspace-view.js';
 import { methodologyHtml } from './views/methodology-view.js';
 import { uploadModal, infrastructureModal, streetModal, exportModal, settingsModal, helpModal, issueModal } from './modals.js';
+import { geoIndicatorHtml, initGeolocation } from './geolocate.js';
 
 const app = document.querySelector('#app');
 const headings = { map: 'Map Explorer', data: 'Data Explorer', dashboard: 'City overview', saved: 'Saved', recents: 'Recently viewed', verify: 'Verification queue', methodology: 'Methodology' };
@@ -90,7 +91,7 @@ function footerHtml() {
 export function render() {
   destroyMap();
   const title = headings[state.view] || headings.map, onMap = state.view === 'map', withFilters = !onMap && state.view !== 'methodology';
-  app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1></div><div class="header-right">${dataSourceHtml()}<button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="Map controls and help">${icon('help')}</button></div></header>
+  app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1></div><div class="header-right">${geoIndicatorHtml()}${dataSourceHtml()}<button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="Map controls and help">${icon('help')}</button></div></header>
   ${withFilters ? `<div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}` : ''}
   <div class="workspace-content" id="workspace-content">${pageHtml()}</div>
   ${onMap ? '' : footerHtml()}</main>`;
@@ -279,6 +280,7 @@ async function start() {
     await loadSharedIssueDataset();
     route();
     frameAnalysed();
+    initGeolocation(); // picks up geolocation jobs still running from an earlier visit
   } catch (error) {
     app.innerHTML = '<div class="load-error"><h1>Couldn’t load the workspace</h1><p>Check your issue repository connection and reload.</p><button onclick="location.reload()">Retry</button></div>';
     console.error(error);
