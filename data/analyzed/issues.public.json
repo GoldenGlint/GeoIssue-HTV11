@@ -98,7 +98,7 @@
   "source_category": "Public social post",
   "description": "A large display window pane is entirely shattered with a web of dense cracks across its surface, set within a metallic storefront frame. Yellow police caution tape is wrapped diagonally across the damaged glass and secured to the frame. The surrounding red and metal facade panels appear intact.",
   "explanation": "Photo analysis flagged “Shattered Display Window with Caution Tape” (other) with 85% confidence. Location method: Place name in location text; approximate within 252 m. A reviewer should confirm the issue and location before any action.",
-  "evidence_thumbnail": null,
+  "evidence_thumbnail": "./data/analyzed/photos/CL-6AB8C79B.jpg",
   "evidence_credit": null,
   "is_demo": false,
   "title": "Shattered Display Window with Caution Tape",
@@ -115,7 +115,27 @@
    "CL-EFC3C696"
   ],
   "reference_data": "placeholder",
-  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+  "evidence_photos": [
+   {
+    "url": "./data/analyzed/photos/CL-6AB8C79B.jpg",
+    "role": "evidence"
+   },
+   {
+    "url": "./data/analyzed/photos/CL-6AB8C79B-2.jpg",
+    "role": "context"
+   },
+   {
+    "url": "./data/analyzed/photos/CL-6AB8C79B-3.jpg",
+    "role": "context"
+   },
+   {
+    "url": "./data/analyzed/photos/CL-6AB8C79B-4.jpg",
+    "role": "context"
+   }
+  ],
+  "source_posts": [
+   "https://www.reddit.com/r/toronto/comments/1x5f9jy/yonge_and_dundas_area/"
+  ]
  },
  {
   "issue_id": "CL-EEF1EA17",
@@ -206,7 +226,7 @@
   "source_category": "Public social post",
   "description": "Numerous police cruisers are parked along the roadway and across marked bicycle lanes on a multi-lane street. The vehicles occupy significant portions of both the travel lanes and the adjacent bike lanes, creating a physical barrier to normal traffic flow. This blockage extends across multiple city blocks visible from an overhead perspective. Officers and individuals are present surrounding the vehicles near the curb and street markings.",
   "explanation": "Photo analysis flagged “Police Vehicles Blocking Roadway and Bike Lanes” (other) with 85% confidence. Location method: Place name in location text; approximate within 252 m. A reviewer should confirm the issue and location before any action.",
-  "evidence_thumbnail": null,
+  "evidence_thumbnail": "./data/analyzed/photos/CL-EEF1EA17.jpg",
   "evidence_credit": null,
   "is_demo": false,
   "title": "Police Vehicles Blocking Roadway and Bike Lanes",
@@ -220,7 +240,15 @@
    "CL-EEF1EA17"
   ],
   "reference_data": "placeholder",
-  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+  "evidence_photos": [
+   {
+    "url": "./data/analyzed/photos/CL-EEF1EA17.jpg",
+    "role": "evidence"
+   }
+  ],
+  "source_posts": [
+   "https://bsky.app/profile/did:plc:l34x5swv5vkhw3zxj7di6bfd/post/3mxubvhvlfw72"
+  ]
  },
  {
   "issue_id": "CL-B48D629A",
@@ -312,7 +340,7 @@
   "source_category": "Public social post",
   "description": "A storm drain cover with sloped louvers is embedded in the pavement near a crosswalk. The louver pattern features a central spine with diagonal bars extending outward. The image shows the infrastructure in context at an intersection.",
   "explanation": "Photo analysis flagged “Storm Drain Grate Alignment” (flooding) with 85% confidence. Location method: Place name in location text; approximate within 252 m. A reviewer should confirm the issue and location before any action.",
-  "evidence_thumbnail": null,
+  "evidence_thumbnail": "./data/analyzed/photos/CL-B48D629A.jpg",
   "evidence_credit": null,
   "is_demo": false,
   "title": "Storm Drain Grate Alignment",
@@ -325,7 +353,19 @@
    "CL-B48D629A"
   ],
   "reference_data": "placeholder",
-  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+  "evidence_photos": [
+   {
+    "url": "./data/analyzed/photos/CL-B48D629A.jpg",
+    "role": "evidence"
+   },
+   {
+    "url": "./data/analyzed/photos/CL-B48D629A-2.jpg",
+    "role": "context"
+   }
+  ],
+  "source_posts": [
+   "https://bsky.app/profile/did:plc:vpl4rx4jqs65elp2r76okcx6/post/3mxq2nykri7s2"
+  ]
  },
  {
   "issue_id": "CL-5390414C",
@@ -397,7 +437,7 @@
   "source_category": "Public social post",
   "description": "A roadway features a vertical metal sign bearing a 'Road Closed' text and a no-entry symbol, positioned centrally within the lane. Several orange tubular channelizing posts and a traffic cone are arranged near the base of the sign and across the pavement. The infrastructure affected includes the roadway surface and traffic control devices. The setup visibly restricts traffic flow in that particular lane.",
   "explanation": "Photo analysis flagged “Road Closed Sign and Channelizing Posts” (other) with 85% confidence. Location method: Place name in location text; approximate within 1098 m. A reviewer should confirm the issue and location before any action.",
-  "evidence_thumbnail": null,
+  "evidence_thumbnail": "./data/analyzed/photos/CL-5390414C.jpg",
   "evidence_credit": null,
   "is_demo": false,
   "title": "Road Closed Sign and Channelizing Posts",
@@ -409,7 +449,15 @@
    "CL-5390414C"
   ],
   "reference_data": "placeholder",
-  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+  "evidence_photos": [
+   {
+    "url": "./data/analyzed/photos/CL-5390414C.jpg",
+    "role": "evidence"
+   }
+  ],
+  "source_posts": [
+   "https://bsky.app/profile/did:plc:3dazmt5v45alkxqug7kgspjn/post/3my23nh3nfs2x"
+  ]
  },
  {
   "issue_id": "CL-CF7A8FBD",
@@ -500,7 +548,7 @@
   "source_category": "Public social post",
   "description": "An elevated rapid transit platform and track area is visible, featuring dual tracks, enclosed structural framing, and concrete platforms. The tracks appear vacant without any trains present. The platform and surrounding structural elements show standard features of a transit station viewed from a central vantage point looking down the tracks.",
   "explanation": "Photo analysis flagged “Unoccupied Transit Station Infrastructure” (other) with 85% confidence. Location method: Place name in location text; approximate within 328 m. A reviewer should confirm the issue and location before any action.",
-  "evidence_thumbnail": null,
+  "evidence_thumbnail": "./data/analyzed/photos/CL-CF7A8FBD.jpg",
   "evidence_credit": null,
   "is_demo": false,
   "title": "Unoccupied Transit Station Infrastructure",
@@ -512,7 +560,15 @@
    "CL-CF7A8FBD"
   ],
   "reference_data": "placeholder",
-  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+  "evidence_photos": [
+   {
+    "url": "./data/analyzed/photos/CL-CF7A8FBD.jpg",
+    "role": "evidence"
+   }
+  ],
+  "source_posts": [
+   "https://bsky.app/profile/did:plc:wep4ljsx6jb5xy24xfuyrcz4/post/3my2xemxosk2c"
+  ]
  },
  {
   "issue_id": "CL-1912DF82",
@@ -602,7 +658,7 @@
   "source_category": "Public social post",
   "description": "The image displays the interior of a transit station featuring directional overhead signs reading Southbound and Northbound. The ceiling lights are off in several sections, casting the foreground and surrounding areas into deep shadow. Benches and double doors are visible in the dim interior, but the functional state of the facility is unclear from the visual evidence alone.",
   "explanation": "Photo analysis flagged “Dark and Unlit Transit Station Interior” (other) with 35% confidence. Location method: Place name in location text; approximate within 328 m. A reviewer should confirm the issue and location before any action.",
-  "evidence_thumbnail": null,
+  "evidence_thumbnail": "./data/analyzed/photos/CL-1912DF82.jpg",
   "evidence_credit": null,
   "is_demo": false,
   "title": "Dark and Unlit Transit Station Interior",
@@ -615,6 +671,14 @@
    "CL-1912DF82"
   ],
   "reference_data": "placeholder",
-  "evidence_withheld": "Photo withheld until faces and licence plates are blurred."
+  "evidence_photos": [
+   {
+    "url": "./data/analyzed/photos/CL-1912DF82.jpg",
+    "role": "evidence"
+   }
+  ],
+  "source_posts": [
+   "https://bsky.app/profile/did:plc:wep4ljsx6jb5xy24xfuyrcz4/post/3mxzrm7pz2c2b"
+  ]
  }
 ]

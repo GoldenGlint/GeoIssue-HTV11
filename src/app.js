@@ -11,10 +11,16 @@ import { dashboardHtml, bindDashboard } from './views/dashboard-view.js';
 import { collectionHtml, verifyHtml, bindWorkspace } from './views/workspace-view.js';
 import { methodologyHtml } from './views/methodology-view.js';
 import { uploadModal, infrastructureModal, streetModal, exportModal, settingsModal, helpModal, issueModal } from './modals.js';
+import { activeTheme, setTheme } from './theme.js';
 
 const app = document.querySelector('#app');
 const headings = { map: 'Map Explorer', data: 'Data Explorer', dashboard: 'City overview', saved: 'Saved', recents: 'Recently viewed', verify: 'Verification queue', methodology: 'Methodology' };
 const VIEWS = ['map', 'data', 'dashboard', 'saved', 'recents', 'methodology'];
+
+export function themeButtonHtml() {
+  const label = activeTheme() === 'light' ? 'Switch to dark theme' : 'Switch to light theme';
+  return `<button class="icon-button theme-toggle" data-action="theme" title="${label}" aria-label="${label}">${icon(activeTheme() === 'light' ? 'moon' : 'sun')}</button>`;
+}
 
 // ---- Shared filters ----
 const filterLabels = { query: 'Search', type: 'Issue type', severity: 'Severity', status: 'Status', area: 'Area', days: 'Time' };
@@ -90,7 +96,7 @@ function footerHtml() {
 export function render() {
   destroyMap();
   const title = headings[state.view] || headings.map, onMap = state.view === 'map', withFilters = !onMap && state.view !== 'methodology';
-  app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1></div><div class="header-right">${dataSourceHtml()}<button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="Map controls and help">${icon('help')}</button></div></header>
+  app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1></div><div class="header-right">${dataSourceHtml()}${themeButtonHtml()}<button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="Map controls and help">${icon('help')}</button></div></header>
   ${withFilters ? `<div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}` : ''}
   <div class="workspace-content" id="workspace-content">${pageHtml()}</div>
   ${onMap ? '' : footerHtml()}</main>`;
@@ -212,6 +218,7 @@ export function action(name) {
     case 'export': exportModal(); break;
     case 'clear-recents': state.recent = []; persist('recent', []); render(); break;
     case 'settings': settingsModal(); break;
+    case 'theme': setTheme(activeTheme() === 'light' ? 'dark' : 'light'); app.querySelector('.theme-toggle').outerHTML = themeButtonHtml(); app.querySelector('.theme-toggle').onclick = () => action('theme'); break;
     case 'help': helpModal(); break;
   }
 }

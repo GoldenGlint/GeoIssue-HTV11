@@ -102,7 +102,15 @@ class ScrapingHandoffTest(unittest.TestCase):
         self.assertEqual(records[0]["detection_confidence"], 0.6)  # "medium" via [values.detection_confidence]
         self.assertTrue(records[0]["photo_needs_blur"])
         self.assertNotIn("post_url", records[0])
+        self.assertEqual(records[0]["source_posts"], ["https://example.org/post/1"])
         self.assertNotIn("passed_images[].screening.issue_type", report["unused_input_fields"])
+
+    def test_source_links_reject_scripts_credentials_and_malformed_values(self):
+        for value in ("javascript:alert(1)", "https://user:password@example.org/post", "https://[bad", {"url": "https://example.org"}):
+            group = handoff_group("yes")
+            group["post_url"] = value
+            [record], _ = adapt([group])
+            self.assertEqual(record["source_posts"], [])
 
     def test_unsupported_claims_are_skipped_and_counted(self):
         records, report = adapt([handoff_group("yes", "no", "no")])

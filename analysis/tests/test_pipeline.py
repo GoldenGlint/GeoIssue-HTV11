@@ -59,28 +59,35 @@ class PipelineTest(unittest.TestCase):
             self.assertFalse(set(FRONTEND_FIELDS) - issue.keys())
             self.assertEqual(issue["neighbourhood_id"], "unassigned")
 
-    def test_photos_needing_blur_are_withheld_unless_shown_on_purpose(self):
+    def test_flagged_photos_are_shown_by_default_and_can_be_explicitly_withheld(self):
         from .test_adapter import handoff_group
         with tempfile.TemporaryDirectory() as tmp:
             folder = Path(tmp)
             (folder / "images").mkdir()
             (folder / "images" / "0.jpg").write_bytes(b"\xff\xd8\xff\xd9")
             (folder / "post-groups.jsonl").write_text(json.dumps(handoff_group("yes")) + "\n")
-            [withheld] = self.run_sample(input_path=folder / "post-groups.jsonl")["public"]
+            shown_result = self.run_sample(input_path=folder / "post-groups.jsonl")
+            [shown] = shown_result["public"]
             conf = config()
-            conf["output"]["photos_needing_blur"] = "show"
-            [shown] = self.run_sample(conf, input_path=folder / "post-groups.jsonl")["public"]
+            conf["output"]["photos_needing_blur"] = "withhold"
+            [withheld] = self.run_sample(conf, input_path=folder / "post-groups.jsonl")["public"]
         self.assertIsNone(withheld["evidence_thumbnail"])
         self.assertIn("blurred", withheld["evidence_withheld"])
         self.assertIsNotNone(shown["evidence_thumbnail"])
         self.assertNotIn("evidence_withheld", shown)
+        self.assertEqual(shown_result["report"]["counts"].get("photos_withheld", 0), 0)
         self.assertEqual(withheld["neighbourhood_id"], "parkdale")  # placed from the location guess
 
     def test_photos_from_one_post_are_one_titled_sighting(self):
         from .test_adapter import handoff_group
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "post-groups.jsonl"
-            path.write_text(json.dumps(handoff_group("yes", "yes", "uncertain")) + "\n")
+            group = handoff_group("yes", "yes", "uncertain")
+            group["supplemental_images"] = [{"local_path": "images/context.jpg", "caption": "private-context-marker", "author": "sample-author"}]
+            (path.parent / "images").mkdir()
+            for name in ("0.jpg", "1.jpg", "2.jpg", "context.jpg"):
+                (path.parent / "images" / name).write_bytes(b"\xff\xd8\xff\xd9")
+            path.write_text(json.dumps(group) + "\n")
             result = self.run_sample(input_path=path)
         written = "".join(p.read_text(encoding="utf-8") for p in Path(self.tmp.name).glob("*.json"))
         [issue] = result["public"]
@@ -88,7 +95,12 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(issue["title"], "Blocked storm drain")
         self.assertIn("“Blocked storm drain” (flooding)", issue["explanation"])
         self.assertIn("3 photos from 1 post merged", issue["geo_trace"][-2]["result"])
-        self.assertNotIn("example.org", written)  # the post link only groups the photos
+        self.assertEqual(issue["source_posts"], [group["post_url"]])
+        self.assertEqual(len(issue["evidence_photos"]), 4)
+        self.assertEqual([photo["role"] for photo in issue["evidence_photos"]], ["evidence", "context", "context", "context"])
+        self.assertEqual(len(list((Path(self.tmp.name) / "photos").glob("*.jpg"))), 4)
+        self.assertNotIn("private-context-marker", written)
+        self.assertNotIn("sample-author", written)
 
     def test_input_without_severity_is_scored_with_the_default(self):
         from .test_adapter import handoff_group

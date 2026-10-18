@@ -47,7 +47,7 @@ def run(input_path, config, out_dir=None, now=None, offline=False):
     out.mkdir(parents=True, exist_ok=True)
     for issue in issues:
         _finalise(issue, config, now, placeholder)
-        _publish_photo(issue, out, config.get("output", {}), report)
+        _publish_evidence(issue, out, config.get("output", {}), report)
     for record in sightings + issues:
         for field in ("post_text", "source_post"):  # used to locate and merge, never written
             record.pop(field, None)
@@ -121,12 +121,31 @@ def _explanation(issue, radius_m):
     return " ".join(parts)
 
 
+def _publish_evidence(issue, out, output_cfg, report):
+    sources = list(dict.fromkeys(([issue["photo_source"]] if issue.get("photo_source") else []) + (issue.get("evidence_photos") or [])))
+    _publish_photo(issue, out, output_cfg, report)
+    photos = []
+    if issue.get("evidence_thumbnail"):
+        photos.append({"url": issue["evidence_thumbnail"], "role": "evidence"})
+    if not issue.get("evidence_withheld"):
+        for index, source in enumerate(sources):
+            if source == issue.get("photo_source"):
+                continue
+            companion = {"issue_id": f"{issue['issue_id']}-{index + 1}", "photo_source": source}
+            _publish_photo(companion, out, output_cfg, report)
+            if companion.get("evidence_thumbnail"):
+                photos.append({"url": companion["evidence_thumbnail"], "role": "context"})
+    issue["evidence_photos"] = photos
+    if not issue.get("evidence_thumbnail") and photos:
+        issue["evidence_thumbnail"] = photos[0]["url"]
+
+
 def _publish_photo(issue, out, output_cfg, report):
     source = issue.get("photo_source")
     if not source or issue.get("evidence_thumbnail"):
         return
-    if issue.get("photo_needs_blur") and output_cfg.get("photos_needing_blur", "withhold") == "withhold":
-        # Neither copied nor linked, so the app never shows an unblurred face or plate.
+    if issue.get("photo_needs_blur") and output_cfg.get("photos_needing_blur", "show") == "withhold":
+        # Optional deployment override; the default policy allows full photos.
         issue["evidence_withheld"] = "Photo withheld until faces and licence plates are blurred."
         report["counts"]["photos_withheld"] += 1
         return

@@ -6,7 +6,7 @@ import { icon } from '../icons.js';
 import { typeIcon, typeColor } from '../format.js';
 import { searchSuggestions } from '../issues.js';
 import { state, filtered, findIssue, remember, sampleWord } from '../state.js';
-import { toast, detailHtml, issueRow, emptyHtml } from '../ui.js';
+import { toast, detailHtml, issueRow, emptyHtml, bindEvidence } from '../ui.js';
 import { action, filtersHtml, secondaryFilters, bindFilterChips, updateFilteredView, scopedTable, toggleSave } from '../app.js';
 import { shareIssue, streetModal, correctionModal } from '../modals.js';
 
@@ -178,6 +178,7 @@ export function renderPanel() {
     el.querySelector('[data-action="save-issue"]').onclick = () => toggleSave([i.issue_id]);
     el.querySelector('[data-action="correct-issue"]').onclick = () => correctionModal(i);
     el.querySelector('[data-action="share-issue"]').onclick = () => shareIssue(i);
+    bindEvidence(el);
     el.querySelector('[data-action="panel-back"]').onclick = () => { if (p.back) { state.panel = p.back; renderPanel(); } else clearSelection(); };
   } else {
     const issues = p.ids.map(findIssue).filter(Boolean), cluster = p.mode === 'cluster';

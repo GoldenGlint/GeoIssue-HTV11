@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-17T22:50:08Z",
- "input": "scraping/shared/post-groups.jsonl",
+ "generated_at": "2026-10-17T23:47:11Z",
+ "input": "scraping/data/handoff/post-groups.jsonl",
  "reference_data": "placeholder",
  "stages": {
   "locate": true,
@@ -15,7 +15,6 @@
   "skipped_issue_supported=no": 24,
   "located": 9,
   "merged_away": 3,
-  "photos_withheld": 6,
   "sightings": 9,
   "issues": 6,
   "dropped": 1
@@ -91,7 +90,6 @@
   "passed_images[].screening.appears_old_reason": 31,
   "group_id": 26,
   "collector": 26,
-  "post_url": 26,
   "detail_status": 26,
   "issue_details.fingerprint": 26,
   "issue_details.group_id": 26,
@@ -186,8 +184,7 @@
    "locate": 5
   },
   "evidence_photos": {
-   "dedupe": 1,
-   "analysis": 5
+   "dedupe": 1
   },
   "explanation": {
    "default": 6
@@ -276,6 +273,10 @@
   },
   "source_category": {
    "input": 6
+  },
+  "source_posts": {
+   "dedupe": 1,
+   "input": 5
   },
   "title": {
    "input": 6

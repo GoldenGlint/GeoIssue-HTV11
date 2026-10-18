@@ -5,8 +5,9 @@ import { CivicMap } from './map.js';
 import { icon } from './icons.js';
 import { esc, badge, typeIcon, typeColor, countBy, age, plural } from './format.js';
 import { state, scopedRows, persist, remember, addSighting, isSampleData, sampleWord } from './state.js';
-import { toast, showModal, closeModal, modalHeader, detailHtml } from './ui.js';
-import { render, nav, toggleSave, setRole } from './app.js';
+import { toast, showModal, closeModal, modalHeader, detailHtml, bindEvidence } from './ui.js';
+import { render, nav, toggleSave, setRole, action, themeButtonHtml } from './app.js';
+import { themePreference, setTheme } from './theme.js';
 import { getMap, openIssue, frameIssues, renderPanel } from './views/map-view.js';
 import { apiStatus, triagePhoto } from './api.js';
 import { blurPhoto } from './blur.js';
@@ -394,8 +395,13 @@ function exportData(rows, format) {
 
 export function settingsModal() {
   const roles = ['Public', 'Volunteer', 'City Staff'];
-  showModal(`${modalHeader('', 'Preferences')}<div class="modal-body"><label class="form-label">Demo account type<select id="settings-role">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></label><div class="setting-row"><div><h3>Local viewing history</h3><p>Remember recently opened issues on this browser.</p></div><input id="history-toggle" type="checkbox" role="switch" aria-label="Enable viewing history" ${state.historyEnabled ? 'checked' : ''}></div><div class="setting-row"><div><h3>Saved issues</h3><p>${state.saved.length} bookmarks stored locally.</p></div><button class="button small" id="clear-saves">Clear saved</button></div><div class="setting-row"><div><h3>Local submissions</h3><p>${state.pending.length} sample submissions. Photos are never stored.</p></div><button class="button small" id="clear-pending">Clear</button></div><p class="fine-print">The account selector previews roles. Authentication, permissions, and cross-device persistence are backend integration points.</p></div><div class="modal-footer"><button class="button primary" data-close>Done</button></div>`, { label: 'Preferences' });
+  showModal(`${modalHeader('', 'Preferences')}<div class="modal-body"><label class="form-label">Demo account type<select id="settings-role">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></label><label class="form-label">Appearance<select id="settings-theme">${[['dark', 'Dark'], ['light', 'Light'], ['system', 'Match system']].map(([value, name]) => `<option value="${value}" ${themePreference() === value ? 'selected' : ''}>${name}</option>`).join('')}</select></label><div class="setting-row"><div><h3>Local viewing history</h3><p>Remember recently opened issues on this browser.</p></div><input id="history-toggle" type="checkbox" role="switch" aria-label="Enable viewing history" ${state.historyEnabled ? 'checked' : ''}></div><div class="setting-row"><div><h3>Saved issues</h3><p>${state.saved.length} bookmarks stored locally.</p></div><button class="button small" id="clear-saves">Clear saved</button></div><div class="setting-row"><div><h3>Local submissions</h3><p>${state.pending.length} sample submissions. Photos are never stored.</p></div><button class="button small" id="clear-pending">Clear</button></div><p class="fine-print">The account selector previews roles. Authentication, permissions, and cross-device persistence are backend integration points.</p></div><div class="modal-footer"><button class="button primary" data-close>Done</button></div>`, { label: 'Preferences' });
   document.querySelector('#settings-role').onchange = e => setRole(e.target.value);
+  document.querySelector('#settings-theme').onchange = e => {
+    setTheme(e.target.value);
+    const toggle = document.querySelector('.theme-toggle');
+    if (toggle) { toggle.outerHTML = themeButtonHtml(); document.querySelector('.theme-toggle').onclick = () => action('theme'); }
+  };
   document.querySelector('#history-toggle').onchange = e => { state.historyEnabled = e.target.checked; persist('historyEnabled', state.historyEnabled); };
   document.querySelector('#clear-saves').onclick = () => { state.saved = []; persist('saved', []); render(); settingsModal(); };
   document.querySelector('#clear-pending').onclick = () => { state.pending = []; persist('pending', []); render(); settingsModal(); };
@@ -420,6 +426,7 @@ export function issueModal(i) {
   remember(i);
   showModal(`<div class="modal-heading"><div><h2>Issue details</h2></div><button class="icon-button" data-close aria-label="Close issue">${icon('close')}</button></div>${detailHtml(i)}<div class="modal-footer"><button class="button" id="modal-save">${icon('bookmark')} ${state.saved.includes(i.issue_id) ? 'Remove saved' : 'Save issue'}</button><button class="button" id="modal-correct">${icon('edit')} Suggest correction</button><button class="button primary" id="modal-on-map">${icon('map')} View on map</button></div>`, { label: `Issue ${i.issue_id}` });
   document.querySelector('#modal-save').onclick = () => { toggleSave([i.issue_id]); closeModal(); };
+  bindEvidence(document.querySelector('#modal-root'));
   document.querySelector('#modal-correct').onclick = () => correctionModal(i);
   document.querySelector('#modal-on-map').onclick = () => { closeModal(); nav('map'); openIssue(i.issue_id); frameIssues([i]); };
 }

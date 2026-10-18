@@ -39,6 +39,7 @@ location_clues       = ["issue.screening.clues", "location_clues", "geo_clues", 
 observed_at          = ["observed_at", "posted_at", "created_at", "timestamp", "date", "taken_at"]
 photo                = ["issue.local_path", "photo", "image", "image_path", "photo_path", "image_url", "media[0].path", "media[0].url"]
 source_category      = ["source_category", "platform", "source"]
+source_posts         = ["source_posts", "post_url", "issue.post_url"]
 image_hash           = ["issue.dhash", "image_hash", "phash", "analysis.image_hash"]
 is_demo              = ["is_sample", "is_demo"]
 evidence_credit      = ["evidence_credit", "photo_credit"]
@@ -193,9 +194,9 @@ env_files = [".env", "spikes/.env"]
 [output]
 dir = "data/analyzed"
 copy_photos = true
-# Photos flagged as needing face and plate blurring (the scraping handoff flags them) are left out of
-# issues.public.json until they are blurred: "withhold", or "show" for local review only.
-photos_needing_blur = "withhold"
+# Display collected photos under the current policy, including those with face/plate flags.
+# Set "withhold" only when a deployment explicitly requires blurring before display.
+photos_needing_blur = "show"
 public_grid_m = 250                  # unverified issues are snapped to this grid in issues.public.json
 public_min_radius_m = 250
 # Input fields copied unchanged into every issue, e.g. ["blur_applied"]. Private fields are refused.

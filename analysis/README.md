@@ -3,7 +3,7 @@
 Takes the photo-analysis output (JSON records plus photos) and produces what the map, table and ward pages need:
 
 1. **Locate** (map-ready issues): coordinates, or a place named in the location guess or post text (an intersection such as "Queen and Spadina", a station or a park, from `analysis/refdata/`), then the ward from the City's boundaries, neighbourhood, nearest TTC station / school / road and a street-corner address. Each step is recorded in `geo_trace`, which the issue panel shows as "How this location was estimated".
-2. **Dedupe**: sightings of the same issue (same type, close together, within 14 days, or a reposted photo) become one incident with a sighting count. Several photos from one post count as one sighting.
+2. **Dedupe**: sightings of the same issue (same type, close together, within 14 days, or a reposted photo) become one incident with a sighting count. Several photos from one post count as one sighting. Available same-post companions are exported in `evidence_photos` as context, with validated original links in `source_posts`.
 3. **Priority**: a 0-100 score with the reasons that produced it, for example `High severity (+40)` or `49 m from University of Toronto Scarborough (+15)`.
 4. **Stats and summaries**: counts and 7-day trends per neighbourhood and ward, plus a short neutral summary per ward. Summaries come from Gemini when `GEMINI_API_KEY` is set and from a plain template otherwise.
 
@@ -21,7 +21,9 @@ python -m unittest discover -s analysis/tests -t .  # the tests
 
 Then serve the repo with `npm run dev` or `python scripts/serve.py`. (Not `python -m http.server`: it would also serve `.env` and its Gemini key.) The map, table and dashboard load `data/analyzed/issues.public.json`, whose records follow `data-contract.md`, and fall back to the demo records when that file is missing.
 
-The public output of the scraping handoff is committed, so the app shows the analysed posts on a fresh clone. After a new handoff, re-run the scraping line above and commit `data/analyzed/issues.public.json`, `report.json` and `areas.json`. Running the fictional sample overwrites them, so don't commit after that.
+The public output of the scraping handoff is committed, so the app shows the analysed posts on a fresh clone. After a new handoff, re-run the scraping line above and commit `data/analyzed/issues.public.json`, `report.json`, `areas.json` and the referenced files in `photos/`. Running the fictional sample overwrites them, so don't commit after that.
+
+To include the collected photos, use `--input scraping/data/handoff/post-groups.jsonl`, whose relative image paths point to the local handoff images. The shared text handoff does not include image files.
 
 ## When their output format changes
 
@@ -52,13 +54,14 @@ The output stays valid for the frontend with every stage off.
 | `sightings.json` | Every input record after locating, with its `incident_id`. Gitignored. |
 | `areas.json` | City, neighbourhood and ward stats, plus summaries. Committed. |
 | `report.json` | Counts, dropped records and why, unused fields, unrecognised labels, field sources, warnings. Committed. |
-| `photos/` | Evidence photos copied and renamed by issue ID. Gitignored; photos that need blurring are never copied. |
+| `photos/` | Public evidence photos copied and renamed by issue ID, including photos with face/plate flags. Included with the app data. |
 
 ## Privacy
 
+- The current photo-display policy allows collected photos to be shown in full. `[output] photos_needing_blur = "show"` is the default; `"withhold"` remains an optional deployment override.
 - Only the fields named in `[fields]` are read. Authors, handles and anything else are never copied, and `[output] private_fields` blocks them even when listed in `passthrough`.
-- Post text is used only to find a place name, and the post ID only to count photos from one post as one sighting. Neither is written out.
-- Issue IDs are `CL-` plus the first 8 hex characters of SHA-1(source post ID, plus `#n` for the n-th issue in a photo), so the post ID itself isn't published.
+- Post text is used only to find a place name, and the native post ID only to count photos from one post as one sighting. Raw text and identifiers are not written out; validated original post URLs are published separately for context.
+- Issue IDs are `CL-` plus the first 8 hex characters of SHA-1(source post ID, plus `#n` for the n-th issue in a photo). Original post URLs are retained separately in `source_posts`.
 
 ## Reference data
 
