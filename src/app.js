@@ -5,7 +5,7 @@ import { icon } from './icons.js';
 import { esc, date } from './format.js';
 import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel, applyCorrection, reviewQueue, applyLocalSightings } from './state.js';
 import { toast, closeModal } from './ui.js';
-import { mapHtml, initMap, destroyMap, getMap, renderPanel, clearSelection, selectMap, openIssue, frameIssues, refreshMapFilters, setMapMode, setHeat, visibleIssues } from './views/map-view.js';
+import { mapHtml, initMap, destroyMap, getMap, renderPanel, clearSelection, selectMap, openIssue, frameIssues, refreshMapFilters, setMapMode, setHeat, visibleIssues, planCrewRoute } from './views/map-view.js';
 import { dataHtml, bindData } from './views/data-view.js';
 import { dashboardHtml, bindDashboard } from './views/dashboard-view.js';
 import { collectionHtml, verifyHtml, bindWorkspace } from './views/workspace-view.js';
@@ -71,7 +71,7 @@ function navItem(view, glyph, title, count) {
 function sidebarHtml() {
   const roles = ['Public', 'Volunteer', 'City Staff'];
   const reviewCount = reviewQueue().length + state.corrections.filter(c => c.status === 'Pending review').length + state.issues.filter(i => i.verification_status === 'Needs review').length;
-  return `<aside class="sidebar"><a class="brand" href="#map" data-nav="map" aria-label="CivicLens home"><span class="brand-mark"><i></i></span><span>Civic<span class="cyan">Lens</span></span></a><div class="workspace-label">Toronto <span class="live-dot"></span></div><nav aria-label="Main navigation">${navItem('map', 'map', 'Map Explorer')}${navItem('data', 'database', 'Data Explorer')}${navItem('dashboard', 'chart', 'Dashboard')}<div class="nav-divider"></div><span class="nav-section">Your workspace</span>${navItem('saved', 'bookmark', 'Saved', state.saved.length)}${navItem('recents', 'clock', 'Recents')}${state.role !== 'Public' ? navItem('verify', 'shield', 'Verify', reviewCount) : ''}</nav><button class="button primary upload-button" data-action="upload" title="Upload new issue" aria-label="Upload new issue">${icon('plus')}<span>Upload new issue</span></button><div class="sidebar-bottom"><button class="nav-item" data-action="settings" title="Settings" aria-label="Settings">${icon('settings')}<span>Settings</span></button><button class="nav-item ${state.view === 'methodology' ? 'active' : ''}" data-nav="methodology" title="Help and methodology" aria-label="Help and methodology">${icon('help')}<span>Help & methodology</span></button><div class="account"><span class="avatar">JD</span><div><strong>Jamie Davis</strong><select id="role-select" aria-label="Demo account type">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div><span class="account-dots">···</span></div></div></aside>`;
+  return `<aside class="sidebar"><a class="brand" href="#map" data-nav="map" aria-label="CivicLens home"><span class="brand-mark"><i></i></span><span>Civic<span class="cyan">Lens</span></span></a><div class="workspace-label">Toronto</div><nav aria-label="Main navigation">${navItem('map', 'map', 'Map Explorer')}${navItem('data', 'database', 'Data Explorer')}${navItem('dashboard', 'chart', 'Dashboard')}<div class="nav-divider"></div><span class="nav-section">Your workspace</span>${navItem('saved', 'bookmark', 'Saved', state.saved.length)}${navItem('recents', 'clock', 'Recents')}${state.role !== 'Public' ? navItem('verify', 'shield', 'Verify', reviewCount) : ''}</nav><button class="button primary upload-button" data-action="upload" title="Upload new issue" aria-label="Upload new issue">${icon('plus')}<span>Upload new issue</span></button><div class="sidebar-bottom"><button class="nav-item" data-action="settings" title="Settings" aria-label="Settings">${icon('settings')}<span>Settings</span></button><button class="nav-item ${state.view === 'methodology' ? 'active' : ''}" data-nav="methodology" title="Help and methodology" aria-label="Help and methodology">${icon('help')}<span>Help & methodology</span></button><div class="account"><span class="avatar">JD</span><div><strong>Jamie Davis</strong><select id="role-select" aria-label="Demo account type">${roles.map(r => `<option ${state.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div><span class="account-dots">···</span></div></div></aside>`;
 }
 function pageHtml() {
   switch (state.view) {
@@ -87,7 +87,9 @@ function pageHtml() {
 function dataSourceHtml() {
   const { sample, pipeline, replay } = state.sources;
   if (!pipeline && !replay) return `<span class="data-source">${icon('database')} Sample data · ${sample}</span>`;
-  const options = [['sample', 'Sample data', sample], ['pipeline', issueRepository.backend('pipeline').type === 'tiger' ? 'Collected data' : 'File snapshot', pipeline], ['replay', 'Simulated replay', replay]];
+  // Phones get short labels so the count stays visible beside the page title.
+  const short = matchMedia('(max-width:650px)').matches, collected = issueRepository.backend('pipeline').type === 'tiger';
+  const options = [['sample', short ? 'Sample' : 'Sample data', sample], ['pipeline', collected ? (short ? 'Collected' : 'Collected data') : (short ? 'Snapshot' : 'File snapshot'), pipeline], ['replay', short ? 'Replay' : 'Simulated replay', replay]];
   return `<label class="data-source" title="${esc(state.dataBackend.warning || '')}">${icon('database')}<select id="data-source" aria-label="Data shown">${options.filter(([, , count]) => count).map(([value, label, count]) => `<option value="${value}" ${state.dataSource === value ? 'selected' : ''}>${label} · ${count}</option>`).join('')}</select></label>`;
 }
 function footerHtml() {
@@ -233,6 +235,7 @@ export function action(name) {
     case 'center': map?.flyTo(TORONTO_CENTER, 13); break;
     case 'search-area': { const visible = visibleIssues(); if (visible.length) selectMap(visible.map(i => i.issue_id), 'multi'); else toast('No matching issues in this view. Use Fit all matching issues.'); break; }
     case 'street': streetModal(); break;
+    case 'crew-route': planCrewRoute(visibleIssues()); break;
     case 'clear-scope': state.scope = null; state.page = 1; render(); break;
     case 'clear-table-selection': state.selected = []; render(); break;
     case 'save-table-selection': toggleSave(state.selected); break;

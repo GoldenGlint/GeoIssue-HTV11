@@ -20,12 +20,12 @@ export const TORONTO_BOUNDS = { west: -79.64, south: 43.58, east: -79.11, north:
 const DAY = 86400000;
 
 export const categories = {
-  Pothole: { color: '#fa6575', icon: 'warning' },
-  'Sidewalk damage': { color: '#ffb452', icon: 'cone' },
-  Graffiti: { color: '#ba80f6', icon: 'tool' },
-  Litter: { color: '#25d5ac', icon: 'trash' },
-  Flooding: { color: '#4ea8ff', icon: 'water' },
-  Other: { color: '#9daec3', icon: 'more' },
+  Pothole: { color: '#dc2626', icon: 'warning' },
+  'Sidewalk damage': { color: '#d97706', icon: 'cone' },
+  Graffiti: { color: '#7c3aed', icon: 'tool' },
+  Litter: { color: '#059669', icon: 'trash' },
+  Flooding: { color: '#2563eb', icon: 'water' },
+  Other: { color: '#6b7280', icon: 'more' },
 };
 
 // Toronto's 25 wards (2018 boundaries).

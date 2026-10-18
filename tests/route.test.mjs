@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { planOrder, pathKm, planRoute, emissions, ROUTE_ASSUMPTIONS, MAX_STOPS } from '../src/route.js';
+import { planOrder, pathKm, planRoute, emissions, roadMatrix, roadPath, ROUTE_ASSUMPTIONS, MAX_STOPS } from '../src/route.js';
 import { googleDirectionsUrl } from '../src/coordinates.js';
 
 // Points along Queen Street, west to east, about 600 m apart.
@@ -43,4 +43,29 @@ test('directions links keep the order and stop at 9 waypoints', () => {
   assert.equal(url.searchParams.get('waypoints'), '43.645000,-79.422500');
   const long = new URL(googleDirectionsUrl([...line, ...line]));
   assert.equal(long.searchParams.get('waypoints').split('|').length, 9);
+});
+
+test('road distances decide the order when the router supplies them', () => {
+  // Three stops in a row, but the road from the middle one to the east end is long (a river with no bridge).
+  const points = [[-79.40, 43.65], [-79.39, 43.65], [-79.38, 43.65]];
+  const km = [[0, 1, 2], [1, 0, 9], [2, 9, 0]];
+  const plan = planRoute(points.map((c, n) => issue(c, n)), { km, minutes: km.map(row => row.map(v => v * 2)) });
+  assert.equal(plan.method, 'roads');
+  assert.deepEqual(plan.stops.map(s => s.issue_id), ['CL-1', 'CL-0', 'CL-2']);
+  assert.equal(plan.km, 3);
+  assert.equal(plan.minutes, 6);
+  assert.deepEqual(plan.legs, [0, 1, 2]);
+});
+
+const reply = body => async () => ({ ok: true, status: 200, json: async () => body });
+
+test('router replies are read, and unconnected pairs fall back to straight lines', async () => {
+  const points = [[-79.40, 43.65], [-79.39, 43.65]];
+  const roads = await roadMatrix(points, { fetchImpl: reply({ code: 'Ok', distances: [[0, 1500], [null, 0]], durations: [[0, 180], [null, 0]] }) });
+  assert.equal(roads.km[0][1], 1.5);
+  assert.equal(roads.minutes[0][1], 3);
+  assert.ok(roads.km[1][0] > 0.8 && roads.km[1][0] < 1.2, 'straight-line estimate for the missing pair');
+  const path = await roadPath(points, { fetchImpl: reply({ code: 'Ok', routes: [{ geometry: { coordinates: [[-79.4, 43.65], [-79.395, 43.651], [-79.39, 43.65]] } }] }) });
+  assert.equal(path.length, 3);
+  await assert.rejects(roadMatrix(points, { fetchImpl: reply({ code: 'TooBig', message: 'Too many table coordinates' }) }), /Too many/);
 });
