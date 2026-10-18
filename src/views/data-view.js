@@ -5,6 +5,7 @@ import { DAY, esc, badge, date, typeIcon, typeColor, percent } from '../format.j
 import { compareIssues } from '../issues.js';
 import { state, scopedRows, persist } from '../state.js';
 import { statCard, emptyHtml, toast, priorityLevel } from '../ui.js';
+import { selectHtml, placeMenu } from '../select.js';
 import { render } from '../app.js';
 
 // Key, header, cell contents and an optional cell class. Issue ID can't be hidden: it opens the record.
@@ -58,8 +59,8 @@ const columnButtonLabel = () => {
   return `${icon('columns')} Columns${shown < columns.length ? ` <span class="columns-count">${shown}/${columns.length}</span>` : ''}`;
 };
 function columnPickerHtml() {
-  const options = columns.map(([key, title]) => `<label class="columns-option"><input type="checkbox" data-toggle-col="${key}" ${isHidden(key) ? '' : 'checked'} ${key === 'issue_id' ? 'disabled' : ''}>${title}</label>`).join('');
-  return `<button class="button small" id="columns-button" popovertarget="columns-menu">${columnButtonLabel()}</button><div class="columns-menu" id="columns-menu" popover><div class="columns-menu-head"><span>Show columns</span><button class="text-button" id="show-all-columns">Show all</button></div>${options}</div>`;
+  const options = columns.map(([key, title]) => `<label class="menu-item"><input type="checkbox" data-toggle-col="${key}" ${isHidden(key) ? '' : 'checked'} ${key === 'issue_id' ? 'disabled' : ''}>${title}</label>`).join('');
+  return `<button class="button small" id="columns-button" popovertarget="columns-menu">${columnButtonLabel()}</button><div class="menu columns-menu" id="columns-menu" popover><div class="menu-head"><span>Show columns</span><button class="text-button" id="show-all-columns">Show all</button></div>${options}</div>`;
 }
 
 function recordsHtml(rows) {
@@ -74,7 +75,7 @@ function recordsHtml(rows) {
   // Always in the page, so ticking rows can show and count it without redrawing the table.
   const selectionBar = `<div class="table-selection-bar" ${count ? '' : 'hidden'}><span>${icon('check')} <strong data-selection-count>${count}</strong> selected</span><div><button class="text-button" data-action="save-table-selection">${icon('bookmark')} Save</button><button class="text-button" data-action="export-selected">${icon('download')} Export selected</button><button class="text-button" data-action="clear-table-selection">Clear selection</button></div></div>`;
   const range = rows.length ? `Showing ${(state.page - 1) * state.perPage + 1}–${Math.min(rows.length, state.page * state.perPage)} of ${rows.length}` : '0 results';
-  return `${selectionBar}<div class="table-scroll"><table><thead><tr><th><input type="checkbox" id="select-page" aria-label="Select visible rows" ${pageRows.length && pageRows.every(isSelected) ? 'checked' : ''}></th>${head}<th></th></tr></thead><tbody>${body}</tbody></table>${rows.length ? '' : emptyHtml('No issues match these filters', 'Reset filters or try another area.')}</div><div class="table-pagination"><span>${range} <strong id="page-selection" ${count ? '' : 'hidden'}>· <span data-selection-count>${count}</span> selected</strong></span><div><select id="page-size" aria-label="Rows per page">${[10, 20, 50].map(n => `<option ${n === state.perPage ? 'selected' : ''} value="${n}">${n} per page</option>`).join('')}</select><button class="icon-button" data-page="${state.page - 1}" ${state.page === 1 ? 'disabled' : ''} aria-label="Previous page">${icon('back')}</button><span class="page-number">${state.page}</span><button class="icon-button" data-page="${state.page + 1}" ${state.page * state.perPage >= rows.length ? 'disabled' : ''} aria-label="Next page">${icon('arrow')}</button></div></div>`;
+  return `${selectionBar}<div class="table-scroll"><table><thead><tr><th><input type="checkbox" id="select-page" aria-label="Select visible rows" ${pageRows.length && pageRows.every(isSelected) ? 'checked' : ''}></th>${head}<th></th></tr></thead><tbody>${body}</tbody></table>${rows.length ? '' : emptyHtml('No issues match these filters', 'Reset filters or try another area.')}</div><div class="table-pagination"><span>${range} <strong id="page-selection" ${count ? '' : 'hidden'}>· <span data-selection-count>${count}</span> selected</strong></span><div>${selectHtml({ id: 'page-size', label: 'Rows per page', options: [10, 20, 50].map(n => [n, `${n} per page`]), value: state.perPage })}<button class="icon-button" data-page="${state.page - 1}" ${state.page === 1 ? 'disabled' : ''} aria-label="Previous page">${icon('back')}</button><span class="page-number">${state.page}</span><button class="icon-button" data-page="${state.page + 1}" ${state.page * state.perPage >= rows.length ? 'disabled' : ''} aria-label="Next page">${icon('arrow')}</button></div></div>`;
 }
 
 const schema = [
@@ -201,13 +202,8 @@ function setHiddenColumns(keys) {
   document.querySelectorAll('[data-toggle-col]').forEach(c => c.checked = !isHidden(c.dataset.toggleCol));
   document.querySelector('#columns-button').innerHTML = columnButtonLabel();
 }
-/** The menu opens in the top layer, so it is placed by hand: under its button, right edges aligned, or above it when there is more room there. */
+/** The menu opens in the top layer, so it is placed by hand under its button, right edges aligned. */
 function placeColumnMenu() {
-  const menu = document.querySelector('#columns-menu'), button = document.querySelector('#columns-button');
-  if (!menu?.matches(':popover-open')) return;
-  const r = button.getBoundingClientRect(), gap = 6, edge = 8;
-  const below = innerHeight - r.bottom - gap - edge, above = r.top - gap - edge, up = menu.scrollHeight > below && above > below;
-  menu.style.maxHeight = `${up ? above : below}px`;
-  menu.style.left = `${Math.max(edge, r.right - menu.offsetWidth)}px`;
-  menu.style.top = `${up ? r.top - gap - menu.offsetHeight : r.bottom + gap}px`;
+  const menu = document.querySelector('#columns-menu');
+  if (menu?.matches(':popover-open')) placeMenu(menu, document.querySelector('#columns-button'), 'end');
 }

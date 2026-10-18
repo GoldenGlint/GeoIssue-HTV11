@@ -182,6 +182,20 @@ components:
     rounded: "{rounded.control}"
     height: "32px"
     padding: "0 10px"
+  select-field:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-2}"
+    rounded: "{rounded.field}"
+    height: "40px"
+    padding: "0 11px"
+  menu:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-2}"
+    rounded: "9px"
+    padding: "5px"
+  menu-item-active:
+    backgroundColor: "{colors.accent-soft}"
+    textColor: "{colors.text}"
   map-control:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text-2}"
@@ -365,18 +379,18 @@ The app shell is fixed: a white sidebar on the left, a one-row page header, and 
 
 The Map Explorer gives the map everything below a compact 17px title. The map sits in a framed canvas (Control Edge border, 11px corners) and every control floats on it, inset 15px: search and filters across the top; the Pins/Density segment and the crew-route button below them on the left; map tools on the right; the live count and category legend sharing one panel bottom-left; Street View, zoom, fit and home bottom-right. Selecting an issue docks the white issue panel at the right edge (360px, 390px at 1600px) and the floating controls slide clear of it. On phones the panel becomes a bottom sheet over 58% of the height.
 
-Filters sit in one row. Selects size to their label (`field-sizing: content`) and the search field takes the rest (it grows from 220px). On the map at 1360px and narrower, search takes its own row and the filters sit under it. When the map is narrow the filter row never wraps or clips: it scrolls sideways with a hidden scrollbar.
+Filters sit in one row. Each filter dropdown sizes to its label and the search field takes the rest (it grows from 220px). On the map at 1360px and narrower, search takes its own row and the filters sit under it. When the map is narrow the filter row never wraps or clips: it scrolls sideways with a hidden scrollbar.
 
 Data pages use white cards in grids with 16px to 18px gaps (20px at 1600px); the dashboard's KPIs form one bordered strip split by 1px tone steps. There is no spacing scale in tokens: panels pad 18px, dialogs 24px, control groups gap 6px to 12px. Breakpoints are 420px, 650px, 950px, 1200px, 1360px and 1600px.
 
 ### Named Rules
-**The Sideways Filter Rule.** Selects size to their label. When the map is narrow its filter row scrolls sideways; labels are never clipped.
+**The Sideways Filter Rule.** Filter dropdowns size to their label. When the map is narrow its filter row scrolls sideways; labels are never clipped.
 
 **The Clear Map Rule.** Map controls hug the canvas edges and slide aside when the issue panel opens, so the panel never covers a control.
 
 ## Elevation & Depth
 
-The system is flat and tonal: white surfaces on a grey ground, separated by hairlines. One soft shadow lifts things that float or can be pressed: buttons, map controls, filter fields, the segmented control, the issue panel, dialogs, search suggestions, the hover preview and the sticky table header. Cards at rest have no shadow, and neither does the map's count and legend panel. Dialogs sit over a scrim, the photo viewer over near-black, and nothing uses backdrop blur. `--shadow-md`, `--shadow-lg` and `--focus-ring` exist in both palettes but nothing uses them.
+The system is flat and tonal: white surfaces on a grey ground, separated by hairlines. One soft shadow lifts things that float or can be pressed: buttons, map controls, filter fields, the segmented control, the issue panel, dialogs, dropdown menus, search suggestions, the hover preview and the sticky table header. Cards at rest have no shadow, and neither does the map's count and legend panel. Dialogs sit over a scrim, the photo viewer over near-black, and nothing uses backdrop blur. `--shadow-md`, `--shadow-lg` and `--focus-ring` exist in both palettes but nothing uses them.
 
 ### Shadow Vocabulary
 - **Soft lift, light** (`box-shadow: 0 1px 2px rgb(16 24 40 / .06), 0 1px 3px rgb(16 24 40 / .08)`): the one elevation in light.
@@ -419,10 +433,17 @@ Plain, solid and quiet.
 - **Callouts:** inside a panel, a location note, why-flagged or geolocation block is a flat tinted block (Quiet Fill or Faint Mist, Hairline edge, 7px to 8px corners), never a second white card.
 
 ### Inputs / Fields
-- **Style:** Paper White, 1px Control Edge, 7px corners, 32px tall (34px for the search and filters over the map, matching the map tools), 13px text, Muted Slate placeholder and icon. Selects are borderless inside their white shell and size to their current label.
+- **Style:** Paper White, 1px Control Edge, 7px corners, 32px tall (34px for the search and filters over the map, matching the map tools), 13px text, Muted Slate placeholder and icon. Dropdowns share this box and size to their current label (see Dropdowns).
 - **Focus:** the border turns Civic Blue with the soft lift; the search icon turns Link Blue.
 - **Dialog fields:** Paper White, Control Edge, 6px corners, 11px padding. Choice tiles (correction kinds) turn Selection Wash with a Civic Blue edge when checked.
 - **Error:** Alert ink under the field. Valid location feedback is Crew Green ink.
+
+### Dropdowns
+- **One component:** every choice from a list is `selectHtml()` in `src/select.js`: a button showing the current choice and a chevron, with the native select kept underneath as the value, so forms, `change` and `.value` work as on a plain select. After setting `.value` or `.disabled` from code, call `syncSelect()`.
+- **Sizes:** the 32px control (filters, panel sort, rows per page, ward picker; 34px with the soft lift on the map); a 40px dialog field with 6px corners and 12px text; the header data switch as a pill; bare 12px text in the sidebar account.
+- **Menu:** opens in the top layer under its button, or above it when there is more room, at least as wide as the button. Paper White, Control Edge, 9px corners, 5px padding, the soft lift. Rows are 32px (40px on touch screens) with 6px corners in Slate Ink; the highlighted row is Selection Wash with Ink text, and the chosen row has Ink text at 500 with a Link Blue check. Group labels are 12px/600 Muted Slate. Issue categories keep their pin icon and colour in the list and on the button. Long lists (areas, wards) open with a search field at the top. The table's column picker uses the same surface and rows.
+- **States:** open shows a Civic Blue border and turns the chevron up; keyboard focus is a 2px Civic Blue outline like buttons; disabled is 50% opacity; a required field rejected on submit takes an Alert Red border.
+- **Keys:** arrows, Home, End and Page Up/Down move; Enter or Space choose; typing jumps to a match (or searches, in long lists); Escape and Tab close without choosing.
 
 ### Navigation
 - **Sidebar:** white with a Hairline right edge. The lens mark and wordmark, a 12px workspace label, then 42px nav items (13px/500 Muted Slate, 20px icons, 7px corners). Hover is Faint Mist with Ink text; the active item is Selection Wash with Link Blue text. The primary upload button sits under the nav and the account under a hairline at the bottom.
@@ -455,6 +476,13 @@ The signature component.
 - **Dialog:** white, 540px wide, 13px corners, Hairline border, the soft lift over the scrim. Heading, body and footer pad 24px across and are divided by rules; it enters with a 9px rise over 150ms.
 - **Toast:** white, Hairline, 8px corners, 12px text, the soft lift, centred at the bottom.
 
+### Dashboard charts
+- **Engine:** Apache ECharts 6, a trimmed build vendored at `src/vendor/echarts.js` (`scripts/vendor-echarts.mjs`), drawn as SVG through `src/charts.js` and loaded when the browser is idle. Colours are read from the theme tokens, so a theme switch repaints the charts in place.
+- **Marks:** 2px Civic Blue lines over a flat 10% wash (no gradient); solid Hairline gridlines; 8px bars with 4px round ends on a Quiet Fill track, in the category colour for issue types; a donut of status colours with a 2px gap between slices around a Faint Mist centre. The funnel's sample stages are Civic Blue and its measured stages Crew Green.
+- **Readout:** one floating card for every chart: Paper White, Hairline, 8px corners, the soft lift. The value leads at 15px/650 beside a short stroke of the mark's colour, and the label follows in Slate Ink. Lines track a snapping hairline crosshair; bars and slices answer on the mark itself.
+- **Rows that act:** breakdown rows and status legend rows are real buttons over the chart. Hover or keyboard focus tints the row, lifts its mark, fades the others to 35% and shows the readout; the donut's centre turns into the hovered status's count. Selecting opens the Data Explorer filtered to that type or status.
+- **Motion:** a chart enters when it scrolls into view: lines draw left to right, bars grow in a 45ms stagger while their counts tick up, and the donut sweeps clockwise from the top (650ms to 900ms, ease-out). A filter change or a live refresh morphs every mark from its previous value over 450ms instead of replaying the entrance. Hover states ease over 180ms. Reduced motion draws each chart finished.
+
 ### Loading mark
 The lens draws itself: the inner ring strokes in over .65s, the blue core pops in, six category dots blink in around it like pins being found, and the wordmark rises in before the screen fades once the map is ready. Under reduced motion it shows the finished mark.
 
@@ -467,13 +495,14 @@ The lens draws itself: the inner ring strokes in over .65s, the blue core pops i
 - **Do** set controls at 13px (12px at 650px and below) and keep anything a reader must read at 12px or larger.
 - **Do** put the heading first and its ID, type or date underneath as a 12px meta line in text-3.
 - **Do** draw issues as category-coloured teardrop pins with a white rim, clusters as Civic Blue numbered circles, and mark high severity with the "!" badge.
-- **Do** let selects size to their label (`field-sizing: content`) and let the map's filter row scroll sideways when it is narrow.
+- **Do** build every dropdown with `selectHtml()` (src/select.js), let it size to its label, and let the map's filter row scroll sideways when it is narrow.
 - **Do** lift floating controls, panels and dialogs with the one soft shadow (--shadow-sm) and keep the basemap muted with --tile-filter.
 - **Do** add every new colour token to both palettes and keep tests/theme.test.mjs passing at 4.5:1 for each text pair in both themes.
 - **Do** keep light as the default theme and make dark neutral graphite.
 
 ### Don't:
 - **Don't** use blue for headings, body copy or labels that are not links, selections or status chips.
+- **Don't** add a bare native `<select>` or a one-off popup list; use `selectHtml()`, and the `.menu` surface for any other menu.
 - **Don't** put coloured side-accent stripes on cards, rows, callouts or alerts.
 - **Don't** use glows, neon halos, backdrop blur, gradient text or decorative gradient sheen; the density ramp is a data encoding, not decoration.
 - **Don't** nest a card inside a card.
