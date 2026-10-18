@@ -30,7 +30,7 @@ this machine, using the local Claude Code login, so it keeps going if the page o
   POST /api/geolocate/<id>/cancel
 GEOLOC_PYTHON is the Python with the vision tools installed (default: research/geoloc_tests/.venv, then .venv in
 the repo root); GEOLOC_MODEL (default opus), GEOLOC_EFFORT (high), GEOLOC_MINUTES (10) and GEOLOC_MAX_RUNNING (1)
-tune it. Only this app may use these endpoints (Host and Origin are checked, POSTs must be JSON), at most 5 jobs
+tune it; a job's Mapillary downloads are deleted when it ends unless GEOLOC_KEEP_DOWNLOADS is set. Only this app may use these endpoints (Host and Origin are checked, POSTs must be JSON), at most 5 jobs
 run or wait at once, and the job folders (data/geolocate/) are not on the static allowlist.
 """
 import argparse
@@ -174,6 +174,7 @@ GEOLOC_MODEL = setting("GEOLOC_MODEL", "opus")
 GEOLOC_EFFORT = setting("GEOLOC_EFFORT", "high")
 GEOLOC_MINUTES = float(setting("GEOLOC_MINUTES", 10))
 GEOLOC_MAX_RUNNING = int(setting("GEOLOC_MAX_RUNNING", 1))
+GEOLOC_KEEP_DOWNLOADS = bool(setting("GEOLOC_KEEP_DOWNLOADS"))  # keep each job's Mapillary images (debugging)
 GEOLOC_MAX_ACTIVE = 5  # running or waiting; more are refused, so nothing can pile up Opus runs
 JOB_ID = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{6}$")
 SUFFIX = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
@@ -209,7 +210,8 @@ def start_geolocation(body):
         raise OverflowError(f"{len(active)} photos are already being located. Wait for one to finish.")
     job = claude_geoloc.new_job(GEOLOC_JOBS, photo, SUFFIX[mime], GEOLOC_MINUTES, GEOLOC_MODEL, GEOLOC_EFFORT)
     try:
-        claude_geoloc.start_background(job, python=str(GEOLOC_PYTHON), max_running=GEOLOC_MAX_RUNNING)
+        claude_geoloc.start_background(job, python=str(GEOLOC_PYTHON), max_running=GEOLOC_MAX_RUNNING,
+                                       keep_downloads=GEOLOC_KEEP_DOWNLOADS)
     except OSError as error:  # the job must not sit "queued" in front of later ones
         status = claude_geoloc.read_status(job)
         status.update(state="failed", error=f"couldn't start the background worker: {error}",

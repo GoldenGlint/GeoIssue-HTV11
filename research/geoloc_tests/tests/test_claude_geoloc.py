@@ -95,7 +95,8 @@ class RunTest(unittest.TestCase):
         self.image = self.tmp / "photo.jpg"
         self.image.write_bytes(b"not really a jpeg")
         for patch in (mock.patch.dict(os.environ, {"CLAUDE_BIN": fake_claude_bin(self.tmp), "FAKE_CLAUDE_MODE": "ok"}),
-                      mock.patch.object(claude_geoloc, "QUEUE_DIRS", [])):  # don't queue behind real jobs
+                      mock.patch.object(claude_geoloc, "QUEUE_DIRS", []),  # don't queue behind real jobs
+                      mock.patch.object(claude_geoloc, "DOWNLOADS", self.tmp / "downloads")):
             patch.start()
             self.addCleanup(patch.stop)
 
@@ -113,6 +114,27 @@ class RunTest(unittest.TestCase):
         self.assertTrue((self.tmp / "jobs" / "job" / "events.jsonl").read_text().count("\n") >= 6)
         command = claude_geoloc.claude_command(self.tmp, "opus", "high", 10)
         self.assertEqual(command[command.index("--tools") + 1], "")  # no built-in tools
+
+    def downloaded(self, name="job"):
+        """Stand-in Mapillary images, where geoloc_mcp.py would have downloaded them for this job."""
+        folder = claude_geoloc.DOWNLOADS / name / "m1_p0"
+        folder.mkdir(parents=True)
+        (folder / "123.jpg").write_bytes(b"jpeg")
+        return folder.parent
+
+    def test_a_job_deletes_its_downloads_when_it_ends(self):
+        folder = self.downloaded()
+        self.assertEqual(self.run_job()["state"], "done")
+        self.assertFalse(folder.exists())
+        os.environ["FAKE_CLAUDE_MODE"] = "fail"
+        folder = self.downloaded("failed")
+        self.run_job("failed")
+        self.assertFalse(folder.exists())
+
+    def test_downloads_can_be_kept_for_debugging(self):
+        folder = self.downloaded()
+        self.run_job(keep_downloads=True)
+        self.assertTrue((folder / "m1_p0" / "123.jpg").exists())
 
     def test_claude_failing_gives_a_failed_job_with_its_message(self):
         os.environ["FAKE_CLAUDE_MODE"] = "fail"

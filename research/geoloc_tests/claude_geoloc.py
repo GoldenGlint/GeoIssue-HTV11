@@ -33,6 +33,7 @@ HERE = Path(__file__).parent
 JOBS = HERE / "results" / "claude_jobs"
 APP_JOBS = HERE.parent.parent / "data" / "geolocate"  # where scripts/serve.py puts the app's jobs
 QUEUE_DIRS = [JOBS, APP_JOBS]  # command-line and app jobs share one GPU, so they queue together
+DOWNLOADS = HERE / "data" / "agent_mly"  # geoloc_mcp.py downloads each job's Mapillary images to DOWNLOADS/<job>
 GRACE_S = 180  # after the tool budget: time to answer, or to finish a match already under way
 HEARTBEAT_S, STALE_S, START_S = 5, 60, 120  # worker heartbeat period; dead after STALE_S silent or START_S unstarted
 WINDOWS = os.name == "nt"
@@ -152,12 +153,14 @@ def new_job(jobs_dir, image_bytes, suffix, minutes, model, effort):
     return job_dir
 
 
-def start_background(job_dir, python=None, max_running=1):
+def start_background(job_dir, python=None, max_running=1, keep_downloads=False):
     """Run the job in a detached worker process; returns its pid."""
     status = read_status(job_dir)
     argv = [python or sys.executable, str(HERE / "claude_geoloc.py"), "--job-dir", str(job_dir),
             "--image", str(Path(job_dir) / status["image"]), "--minutes", str(status["minutes"]),
             "--model", status["model"], "--effort", status["effort"], "--max-running", str(max_running)]
+    if keep_downloads:
+        argv.append("--keep-downloads")
     with open(Path(job_dir) / "worker.log", "ab") as log:
         proc = subprocess.Popen(argv, cwd=HERE, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                                 **detached())
@@ -301,6 +304,18 @@ class Progress:
 
 
 # ---------- the run ----------
+def remove_downloads(job_dir):
+    """Delete the Mapillary images a job downloaded: often hundreds of MB, and only needed while it runs. The
+    contact sheets the app shows are already in the job folder. Windows may hold a file for a moment after the
+    tools are killed, so this tries a few times."""
+    folder = DOWNLOADS / Path(job_dir).name
+    for _ in range(5):
+        shutil.rmtree(folder, ignore_errors=True)
+        if not folder.exists():
+            return
+        time.sleep(1)
+
+
 def score(final, truth):
     """Distance from the true camera position, for test runs."""
     import math
@@ -340,13 +355,15 @@ def claude_command(job_dir, model, effort, minutes):
             "--no-session-persistence"]
 
 
-def run(job_dir, image, minutes=10, model="opus", effort="high", truth=None, max_running=1):
+def run(job_dir, image, minutes=10, model="opus", effort="high", truth=None, max_running=1, keep_downloads=False):
     job_dir = Path(job_dir).resolve()
     job_dir.mkdir(parents=True, exist_ok=True)
     heartbeat = start_heartbeat(job_dir)
     try:
         return run_job(job_dir, image, minutes, model, effort, truth, max_running)
     finally:
+        if not keep_downloads:  # done, failed, timed out or cancelled alike
+            remove_downloads(job_dir)
         heartbeat.set()
 
 
@@ -441,9 +458,12 @@ def main():
     ap.add_argument("--job-dir", help="default: results/claude_jobs/<time>-<photo>")
     ap.add_argument("--max-running", type=int, default=int(os.environ.get("GEOLOC_MAX_RUNNING", 1)),
                     help="jobs allowed to run at once across the app's and the command line's job folders")
+    ap.add_argument("--keep-downloads", action="store_true", default=bool(os.environ.get("GEOLOC_KEEP_DOWNLOADS")),
+                    help="keep the job's Mapillary images in data/agent_mly/<job> (deleted by default when it ends)")
     args = ap.parse_args()
     job_dir = Path(args.job_dir or JOBS / f"{time.strftime('%Y%m%d-%H%M%S')}-{Path(args.image).stem}")
-    status = run(job_dir, args.image, args.minutes, args.model, args.effort, args.truth, args.max_running)
+    status = run(job_dir, args.image, args.minutes, args.model, args.effort, args.truth, args.max_running,
+                 args.keep_downloads)
     print(json.dumps({k: status.get(k) for k in ("id", "state", "error", "elapsed_s", "usage", "result")},
                      indent=2, default=str))
     print(f"job folder: {job_dir}")
