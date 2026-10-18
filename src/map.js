@@ -11,7 +11,7 @@ function unproject([x, y], z) {
   return [x / size * 360 - 180, Math.atan(Math.sinh(Math.PI * (1 - 2 * y / size))) * 180 / Math.PI];
 }
 export class CivicMap {
-  constructor(element, { onSelect, onEmpty, onMove, onArea, icon, colorFor = () => '#4ea8ff', assets = [], boundaries = [], home = [-79.397, 43.661] }) {
+  constructor(element, { onSelect, onEmpty, onMove, onArea, icon, colorFor = () => '#2563eb', assets = [], boundaries = [], home = [-79.397, 43.661] }) {
     Object.assign(this, { element, onSelect, onEmpty, onMove, onArea, icon, colorFor, assets, home, center: home, zoom: 13, issues: [], selected: [], layers: [], activeArea: '', mode: 'pan', drag: null, pinch: null, pointers: new Map(), showHeat: false, tileCache: new Map(), motionFrame: null, renderFrame: null, lastWheel: 0, backdropTimer: null });
     // Ward outlines ({ id, name, rings }), labelled at the centroid of each ward's largest ring.
     this.boundaries = boundaries.map(b => {
@@ -83,8 +83,9 @@ export class CivicMap {
     if (this.tooltip) this.tooltip.hidden = true;
   }
   setData(issues, selected = []) { this.stopMotion(); this.issues = issues; this.selected = selected; this.render(); }
-  /** Draws a crew route through these [lng, lat] stops in order, or removes it with null. */
-  setRoute(stops) { this.route = stops?.length > 1 ? stops : null; this.render(); }
+  /** Draws a crew route, or removes it with null: { stops, path }, both [lng, lat] lists. The path follows the
+   * roads when the router supplied one; otherwise the line joins the stops directly. */
+  setRoute(route) { this.route = route?.stops?.length > 1 ? route : null; this.render(); }
   setZoom(z, anchor = [this.element.clientWidth / 2, this.element.clientHeight / 2]) {
     z = clampZoom(Math.round(z));
     const c = project(this.center, this.zoom);
@@ -294,8 +295,8 @@ export class CivicMap {
       }
     }
     // A planned route runs under the pins; its stop numbers sit on top of them.
-    const route = this.route?.map(c => this.position(c));
-    if (route) markerFragment.append(this.routeLine(route, width, height));
+    const route = this.route?.stops.map(c => this.position(c));
+    if (route) markerFragment.append(this.routeLine((this.route.path || this.route.stops).map(c => this.position(c)), width, height));
     for (const group of groups) {
       const first = group.items[0], multi = group.items.length > 1, key = group.items.map(i => i.issue_id).join(',');
       // High severity gets a "!" badge, so severity never depends on colour alone.
@@ -314,7 +315,11 @@ export class CivicMap {
       button.onclick = e => { e.stopPropagation(); this.tooltip.hidden = true; this.onSelect(group.items.map(i => i.issue_id), multi ? 'cluster' : 'issue', e); };
       markerFragment.append(button);
     }
+    // Stop numbers that would land on one already drawn are skipped; zooming in separates them.
+    const placed = [];
     route?.forEach((p, i) => {
+      if (placed.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 20)) return;
+      placed.push(p);
       const stop = document.createElement('span'); stop.className = 'route-stop'; stop.textContent = i + 1;
       stop.style.cssText = `left:${p[0]}px;top:${p[1]}px`; stop.setAttribute('aria-hidden', 'true');
       markerFragment.append(stop);
@@ -323,7 +328,11 @@ export class CivicMap {
     this.element.classList.toggle('box-mode', this.mode === 'box');
     this.renderInfrastructure();
   }
-  routeLine(points, width, height) {
+  routeLine(all, width, height) {
+    // A road path has thousands of points; points closer than 2 px to the last one kept add nothing at this zoom.
+    const points = [];
+    for (const p of all) { const last = points.at(-1); if (!last || Math.hypot(p[0] - last[0], p[1] - last[1]) >= 2) points.push(p); }
+    if (points.at(-1) !== all.at(-1)) points.push(all.at(-1));
     const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('class', 'route-line'); svg.setAttribute('width', width); svg.setAttribute('height', height);
     svg.setAttribute('aria-hidden', 'true');
@@ -368,7 +377,7 @@ export class CivicMap {
     if (this.heatColours) return this.heatColours;
     const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 1;
     const ctx = canvas.getContext('2d'), gradient = ctx.createLinearGradient(0, 0, 256, 0);
-    for (const [stop, colour] of [[0, 'rgba(39,120,246,0)'], [0.12, 'rgba(39,120,246,.38)'], [0.35, 'rgba(39,184,246,.62)'], [0.6, 'rgba(255,180,82,.8)'], [0.85, 'rgba(250,101,117,.9)'], [1, 'rgba(255,214,222,.95)']]) gradient.addColorStop(stop, colour);
+    for (const [stop, colour] of [[0, 'rgba(37,99,235,0)'], [0.12, 'rgba(37,99,235,.32)'], [0.35, 'rgba(37,99,235,.55)'], [0.6, 'rgba(217,119,6,.72)'], [0.85, 'rgba(220,38,38,.82)'], [1, 'rgba(185,28,28,.9)']]) gradient.addColorStop(stop, colour);
     ctx.fillStyle = gradient; ctx.fillRect(0, 0, 256, 1);
     return (this.heatColours = ctx.getImageData(0, 0, 256, 1).data);
   }
@@ -390,7 +399,7 @@ export class CivicMap {
     this.tooltip.hidden = false;
     const width = this.tooltip.offsetWidth, height = this.tooltip.offsetHeight;
     const x = Math.max(10, Math.min(this.element.clientWidth - width - 10, group.p[0] - width / 2));
-    const y = group.p[1] - height - 29;
+    const y = group.p[1] - height - (multi ? 29 : 42); // above a cluster circle, or above a pin's head
     this.tooltip.style.left = x + 'px';
     this.tooltip.style.top = (y < 120 ? Math.min(this.element.clientHeight - height - 10, group.p[1] + 28) : y) + 'px';
     button.setAttribute('aria-describedby', this.tooltip.id);
@@ -427,8 +436,9 @@ export class CivicMap {
         const lines = asset.geometry.type === 'LineString' ? [asset.geometry.coordinates] : asset.geometry.coordinates;
         const visible = [];
         for (const coordinates of lines) {
-          const points = coordinates.map(c => this.position(c));
-          if (!points.some(p => inView(p, 200))) continue;
+          const points = coordinates.map(c => this.position(c)), xs = points.map(p => p[0]), ys = points.map(p => p[1]);
+          // Skip only lines wholly off screen: zoomed in, a long straight piece can cross the view with both ends outside it.
+          if (Math.max(...xs) < -200 || Math.min(...xs) > w + 200 || Math.max(...ys) < -200 || Math.min(...ys) > h + 200) continue;
           const line = document.createElementNS(ns, 'polyline'); line.setAttribute('points', points.map(p => p.join(',')).join(' ')); svg.append(line);
           visible.push(...points.filter(p => inView(p, -60)));
         }

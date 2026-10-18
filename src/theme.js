@@ -1,10 +1,10 @@
 // Dark/light/system appearance. index.html applies the saved choice before first paint; this keeps it in sync.
 import { read, persist } from './state.js';
 
-const THEME_COLORS = { dark: '#07121f', light: '#eff4fa' };
+const THEME_COLORS = { dark: '#0e0f11', light: '#f5f6f8' };
 const systemLight = matchMedia('(prefers-color-scheme: light)');
 
-export const themePreference = () => read('theme', 'dark');
+export const themePreference = () => read('theme', 'light');
 export const activeTheme = (preference = themePreference()) =>
   preference === 'light' || (preference === 'system' && systemLight.matches) ? 'light' : 'dark';
 

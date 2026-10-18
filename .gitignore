@@ -28,3 +28,6 @@ scraping/data/
 
 # macOS folder metadata
 .DS_Store
+
+# Impeccable design-review screenshots (regenerated on each review)
+.impeccable/review/
