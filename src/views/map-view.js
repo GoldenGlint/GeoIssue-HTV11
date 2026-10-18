@@ -1,5 +1,5 @@
 // Map Explorer: the map canvas, floating controls, and the selection-driven right panel.
-import { CivicMap } from '../map.js';
+import { CivicMap, selectionOp, modKey } from '../map.js';
 import { attachSearch } from '../search.js';
 import { categories, infrastructure, wardBoundaries, TORONTO_CENTER } from '../data.js';
 import { icon } from '../icons.js';
@@ -67,7 +67,12 @@ export function mapPadding() {
 }
 export function frameIssues(issues, maxZoom = 15, duration) {
   if (!issues.length) { toast('No matching issues to frame.'); return; }
-  map?.fitTo(issues.map(i => i.geometry.coordinates), mapPadding(), maxZoom, duration);
+  map?.fitTo(issues.map(i => i.geometry.coordinates), mapPadding(), { maxZoom, duration });
+}
+/** Zooms in to show what a cluster or hot spot holds: up to two levels per click, and never out. */
+function zoomInto(issues) {
+  const z = Math.round(map.targetZoom ?? map.zoom);
+  map.fitTo(issues.map(i => i.geometry.coordinates), mapPadding(), { minZoom: z, maxZoom: Math.min(18, z + 2) });
 }
 const inView = issue => { const [x, y] = map.position(issue.geometry.coordinates); return x >= 0 && y >= 0 && x <= map.element.clientWidth && y <= map.element.clientHeight; };
 export const visibleIssues = () => filtered().filter(inView);
@@ -106,24 +111,39 @@ export function openIssue(id, back = null) {
   renderPanel(); map?.setData(filtered(), state.selected); updateMapMeta();
   reveal(issue);
 }
+/** Selects issues picked on the map. A plain click or box replaces the selection; with Ctrl (⌘) held it adds to it and
+ * with Shift it removes from it, leaving the camera alone so more can be picked. A plain click on a cluster zooms in. */
 export function selectMap(ids, mode, e) {
-  if (e?.shiftKey) {
-    for (const id of ids) state.selected = state.selected.includes(id) ? state.selected.filter(x => x !== id) : [...state.selected, id];
-    state.panel = state.selected.length ? { mode: 'multi', ids: [...state.selected] } : null;
-  } else {
+  const op = selectionOp(e);
+  if (op === 'replace') {
     state.selected = ids;
     state.panel = ids.length ? mode === 'issue' ? { mode, id: ids[0] } : { mode, ids } : null;
     if (mode === 'issue') remember(findIssue(ids[0]));
+  } else {
+    const next = op === 'add' ? [...new Set([...state.selected, ...ids])] : state.selected.filter(id => !ids.includes(id));
+    // Adding what is already selected, or removing what isn't, leaves the panel as it was.
+    if (next.length === state.selected.length) return;
+    state.selected = next;
+    state.panel = next.length ? { mode: 'multi', ids: [...next] } : null;
   }
   renderPanel(); map?.setData(filtered(), state.selected); updateMapMeta();
   if (state.panel?.mode === 'issue') reveal(findIssue(state.panel.id));
+  else if (op === 'replace' && mode === 'cluster') zoomInto(ids.map(findIssue));
+}
+/** Arrives on the map showing these issues, from another page: one opens its details, several open as a selection,
+ * and the camera frames them. */
+export function showIssues(ids) {
+  const issues = ids.map(findIssue).filter(Boolean);
+  if (!issues.length) return;
+  if (issues.length === 1) openIssue(issues[0].issue_id); else selectMap(issues.map(i => i.issue_id), 'multi');
+  frameIssues(issues);
 }
 export function clearSelection() {
   state.selected = []; state.panel = null;
   renderPanel(); map?.setData(filtered(), []); updateMapMeta();
 }
 
-const mapHint = mode => `${icon(mode === 'box' ? 'select' : 'hand')} ${mode === 'box' ? 'Drag a rectangle to select issues &middot; Middle-drag to pan' : 'Drag to pan &middot; Scroll to zoom &middot; Shift + click to select'}`;
+const mapHint = mode => `${icon(mode === 'box' ? 'select' : 'hand')} ${mode === 'box' ? `Drag a rectangle to select issues &middot; Hold ${modKey} to add, Shift to remove &middot; Middle-drag to pan` : `Drag to pan &middot; Scroll to zoom &middot; ${modKey} + click to add &middot; Shift + click to remove`}`;
 
 export function mapHtml() {
   const legend = Object.entries(categories).map(([type, c]) => `<button data-legend="${type}" class="${state.filters.type === type ? 'legend-active' : ''}"><span style="color:${c.color}">${typeIcon(type)}</span>${type}</button>`).join('');
@@ -299,7 +319,7 @@ export function renderPanel() {
   } else {
     const issues = p.ids.map(findIssue).filter(Boolean), cluster = p.mode === 'cluster';
     const high = issues.filter(i => i.severity === 'High').length, verified = issues.filter(i => i.verification_status === 'Verified').length;
-    el.innerHTML = `<div class="panel-heading"><div><h2>${issues.length} ${issues.length === 1 ? 'issue' : 'issues'} ${cluster ? 'in this cluster' : 'selected'}</h2></div><button class="icon-button" data-action="close-panel" aria-label="Close selection">${icon('close')}</button></div><div class="panel-info">${cluster ? 'Grouped at this zoom level. These may be separate incidents.' : 'Shift + click markers to add or remove issues.'}</div><div class="panel-list-controls"><input id="panel-search" placeholder="Filter these issues…" aria-label="Filter these issues">${selectHtml({ id: 'panel-sort', label: 'Sort issues', options: [['date', 'Newest first'], ['severity', 'Severity'], ['type', 'Issue type']] })}</div><div class="selection-summary">${high} high priority <span>·</span> ${verified} verified</div><div id="panel-results" class="panel-results"></div><div class="panel-footer wrap"><button class="button primary" data-action="selection-table">${icon('database')} View as table</button>${cluster ? `<button class="button" data-action="cluster-zoom">${icon('fit')} Zoom in</button>` : ''}<button class="button" data-action="save-selection">${icon('bookmark')} Save selection</button>${issues.length > 1 ? `<button class="button" data-action="plan-route">${icon('route')} Plan crew route</button>` : ''}</div>`;
+    el.innerHTML = `<div class="panel-heading"><div><h2>${issues.length} ${issues.length === 1 ? 'issue' : 'issues'} ${cluster ? 'in this cluster' : 'selected'}</h2></div><button class="icon-button" data-action="close-panel" aria-label="Close selection">${icon('close')}</button></div><div class="panel-info">${cluster ? 'Grouped at this zoom level. These may be separate incidents.' : `${modKey} + click markers to add issues, Shift + click to remove them.`}</div><div class="panel-list-controls"><input id="panel-search" placeholder="Filter these issues…" aria-label="Filter these issues">${selectHtml({ id: 'panel-sort', label: 'Sort issues', options: [['date', 'Newest first'], ['severity', 'Severity'], ['type', 'Issue type']] })}</div><div class="selection-summary">${high} high priority <span>·</span> ${verified} verified</div><div id="panel-results" class="panel-results"></div><div class="panel-footer wrap"><button class="button primary" data-action="selection-table">${icon('database')} View as table</button>${cluster ? `<button class="button" data-action="cluster-zoom">${icon('fit')} Zoom in</button>` : ''}<button class="button" data-action="save-selection">${icon('bookmark')} Save selection</button>${issues.length > 1 ? `<button class="button" data-action="plan-route">${icon('route')} Plan crew route</button>` : ''}</div>`;
     const severityRank = ['High', 'Medium', 'Low'];
     const updateList = () => {
       const query = el.querySelector('#panel-search').value.toLowerCase(), sort = el.querySelector('#panel-sort').value;
@@ -313,7 +333,7 @@ export function renderPanel() {
     el.querySelector('[data-action="selection-table"]').onclick = () => scopedTable(p.ids);
     el.querySelector('[data-action="save-selection"]').onclick = () => toggleSave(p.ids);
     const zoom = el.querySelector('[data-action="cluster-zoom"]');
-    if (zoom) zoom.onclick = () => frameIssues(issues, Math.min(18, Math.round(map.zoom) + 2));
+    if (zoom) zoom.onclick = () => zoomInto(issues);
     const route = el.querySelector('[data-action="plan-route"]');
     if (route) route.onclick = () => planCrewRoute(issues, p);
   }

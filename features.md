@@ -46,8 +46,8 @@ A persistent left navigation sidebar is shared across both primary pages. On sma
 
 ### 2.4 Cluster and multi-pin selection
 
-- **Cluster click (approved):** Immediately open the right panel as a sortable/filterable issue list showing all issues in the clicked cluster. Include a prominent Zoom in action in that panel; do not automatically zoom on click. A cluster is a visual grouping at the current zoom, not necessarily one incident.
-- **Multi-pin select (approved):** Shift+click adds/removes individual pins; an explicit Box select toolbar mode enables click-and-drag rectangular selection. Normal dragging outside Box select always pans. Shift+click works without entering Box select. Optionally draw a lasso/polygon later (stretch). Clearly display N selected, allow clear selection and add/remove without closing panel.
+- **Cluster click (approved):** Immediately open the right panel as a sortable/filterable issue list showing all issues in the clicked cluster. A plain click also zooms in on the cluster (up to two levels, never out) so its pins separate; Ctrl + click adds it to the selection without moving the map (revised 2026-10-18). Keep a Zoom in action in that panel for further zooming. A cluster is a visual grouping at the current zoom, not necessarily one incident.
+- **Multi-pin select (approved, keys revised 2026-10-18):** Ctrl+click (⌘ on a Mac) adds pins or clusters and Shift+click removes them; an explicit Box select toolbar mode enables click-and-drag rectangular selection, where holding Ctrl adds the box to the selection and Shift subtracts it. Normal dragging outside Box select always pans. Modifier clicks work without entering Box select and never move the map. Optionally draw a lasso/polygon later (stretch). Clearly display N selected, allow clear selection and add/remove without closing panel.
 - **Selection panel:** Show issue rows (type, location, severity, date, verification) and summary by type/status; open an individual row in-place, then back to selection.
 - **Actions:** Save selected issues as a collection; export selection where permitted; narrow by filters. Do not conflate selecting 12 map pins with deduplicating them into 12 unique incidents unless IDs confirm uniqueness.
 - **Define predictable interactions:** dragging normally pans; rectangular selection only occurs in explicit selection mode (or with a documented keyboard modifier).
@@ -139,14 +139,14 @@ A third primary page, reachable from the sidebar, that summarizes the same filte
 
 ### Live demo flow
 
-Open Map Explorer → zoom into Toronto → click a cluster (right-side list opens, without auto-zoom) → optionally click Zoom in → filter cluster rows → select one issue → inspect right-side details → return → Shift+click several pins and use explicit Box select → View as table (scope chip: selected issues) → clear selection scope to see all accessible Toronto issues while preserving shared filters → filter by TTC station within 500m and last 7 days → export CSV → jump back to highlighted pins on the map. If coverage/viewer tests pass, drag the street-level person icon onto a Mapillary-covered road and browse nearby photos.
+Open Map Explorer → zoom into Toronto → click a cluster (right-side list opens and the map zooms in on it) → optionally click Zoom in → filter cluster rows → select one issue → inspect right-side details → return → Ctrl+click several pins and use explicit Box select → View as table (scope chip: selected issues) → clear selection scope to see all accessible Toronto issues while preserving shared filters → filter by TTC station within 500m and last 7 days → export CSV → jump back to highlighted pins on the map. If coverage/viewer tests pass, drag the street-level person icon onto a Mapillary-covered road and browse nearby photos.
 
 ## 9. Approved decisions and remaining open questions
 
 ### Locked product decisions (2026-10-17)
 
-- **Click cluster:** open right-side issue list with a Zoom in button; do not auto-zoom.
-- **Multi-pin selection:** Shift+click, plus explicit Box select mode; default drag pans.
+- **Click cluster:** open right-side issue list with a Zoom in button, and zoom in on the cluster (revised 2026-10-18; Ctrl+click adds it without zooming).
+- **Multi-pin selection:** Ctrl+click adds, Shift+click removes, in pin clicks and Box select mode alike (revised 2026-10-18); default drag pans.
 - **Street-level exploration:** draggable person icon dropped onto available Mapillary street photos, with photo-to-photo browsing and honest no-coverage behavior; delivery remains dependent on a successful integration spike.
 - **Data Explorer initial scope:** all accessible Toronto issues, using shared global filters; selection-scoped table is an explicit action only.
 
@@ -168,9 +168,10 @@ Open Map Explorer → zoom into Toronto → click a cluster (right-side list ope
 | Upload fails or required fields are missing | Show actionable feedback, preserve entered details, and allow correction or retry. |
 | Open Map Explorer | Full-width map; right panel closed. |
 | Click one pin | Right-side details open. |
-| Click a numbered cluster | Right-side sortable/filterable list opens; viewport does not zoom; Zoom in action available. |
+| Click a numbered cluster | Right-side sortable/filterable list opens; viewport zooms in on the cluster (at most two levels); Zoom in action available. |
 | Click issue row in cluster list | Same right panel displays issue detail and Back to results. |
-| Shift+click 3 pins | All 3 issue IDs selected; right-side multi-selection list opens; no duplicate IDs. |
+| Ctrl+click 3 pins | All 3 issue IDs selected; right-side multi-selection list opens; no duplicate IDs; viewport does not move. |
+| Shift+click a selected pin | Its issue IDs leave the selection; viewport does not move. |
 | Activate Box select, then drag | Draw selection rectangle and select intersecting pins; dragging in regular mode pans. |
 | Click empty map / Escape | Close right panel and clear current selection according to documented behavior. |
 | Drop person on Mapillary-covered road | Open photo explorer at a covered photo location, with navigation/date/attribution. |

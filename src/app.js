@@ -6,7 +6,7 @@ import { esc, date, categoryOptions } from './format.js';
 import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel, applyCorrection, reviewQueue, applyLocalSightings } from './state.js';
 import { toast, closeModal } from './ui.js';
 import { selectHtml } from './select.js';
-import { mapHtml, initMap, destroyMap, getMap, renderPanel, clearSelection, selectMap, openIssue, frameIssues, refreshMapFilters, setMapMode, setHeat, visibleIssues, planCrewRoute } from './views/map-view.js';
+import { mapHtml, initMap, destroyMap, getMap, renderPanel, clearSelection, selectMap, showIssues, openIssue, frameIssues, refreshMapFilters, setMapMode, setHeat, visibleIssues, planCrewRoute } from './views/map-view.js';
 import { dataHtml, bindData, clearTableSelection } from './views/data-view.js';
 import { dashboardHtml, bindDashboard } from './views/dashboard-view.js';
 import { collectionHtml, verifyHtml, bindWorkspace } from './views/workspace-view.js';
@@ -119,11 +119,13 @@ export function render() {
   if (state.view === 'verify') bindWorkspace();
   bindIssueLinks(app);
 }
-export function nav(view) {
+/** Goes to a page. Going to the map, the issues in `show` arrive selected with the camera on them. */
+export function nav(view, show = []) {
   state.view = view; state.page = 1; state.panel = null; state.selected = [];
   if (view === 'data') state.scope = null;
   history.replaceState(null, '', `#${view}`);
   render(); window.scrollTo(0, 0);
+  if (view === 'map' && show.length) showIssues(show);
 }
 export function scopedTable(ids) {
   state.scope = [...ids]; state.view = 'data'; state.dataTab = 'records'; state.panel = null; state.page = 1;
@@ -148,7 +150,8 @@ export function toggleSave(ids) {
 
 function bindShell() {
   bindFilterChips();
-  app.querySelectorAll('[data-nav]').forEach(b => b.onclick = e => { e.preventDefault(); nav(b.dataset.nav); });
+  // Rows ticked in Data Explorer go along to the map.
+  app.querySelectorAll('[data-nav]').forEach(b => b.onclick = e => { e.preventDefault(); nav(b.dataset.nav, state.view === 'data' ? state.selected : []); });
   app.querySelectorAll('[data-action]').forEach(b => b.onclick = () => action(b.dataset.action));
   app.querySelectorAll('[data-filter]').forEach(el => el.onchange = () => { state.filters[el.dataset.filter] = el.value; updateFilteredView(); });
   const source = document.querySelector('#data-source');
@@ -220,7 +223,7 @@ setInterval(async () => {
   finally { refreshingIssues = false; }
 }, 15000);
 // The analysed posts are few and spread across the city, so the map starts with all of them in view. It jumps
-// there: the new map's first resize callback would stop an animation.
+// there rather than flying in on page load.
 function frameAnalysed() {
   if (state.dataSource === 'collected' && state.view === 'map' && !state.panel && filtered().length) requestAnimationFrame(() => frameIssues(filtered(), 15, 0));
 }
@@ -251,11 +254,7 @@ export function action(name) {
     case 'clear-table-selection': clearTableSelection(); break;
     case 'save-table-selection': toggleSave(state.selected); break;
     case 'export-selected': exportModal('selected'); break;
-    case 'table-map': {
-      const ids = state.selected.length ? state.selected : scopedRows().map(i => i.issue_id);
-      nav('map'); selectMap(ids, 'multi'); frameIssues(state.issues.filter(i => ids.includes(i.issue_id)));
-      break;
-    }
+    case 'table-map': nav('map', state.selected.length ? state.selected : scopedRows().map(i => i.issue_id)); break;
     case 'export': exportModal(); break;
     case 'clear-recents': state.recent = []; persist('recent', []); render(); break;
     case 'settings': settingsModal(); break;

@@ -103,6 +103,10 @@ input::placeholder,textarea::placeholder{color:var(--text-3)}
 .map-pin.selected{border-color:var(--text-4)}
 .asset-label{position:absolute;color:var(--purple-text);background:var(--purple-soft);font-size:12px;padding:4px 6px;border:1px solid var(--purple-border);transform:translate(-50%,-50%);border-radius:3px;white-space:nowrap}
 .box-drawing{display:none;position:absolute;border:1px solid var(--accent);background:var(--accent-soft);pointer-events:none;z-index:4}
+/* Ctrl (⌘) adds to the selection, Shift removes from it; the box says which. */
+.box-drawing[data-op="add"]::after,.box-drawing[data-op="remove"]::after{content:"+";position:absolute;inset:0;display:grid;place-items:center;color:var(--accent);font-size:20px;font-weight:600;line-height:1}
+.box-drawing[data-op="remove"]{border-style:dashed;border-color:var(--danger);background:color-mix(in srgb,var(--danger) 9%,transparent)}
+.box-drawing[data-op="remove"]::after{content:"−";color:var(--danger)}
 .map-top-left{position:absolute;left:17px;top:17px;display:flex;align-items:center;gap:13px;z-index:5}
 .map-segment{display:flex;padding:3px;border:1px solid var(--border-strong);background:var(--surface);border-radius:7px;box-shadow:var(--shadow-sm)}
 .map-segment button{background:none;color:var(--text-3);font-size:12px;padding:7px 12px;border-radius:4px;display:flex;align-items:center;gap:6px}

@@ -9,7 +9,7 @@ import { state, scopedRows, persist, remember, addSighting, isSampleData, sample
 import { toast, showModal, closeModal, modalHeader, detailHtml, bindEvidence } from './ui.js';
 import { render, nav, toggleSave, setRole, action, themeButtonHtml } from './app.js';
 import { themePreference, setTheme } from './theme.js';
-import { getMap, openIssue, frameIssues, renderPanel } from './views/map-view.js';
+import { getMap, renderPanel } from './views/map-view.js';
 import { apiStatus, triagePhoto, photoForUpload } from './api.js';
 import { blurPhoto } from './blur.js';
 import { tigerProofHtml } from './activity.js';
@@ -141,7 +141,7 @@ function joinSighting(id) {
   for (const p of uploadDraft.photos) { URL.revokeObjectURL(p.url); if (p.blurredUrl) URL.revokeObjectURL(p.blurredUrl); }
   uploadDraft = freshDraft();
   showModal(`${modalHeader('Local demo receipt', 'Sighting added')}<div class="submission-success">${icon('check')}<h3>Thanks. Your sighting was added to ${esc(issue.issue_id)}</h3><p>${esc(issue.issue_type)} at ${esc(issue.address)} now has ${plural(issue.sightings_count, 'sighting')}${issue.priority_score != null ? ` and a priority of ${issue.priority_score}` : ''}. It's listed under Saved → Your submissions.</p></div><div class="modal-footer"><button class="button" data-close>Back to workspace</button><button class="button primary" id="view-joined">${icon('map')} View it on the map</button></div>`, { label: 'Sighting added' });
-  $('#view-joined').onclick = () => { closeModal(); nav('map'); openIssue(id); frameIssues([issue]); };
+  $('#view-joined').onclick = () => { closeModal(); nav('map', [id]); };
   render();
 }
 
@@ -540,7 +540,7 @@ export function tigerModal() {
 
 export function helpModal() {
   const steps = [['1', 'Discover', 'Explore issues on the map, or filter and export the same records in Data Explorer.'], ['2', 'Understand', 'Open a pin to inspect evidence, approximate location, how it was located, and nearby infrastructure.'], ['3', 'Verify', 'A volunteer reviews findings before they become reliable public records.']];
-  showModal(`${modalHeader('', 'How GeoIssue works')}<div class="modal-body help-content"><p>GeoIssue brings civic issues from public imagery and community reports into a shared Toronto workspace.</p>${steps.map(([n, t, d]) => `<div class="help-step"><span>${n}</span><div><h3>${t}</h3><p>${d}</p></div></div>`).join('')}<h3>Map controls</h3><p>Drag to pan, or drag with the middle mouse button, which also pans in Box select; scroll, pinch or double-click to zoom; Shift + click to select multiple pins. Focus the map and use arrow keys to pan, + / - to zoom, or Home to return to Toronto. Search suggestions support arrow keys and Enter, and include wards. Fit all matching issues brings filtered results into view. Box select (the dashed square) enables a selection rectangle. A cluster opens a list; choose Zoom in to change the viewport. Pins with a “!” badge are high severity. Escape clears selection.</p><div class="notice-banner">${icon('code')} This is a prototype. Sample data is fictional; pipeline output comes from public posts analysed by the photo pipeline. TTC stations, highways and ward boundaries are real open data, and Street View opens Google Maps. Map tiles are provided by OpenStreetMap.</div><p class="fine-print">Tiger Data stores imported issue snapshots and report history when connected. Accounts, shared submissions and corrections, and 311 integration remain in progress. Gemini suggestions need the local server with a configured key.</p></div><div class="modal-footer"><button class="button primary" data-close>Got it</button></div>`, { label: 'How GeoIssue works' });
+  showModal(`${modalHeader('', 'How GeoIssue works')}<div class="modal-body help-content"><p>GeoIssue brings civic issues from public imagery and community reports into a shared Toronto workspace.</p>${steps.map(([n, t, d]) => `<div class="help-step"><span>${n}</span><div><h3>${t}</h3><p>${d}</p></div></div>`).join('')}<h3>Map controls</h3><p>Drag to pan, or drag with the middle mouse button, which also pans in Box select; scroll, pinch or double-click to zoom. Ctrl + click (⌘ + click on a Mac) adds pins to the selection and Shift + click removes them, without moving the map.Focus the map and use arrow keys to pan, + / - to zoom, or Home to return to Toronto. Search suggestions support arrow keys and Enter, and include wards. Fit all matching issues brings filtered results into view. Box select (the dashed square) enables a selection rectangle; hold Ctrl (⌘) while dragging to add to the selection, or Shift to remove from it. Clicking a cluster zooms in on it and lists its issues; Ctrl + click adds them to the selection instead. View on map in Data Explorer, or going to the map with rows ticked, opens those issues on the map, zoomed to them. Pins with a “!” badge are high severity. Escape clears selection.</p><div class="notice-banner">${icon('code')} This is a prototype. Sample data is fictional; pipeline output comes from public posts analysed by the photo pipeline. TTC stations, highways and ward boundaries are real open data, and Street View opens Google Maps. Map tiles are provided by OpenStreetMap.</div><p class="fine-print">Tiger Data stores imported issue snapshots and report history when connected. Accounts, shared submissions and corrections, and 311 integration remain in progress. Gemini suggestions need the local server with a configured key.</p></div><div class="modal-footer"><button class="button primary" data-close>Got it</button></div>`, { label: 'How GeoIssue works' });
 }
 
 export async function shareIssue(i) {
@@ -559,5 +559,5 @@ export function issueModal(i) {
   document.querySelector('#modal-save').onclick = () => { toggleSave([i.issue_id]); closeModal(); };
   bindEvidence(document.querySelector('#modal-root'));
   document.querySelector('#modal-correct').onclick = () => correctionModal(i);
-  document.querySelector('#modal-on-map').onclick = () => { closeModal(); nav('map'); openIssue(i.issue_id); frameIssues([i]); };
+  document.querySelector('#modal-on-map').onclick = () => { closeModal(); nav('map', [i.issue_id]); };
 }

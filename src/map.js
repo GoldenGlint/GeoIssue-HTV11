@@ -10,6 +10,10 @@ function unproject([x, y], z) {
   const size = tileSize * 2 ** z;
   return [x / size * 360 - 180, Math.atan(Math.sinh(Math.PI * (1 - 2 * y / size))) * 180 / Math.PI];
 }
+/** What a pin click or box drag does to the selection: Ctrl (⌘ on a Mac) adds, Shift removes, otherwise it replaces. */
+export const selectionOp = e => e?.shiftKey ? 'remove' : e?.ctrlKey || e?.metaKey ? 'add' : 'replace';
+/** The add-to-selection key as this platform names it, for hints. */
+export const modKey = /Mac|iPhone|iPad/.test(globalThis.navigator?.platform || '') ? '⌘' : 'Ctrl';
 export class CivicMap {
   constructor(element, { onSelect, onEmpty, onMove, onArea, icon, colorFor = () => '#2563eb', assets = [], boundaries = [], home = [-79.397, 43.661] }) {
     Object.assign(this, { element, onSelect, onEmpty, onMove, onArea, icon, colorFor, assets, home, center: home, zoom: 13, issues: [], selected: [], layers: [], activeArea: '', mode: 'pan', drag: null, pinch: null, pointers: new Map(), showHeat: false, tileCache: new Map(), motionFrame: null, renderFrame: null, lastWheel: 0, backdropTimer: null });
@@ -65,7 +69,14 @@ export class CivicMap {
       },
     };
     for (const [event, handler] of Object.entries(this.handlers)) element.addEventListener(event, handler, event === 'wheel' ? { passive: false } : undefined);
-    this.observer = new ResizeObserver(() => { this.stopMotion(); this.render(); });
+    // Only a real size change stops the camera. The first callback after observe() changes nothing, and a camera
+    // move started just after the map was built (framing issues opened from another page) must survive it.
+    this.size = [element.clientWidth, element.clientHeight];
+    this.observer = new ResizeObserver(() => {
+      if (element.clientWidth === this.size[0] && element.clientHeight === this.size[1]) return;
+      this.size = [element.clientWidth, element.clientHeight];
+      this.stopMotion(); this.render();
+    });
     this.observer.observe(element);
   }
   bindScene(scene) {
@@ -97,14 +108,14 @@ export class CivicMap {
     this.animateTo(unproject([p[0] - offset[0], p[1] - offset[1]], z), z, 360);
   }
   flyTo(coords, z = 14) { this.animateTo(coords, clampZoom(z), 600); }
-  fitTo(coords, { top = 155, right = 55, bottom = 115, left = 55 } = {}, maxZoom = 15, duration = 600) {
+  fitTo(coords, { top = 155, right = 55, bottom = 115, left = 55 } = {}, { minZoom = 10, maxZoom = 15, duration = 600 } = {}) {
     if (!coords.length) return;
     const points = coords.map(c => project(c, 0));
     const minX = Math.min(...points.map(p => p[0])), maxX = Math.max(...points.map(p => p[0]));
     const minY = Math.min(...points.map(p => p[1])), maxY = Math.max(...points.map(p => p[1]));
     const width = Math.max(64, this.element.clientWidth - left - right);
     const height = Math.max(64, this.element.clientHeight - top - bottom);
-    const z = Math.min(maxZoom, clampZoom(Math.floor(Math.log2(Math.min(width / Math.max(0.00001, maxX - minX), height / Math.max(0.00001, maxY - minY))))));
+    const z = Math.max(minZoom, Math.min(maxZoom, clampZoom(Math.floor(Math.log2(Math.min(width / Math.max(0.00001, maxX - minX), height / Math.max(0.00001, maxY - minY)))))));
     const center = unproject([((minX + maxX) / 2) * 2 ** z - (left - right) / 2, ((minY + maxY) / 2) * 2 ** z - (top - bottom) / 2], z);
     this.animateTo(center, z, duration);
   }
@@ -219,6 +230,7 @@ export class CivicMap {
     if (!d.pan) {
       const r = this.element.getBoundingClientRect();
       Object.assign(this.box.style, { display: 'block', left: Math.min(e.clientX, d.x) - r.left + 'px', top: Math.min(e.clientY, d.y) - r.top + 'px', width: Math.abs(dx) + 'px', height: Math.abs(dy) + 'px' });
+      this.box.dataset.op = selectionOp(e); // marks the box + or − while Ctrl or Shift is held
     } else {
       this.center = unproject([d.center[0] - dx, d.center[1] - dy], this.zoom);
       if (!this.renderFrame) this.renderFrame = requestAnimationFrame(() => { this.renderFrame = null; this.render(); });
@@ -245,8 +257,10 @@ export class CivicMap {
       const ids = this.issues.filter(i => { const [x, y] = this.position(i.geometry.coordinates); return x >= x1 && x <= x2 && y >= y1 && y <= y2; }).map(i => i.issue_id);
       this.onSelect(ids, 'multi', e);
     } else if (!d.moved) {
-      // A middle click that doesn't pan does nothing; it never clears the selection.
-      if (!d.middle) this.showHeat ? this.pickHeat(e) : this.onEmpty();
+      // A middle click that doesn't pan does nothing; it never clears the selection. Nor does a Ctrl or Shift click
+      // that misses every pin, so a near miss doesn't lose a selection being built up.
+      if (d.middle) return;
+      if (this.showHeat) this.pickHeat(e); else if (selectionOp(e) === 'replace') this.onEmpty();
     } else if (performance.now() - d.lastTime < 80 && Math.hypot(d.vx, d.vy) > 0.12) {
       const c = project(this.center, this.zoom), limit = v => Math.max(-170, Math.min(170, v * 140));
       this.animateTo(unproject([c[0] - limit(d.vx), c[1] - limit(d.vy)], this.zoom), this.zoom, 340);
@@ -314,7 +328,7 @@ export class CivicMap {
       button.className = `map-pin ${multi ? 'cluster' : ''} ${high ? 'sev-high' : ''} ${group.items.some(i => this.selected.includes(i.issue_id)) ? 'selected' : ''}`;
       button.style.cssText = `left:${group.p[0]}px;top:${group.p[1]}px;--pin:${this.colorFor(first.issue_type)}`;
       button.innerHTML = multi ? `<span>${group.items.length}</span>` : this.icon(first.issue_type);
-      const label = multi ? `${group.items.length} issues${high ? `, ${high} high severity` : ''} · click to explore` : `${first.title || first.issue_type} · ${first.severity} severity · ${first.address}`;
+      const label = multi ? `${group.items.length} issues${high ? `, ${high} high severity` : ''} · click to zoom in` : `${first.title || first.issue_type} · ${first.severity} severity · ${first.address}`;
       button.removeAttribute('title');
       button.setAttribute('aria-label', label);
       button.onpointerenter = e => { if (e.pointerType === 'mouse' && !this.drag) this.preview(group, button); };
@@ -394,7 +408,7 @@ export class CivicMap {
     const r = this.element.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     const ids = this.issues.filter(i => { const [px, py] = this.position(i.geometry.coordinates); return Math.hypot(px - x, py - y) <= this.heatRadius; }).map(i => i.issue_id);
     if (ids.length) this.onSelect(ids, ids.length === 1 ? 'issue' : 'cluster', e);
-    else this.onEmpty();
+    else if (selectionOp(e) === 'replace') this.onEmpty();
   }
   preview(group, button) {
     if (this.motionFrame !== null) return;
@@ -402,7 +416,7 @@ export class CivicMap {
     const title = document.createElement('strong'); title.textContent = multi ? `${group.items.length} issues in this cluster` : first.title || first.issue_type;
     const location = document.createElement('span'); location.textContent = multi ? [...new Set(group.items.map(i => i.issue_type))].join(' · ') : first.address;
     const high = group.items.filter(i => i.severity === 'High').length;
-    const meta = document.createElement('small'); meta.textContent = multi ? `${high ? `${high} high severity · ` : ''}Click to explore · Shift + click to select` : `${first.severity} priority · ${first.verification_status} · ~${first.location_radius_m}m`;
+    const meta = document.createElement('small'); meta.textContent = multi ? `${high ? `${high} high severity · ` : ''}Click to zoom in · ${modKey} + click to add to selection` : `${first.severity} priority · ${first.verification_status} · ~${first.location_radius_m}m`;
     this.tooltip.replaceChildren(title, location, meta);
     this.tooltip.hidden = false;
     const width = this.tooltip.offsetWidth, height = this.tooltip.offsetHeight;
