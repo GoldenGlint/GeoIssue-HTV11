@@ -13,7 +13,7 @@ export const persist = (key, value) => { try { localStorage.setItem(`geoissue:${
 export const state = {
   issues: [], view: 'map', filters: { ...DEFAULT_FILTERS }, selected: [], scope: null, panel: null,
   saved: read('saved', []), recent: read('recent', []), pending: read('pending', []), corrections: read('corrections', []), historyEnabled: read('historyEnabled', true),
-  role: 'Public', sort: 'first_seen_at', direction: -1, page: 1, perPage: 10, dataTab: 'records',
+  role: 'Public', sort: 'first_seen_at', direction: -1, page: 1, perPage: 10, dataTab: 'records', hiddenColumns: read('hiddenColumns', []),
   layers: [], mapMode: 'pan', heat: false, center: TORONTO_CENTER, zoom: 13,
   mapEmptyDismissedFor: null,
   // Samples, collected pipeline issues (Tiger Data or files), and a separate simulated Tiger replay.

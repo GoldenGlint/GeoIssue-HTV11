@@ -143,7 +143,8 @@ components:
     textColor: "{colors.text}"
     typography: "{typography.control}"
     rounded: "{rounded.control}"
-    padding: "11px 15px"
+    padding: "0 15px"
+    height: "36px"
   button-hover:
     backgroundColor: "{colors.surface-2}"
   button-primary:
@@ -151,11 +152,13 @@ components:
     textColor: "{colors.on-accent}"
     typography: "{typography.control}"
     rounded: "{rounded.control}"
-    padding: "11px 15px"
+    padding: "0 15px"
+    height: "36px"
   button-primary-hover:
     backgroundColor: "{colors.accent-hover}"
   button-small:
-    padding: "8px 12px"
+    padding: "0 12px"
+    height: "32px"
   icon-button:
     textColor: "{colors.text-3}"
     rounded: "{rounded.control}"
@@ -183,7 +186,7 @@ components:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text-2}"
     rounded: "{rounded.field}"
-    size: "37px"
+    size: "34px"
   map-control-hover:
     backgroundColor: "{colors.surface-2}"
   map-control-active:
@@ -197,8 +200,8 @@ components:
     textColor: "{colors.text-3}"
     typography: "{typography.control}"
     rounded: "{rounded.control}"
-    padding: "13px 14px"
-    height: "45px"
+    padding: "11px 14px"
+    height: "42px"
   nav-item-hover:
     backgroundColor: "{colors.surface-2}"
     textColor: "{colors.text}"
@@ -240,7 +243,7 @@ components:
   map-pin:
     textColor: "{colors.on-accent}"
     width: "30px"
-    height: "31px"
+    height: "33px"
   map-cluster:
     backgroundColor: "{colors.accent}"
     textColor: "{colors.on-accent}"
@@ -266,7 +269,7 @@ components:
 
 GeoIssue is the familiar civic map-and-data tool, built with care rather than novelty. White working surfaces sit on a cool grey ground, one blue carries every action and selection, Inter sets everything, and the map and the data do the talking. The bar is the category's best: Google Maps for the map, Linear and Stripe for panels and tables, city open-data portals and 311 tools for the civic register, Mapbox and Felt for overlays.
 
-The density is that of a working tool. Controls read at 13px, filter fields are 32px tall, borders are neutral hairlines, and a single soft shadow lifts whatever floats over the map. Saturated colour belongs to the data: category pins on a muted basemap, tinted chips for severity, status and verification, and a blue-to-red density ramp. Light is the default theme; dark is the same system in neutral graphite.
+The density is that of a working tool. Controls read at 13px, buttons are 36px tall and everything floating on the map 34px, borders are neutral hairlines, and a single soft shadow lifts whatever floats over the map. Saturated colour belongs to the data: category pins on a muted basemap, tinted chips for severity, status and verification, and a blue-to-red density ramp. Light is the default theme; dark is the same system in neutral graphite.
 
 The world was chosen against the dark neon command-centre look the app used to have. It carries no glows, no cyan halos, no gradient sheen, no backdrop blur and no gradient text, and nothing in it should read as AI-generated.
 
@@ -388,17 +391,17 @@ The system is flat and tonal: white surfaces on a grey ground, separated by hair
 
 Corners are gently rounded and step up with the size of the thing: 4px for small chips, segments and keyboard hints; 5px for badges and filter chips; 6px for map tools and dialog fields; 7px for buttons, filters, nav items and the segmented control; 8px for the map's count panel, callouts, evidence photos and the toast; 10px for cards; 11px for the map canvas; 13px for dialogs (10px on phones); 20px pills for the data switch, priority and confidence. Circles mark clusters, avatars, stat icons and the severity badge.
 
-The signature shape is the map pin: a teardrop (a square with three round corners, turned 45 degrees) whose tip sits exactly on the location. Dashed outlines mean "approximate" or "drop here": the location-uncertainty circle, the upload zone, blur boxes and the photo placeholder. Icons are inline 24×24 line icons with a 1.65 stroke and round caps, drawn mostly at 14px to 21px.
+The signature shape is the map pin: a teardrop (a 26px square with three round corners, turned 45 degrees) whose tip sits exactly on the location. Dashed outlines mean "approximate" or "drop here": the location-uncertainty circle, the upload zone, blur boxes and the photo placeholder. Icons are [Lucide](https://lucide.dev) (ISC licence, pinned at v1.51.0) inlined as 24×24 line icons with a 1.75 stroke and round caps, drawn mostly at 14px to 21px. `scripts/vendor-icons.mjs` generates `src/icons.js`; add an icon by naming it there and rerunning, never by drawing one. Checkboxes are drawn in CSS with Lucide's check (or minus, for a partial selection) centred in a 16px box: Civic Blue fill and a white mark when checked.
 
 ## Components
 
 ### Buttons
 Plain, solid and quiet.
 - **Shape:** gently rounded (7px).
-- **Default:** Paper White with a Control Edge border, Ink text at 13px/500, the soft lift, 11px 15px padding, a 17px icon 8px from the label.
+- **Default:** Paper White with a Control Edge border, Ink text at 13px/500, the soft lift, 36px tall with 15px side padding, a 17px icon 8px from the label.
 - **Primary:** Civic Blue fill and border with white text (5.17:1); hover Pressed Blue. Used for the main action of a region, such as the sidebar's "Upload new issue" or a panel footer's first action.
 - **Hover / Focus:** hover steps to Faint Mist; press scales to .96; transitions run 180ms. Focus shows a 2px Civic Blue outline 3px out.
-- **Small / icon-only / ghost:** small is 8px 12px at 12px; icon-only is 9px square padding around an 18px icon; the ghost icon button is a 32px square in Muted Slate that fills with Quiet Fill on hover. Text buttons are Link Blue with no fill.
+- **Small / icon-only / ghost:** small is 32px tall with 12px side padding at 12px; icon-only is a 36px square around an 18px icon; the ghost icon button is a 32px square in Muted Slate that fills with Quiet Fill on hover. Text buttons are Link Blue with no fill.
 - **Crew route:** "Plan crew route" is a default button with a Crew Green route icon.
 
 ### Chips and badges
@@ -416,20 +419,20 @@ Plain, solid and quiet.
 - **Callouts:** inside a panel, a location note, why-flagged or geolocation block is a flat tinted block (Quiet Fill or Faint Mist, Hairline edge, 7px to 8px corners), never a second white card.
 
 ### Inputs / Fields
-- **Style:** Paper White, 1px Control Edge, 7px corners, 32px tall (34px for search over the map), 13px text, Muted Slate placeholder and icon. Selects are borderless inside their white shell and size to their current label.
+- **Style:** Paper White, 1px Control Edge, 7px corners, 32px tall (34px for the search and filters over the map, matching the map tools), 13px text, Muted Slate placeholder and icon. Selects are borderless inside their white shell and size to their current label.
 - **Focus:** the border turns Civic Blue with the soft lift; the search icon turns Link Blue.
 - **Dialog fields:** Paper White, Control Edge, 6px corners, 11px padding. Choice tiles (correction kinds) turn Selection Wash with a Civic Blue edge when checked.
 - **Error:** Alert ink under the field. Valid location feedback is Crew Green ink.
 
 ### Navigation
-- **Sidebar:** white with a Hairline right edge. The lens mark and wordmark, a 12px workspace label, then 45px nav items (13px/500 Muted Slate, 20px icons, 7px corners). Hover is Faint Mist with Ink text; the active item is Selection Wash with Link Blue text. The primary upload button sits under the nav and the account under a hairline at the bottom.
+- **Sidebar:** white with a Hairline right edge. The lens mark and wordmark, a 12px workspace label, then 42px nav items (13px/500 Muted Slate, 20px icons, 7px corners). Hover is Faint Mist with Ink text; the active item is Selection Wash with Link Blue text. The primary upload button sits under the nav and the account under a hairline at the bottom.
 - **Phones:** a 58px bottom tab bar; the active tab is marked by a 2px Civic Blue bar along its top edge.
 - **Segmented control:** a white track with a Control Edge and 3px inner padding; the active segment is Selection Wash with Link Blue text (4px corners).
 - **Tabs:** the active table tab carries a 2px Civic Blue underline and Link Blue text.
 
 ### Map pins and clusters
 The signature component.
-- **Pin:** a 22px teardrop head in the category colour with a 2px white rim and a white 14px category icon (2.2 stroke), tip on the location, the pin shadow beneath. Selected pins scale to 1.25. Pins counter-scale with the camera so they hold their size while zooming.
+- **Pin:** a 26px teardrop head (2px white rim included) in the category colour with a white 14px category icon (2.25 stroke) centred on the round head, tip on the location, the pin shadow beneath. Selected pins scale to 1.25. Pins counter-scale with the camera so they hold their size while zooming.
 - **Cluster:** a 34px Civic Blue circle with a 2px white rim and a white 13px/600 count. A selected cluster turns Pressed Blue.
 - **High severity:** a 14px Alert Red "!" badge with a white rim at the pin's top-right.
 - **Basemap:** OpenStreetMap tiles under `--tile-filter`: grayscale(.6) brightness(1.04) contrast(.92) in light, inverted to grey (brightness .78) in dark.

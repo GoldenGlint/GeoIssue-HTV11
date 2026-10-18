@@ -185,11 +185,11 @@ function renderAi() {
   const el = $('#ai-triage');
   if (!el || !gemini) return;
   if (!gemini.gemini) {
-    el.innerHTML = `<div class="ai-note">${icon('sun')}<span>Automatic suggestions and face/plate blurring need the local server with a Gemini key: run <code>python scripts/serve.py</code> with <code>GEMINI_API_KEY</code> in <code>.env</code>. You can fill this in yourself and blur areas by hand.</span></div>`;
+    el.innerHTML = `<div class="ai-note">${icon('sparkles')}<span>Automatic suggestions and face/plate blurring need the local server with a Gemini key: run <code>python scripts/serve.py</code> with <code>GEMINI_API_KEY</code> in <code>.env</code>. You can fill this in yourself and blur areas by hand.</span></div>`;
     return;
   }
   const first = uploadDraft.photos[0];
-  if (!first) { el.innerHTML = `<div class="ai-note">${icon('sun')}<span>Add a photo and Gemini will suggest the category, severity and a description, and blur any faces or licence plates.</span></div>`; return; }
+  if (!first) { el.innerHTML = `<div class="ai-note">${icon('sparkles')}<span>Add a photo and Gemini will suggest the category, severity and a description, and blur any faces or licence plates.</span></div>`; return; }
   if (first.status === 'analyzing') { el.innerHTML = `<div class="ai-card loading"><span class="spinner"></span><span>Gemini is looking at your photo…</span></div>`; return; }
   if (first.status === 'error') { el.innerHTML = `<div class="ai-card warn">${icon('warning')}<span>Couldn’t analyze the photo (${esc(first.error)}). Fill in the details yourself.</span></div>`; return; }
   const r = first.result;
@@ -203,7 +203,7 @@ function renderAi() {
     return;
   }
   el.innerHTML = r.is_civic_issue
-    ? `<div class="ai-card">${icon('sun')}<span><strong>Gemini suggests ${esc(r.category)} · ${esc(r.severity)} severity</strong> · ${Math.round(r.confidence * 100)}% confident. Filled in below; change anything.${r.reason ? `<small>${esc(r.reason)}</small>` : ''}</span>${privacy}</div>`
+    ? `<div class="ai-card">${icon('sparkles')}<span><strong>Gemini suggests ${esc(r.category)} · ${esc(r.severity)} severity</strong> · ${Math.round(r.confidence * 100)}% confident. Filled in below; change anything.${r.reason ? `<small>${esc(r.reason)}</small>` : ''}</span>${privacy}</div>`
     : `<div class="ai-card warn">${icon('warning')}<span><strong>Gemini didn’t find a clear civic issue in this photo</strong> (${Math.round(r.confidence * 100)}% confident). You can still submit it for review.</span>${privacy}</div>`;
 }
 function renderPhotos() {
@@ -313,7 +313,7 @@ function uploadReview() {
       : job ? ['Claude is finding the location', 'It is added to your submission when Claude finishes, even if you close this page.']
         : ['Claude finds the location from the photo', 'Claude starts when you submit, and its answer becomes the location.'];
   } else where = [uploadDraft.address, `${coordinateText(uploadDraft.coordinates)} · ${geo ? `${byClaude(geo)} · confirmed by you` : 'approximate location · confirmed by you'}`];
-  const ai = uploadDraft.ai?.is_civic_issue ? `<p class="fine-print">${icon('sun')} Category, severity and description were suggested by Gemini (${esc(uploadDraft.ai.model)}) and ${uploadDraft.aiFilled.length === 3 ? 'left as suggested' : 'edited by you'}.</p>` : '';
+  const ai = uploadDraft.ai?.is_civic_issue ? `<p class="fine-print">${icon('sparkles')} Category, severity and description were suggested by Gemini (${esc(uploadDraft.ai.model)}) and ${uploadDraft.aiFilled.length === 3 ? 'left as suggested' : 'edited by you'}.</p>` : '';
   showModal(`${modalHeader('', 'Review your issue')}${steps(true)}<div class="modal-body"><div class="review-photos">${uploadDraft.photos.map(p => `<img src="${p.blurredUrl || p.url}" alt="Photo to submit${p.blurredUrl ? ', blurred' : ''}">`).join('')}</div>${blurred ? `<p class="review-blur">${icon('shield')} ${plural(blurred, 'area')} blurred. Only the blurred photos would be submitted.</p>` : ''}<h3>${esc(uploadDraft.category)}${uploadDraft.severity ? ` · ${esc(uploadDraft.severity)} severity` : ''}</h3><p>${esc(uploadDraft.description)}</p><div class="confidence-note">${icon(unknown ? 'locate' : 'pin')}<div><strong>${esc(where[0])}</strong><span>${esc(where[1])}</span></div></div>${ai}<div class="notice-banner">${icon('shield')} Avoid personal information and identifiable people. Submissions require privacy processing and verification before publication.</div><p class="fine-print">Prototype mode: only the issue details are stored in this browser, with the pin rounded to about 100 m. Photos are previewed locally and are not uploaded. This does not create a Toronto 311 request.</p></div><div class="modal-footer"><button class="button" id="upload-back">Back to details</button><button class="button primary" id="upload-submit">Submit local demo ${icon('arrow')}</button></div>`, { label: 'Review your issue' });
   $('#upload-back').onclick = () => uploadModal();
   $('#upload-submit').onclick = async e => {

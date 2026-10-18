@@ -35,3 +35,5 @@ scraping/data/
 # Spike data (scraped posts, images, reference thumbnails) stays local
 spikes/data/
 spikes/results/raw/
+/research
+/spikes

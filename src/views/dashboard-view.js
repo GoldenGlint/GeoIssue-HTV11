@@ -114,7 +114,7 @@ function writtenDigestHtml(ward, rows) {
   }
   const cached = digestCache.get(digestKey(ward, rows));
   if (cached?.text) return `<div class="digest-written"><p>${esc(cached.text)}</p><span>Written by Gemini (${esc(cached.method.slice(7))}) from the counts below${state.dataSource === 'sample' ? ' · sample data' : ''}. Check it before sharing.</span></div>`;
-  return `<div class="digest-written pending" id="digest-ai" hidden><button class="button small" id="write-digest">${icon('sun')} Write a summary with Gemini</button><span id="digest-error" class="form-error"></span></div>`;
+  return `<div class="digest-written pending" id="digest-ai" hidden><button class="button small" id="write-digest">${icon('sparkles')} Write a summary with Gemini</button><span id="digest-error" class="form-error"></span></div>`;
 }
 
 function pipelineHtml() {
@@ -158,7 +158,7 @@ export function dashboardHtml() {
     <div class="dashboard-lower">
       <section class="card"><div class="card-header"><h2>${icon('pin')} Neighbourhood hotspots</h2><span class="subtle-label">${isSampleData() ? 'Sample counts' : 'Counts'}</span></div>${areas.length ? areas.map(({ id, name, count }, j) => `<button class="hotspot-row" data-area-filter="${esc(id)}"><span class="rank">${j + 1}</span><span>${esc(name)}</span><div class="bar-track"><i style="width:${count / areas[0].count * 100}%"></i></div><strong>${count}</strong>${icon('arrow')}</button>`).join('') : emptyHtml('No neighbourhoods', 'Try clearing your filters.')}</section>
       <section class="card"><div class="card-header"><h2>${icon('clock')} Recent detections</h2><button class="text-button" data-nav="data">View all ↗</button></div>${recent.map(issueRow).join('') || emptyHtml('No detections', 'Try clearing your filters.')}</section>
-      <section class="card insights-card"><div class="card-header"><h2>${icon('sun')} At a glance</h2></div><div class="insight"><span class="stat-icon red">${icon('warning')}</span><div><strong>${counts[0]?.count ? counts[0].type : 'No issues'}</strong><small>Most common issue · ${counts[0]?.count || 0} of ${rows.length} filtered records</small></div></div><div class="insight"><span class="stat-icon blue">${icon('pin')}</span><div><strong>${esc(areas[0]?.name || 'No areas')}</strong><small>Highest ${sampleWord()}activity · by ${sampleWord()}record count</small></div></div><div class="insight-foot">${icon('shield')} ${state.dataSource === 'sample' ? 'These insights describe fictional records. Connect verified data before drawing conclusions.' : 'Counts cover issues found in public photos and uploads, not every issue in the city.'}</div></section>
+      <section class="card insights-card"><div class="card-header"><h2>${icon('lightbulb')} At a glance</h2></div><div class="insight"><span class="stat-icon red">${icon('warning')}</span><div><strong>${counts[0]?.count ? counts[0].type : 'No issues'}</strong><small>Most common issue · ${counts[0]?.count || 0} of ${rows.length} filtered records</small></div></div><div class="insight"><span class="stat-icon blue">${icon('pin')}</span><div><strong>${esc(areas[0]?.name || 'No areas')}</strong><small>Highest ${sampleWord()}activity · by ${sampleWord()}record count</small></div></div><div class="insight-foot">${icon('shield')} ${state.dataSource === 'sample' ? 'These insights describe fictional records. Connect verified data before drawing conclusions.' : 'Counts cover issues found in public photos and uploads, not every issue in the city.'}</div></section>
     </div></div>`;
 }
 

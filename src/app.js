@@ -6,7 +6,7 @@ import { esc, date } from './format.js';
 import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel, applyCorrection, reviewQueue, applyLocalSightings } from './state.js';
 import { toast, closeModal } from './ui.js';
 import { mapHtml, initMap, destroyMap, getMap, renderPanel, clearSelection, selectMap, openIssue, frameIssues, refreshMapFilters, setMapMode, setHeat, visibleIssues, planCrewRoute } from './views/map-view.js';
-import { dataHtml, bindData } from './views/data-view.js';
+import { dataHtml, bindData, clearTableSelection } from './views/data-view.js';
 import { dashboardHtml, bindDashboard } from './views/dashboard-view.js';
 import { collectionHtml, verifyHtml, bindWorkspace } from './views/workspace-view.js';
 import { methodologyHtml } from './views/methodology-view.js';
@@ -46,7 +46,7 @@ function areaSelectHtml() {
 }
 export function filtersHtml() {
   const search = `<label class="search-field">${icon('search')}<input id="global-search" placeholder="Search issues, places or IDs&hellip;" value="${esc(state.filters.query)}" aria-label="Search issues, places, wards or IDs"><kbd>/</kbd></label>`;
-  const filters = selectHtml('type', 'All issue types', Object.keys(categories), 'filter')
+  const filters = selectHtml('type', 'All issue types', Object.keys(categories), 'tag')
     + selectHtml('severity', 'All severities', ['High', 'Medium', 'Low'], 'warning')
     + selectHtml('status', 'All statuses', ['Open', 'In review', 'Resolved'], 'check')
     + selectHtml('days', 'Any time', [[7, 'Last 7 days'], [30, 'Last 30 days'], [90, 'Last 90 days']], 'clock')
@@ -99,14 +99,17 @@ function footerHtml() {
   const source = state.dataBackend.warning || (state.dataSource !== 'sample' ? `${label}${generated ? ` · generated ${new Date(generated).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}` : ''}` : `Fictional sample data · As of ${date(REFERENCE_DATE, { year: 'numeric' })}`);
   return `<footer class="page-footer"><span>GeoIssue · Built for a more responsive city</span><span>${source}</span></footer>`;
 }
+// The page fades in when you arrive on it, not each time it redraws for a sort, filter or page change.
+let renderedView = null;
 export function render() {
   destroyActivity();
   destroyMap();
   const title = headings[state.view] || headings.map, onMap = state.view === 'map', withFilters = !onMap && state.view !== 'methodology';
   app.innerHTML = `${sidebarHtml()}<main class="main ${onMap ? 'map-page' : ''}"><header class="page-header"><div class="page-title"><h1>${title}</h1></div><div class="header-right">${geoIndicatorHtml()}${dataSourceHtml()}${themeButtonHtml()}<button class="icon-button header-settings" data-action="settings" aria-label="Settings">${icon('settings')}</button><button class="icon-button" data-action="help" aria-label="Map controls and help">${icon('help')}</button></div></header>
   ${withFilters ? `<div class="filterbar">${filtersHtml()}</div>${secondaryFilters()}` : ''}
-  <div class="workspace-content" id="workspace-content">${pageHtml()}</div>
+  <div class="workspace-content ${state.view === renderedView ? '' : 'view-enter'}" id="workspace-content">${pageHtml()}</div>
   ${onMap ? '' : footerHtml()}</main>`;
+  renderedView = state.view;
   bindShell();
   if (onMap) initMap();
   if (state.view === 'data') bindData();
@@ -238,7 +241,7 @@ export function action(name) {
     case 'street': streetModal(); break;
     case 'crew-route': planCrewRoute(visibleIssues()); break;
     case 'clear-scope': state.scope = null; state.page = 1; render(); break;
-    case 'clear-table-selection': state.selected = []; render(); break;
+    case 'clear-table-selection': clearTableSelection(); break;
     case 'save-table-selection': toggleSave(state.selected); break;
     case 'export-selected': exportModal('selected'); break;
     case 'table-map': {
@@ -259,9 +262,10 @@ document.addEventListener('keydown', e => {
   const modal = document.querySelector('.modal');
   if (e.key === 'Escape') {
     if (modal) closeModal();
+    // An open menu, such as the table's column picker, closes itself and leaves the selection alone.
+    else if (document.querySelector(':popover-open')) return;
     else if (state.view === 'map') clearSelection();
-    // Elsewhere, Escape clears the table selection and redraws so the UI matches the state.
-    else if (state.selected.length) { state.selected = []; render(); }
+    else if (state.selected.length) clearTableSelection();
   }
   if (e.key === '/' && !modal && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); document.querySelector('#global-search')?.focus(); }
   if (e.key === 'Tab' && modal) {

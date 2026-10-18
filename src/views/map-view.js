@@ -24,32 +24,41 @@ export function destroyMap() {
   controlsObserver?.disconnect();
 }
 
-/** Seats Pins / Density / Plan crew route right under the search and filters, beside the filter-context row's
- * active-filter chips and Infrastructure button when there is room, and below them when there is not. */
+/** Seats the two rows of top controls (Pins / Density / Plan crew route on the left, the map tools on the right) right
+ * under the search and filters, beside the filter-context row's active-filter chips and Infrastructure button when
+ * there is room, and below them when there is not. */
 let controlsObserver = null;
-function placeTopLeft() {
-  const row = document.querySelector('.map-top-left'), bar = document.querySelector('.map-floating-filters .filterbar');
-  if (!row || !bar || !row.offsetParent) return;
+function placeTopControls() {
+  const bar = document.querySelector('.map-floating-filters .filterbar');
+  const rows = [...document.querySelectorAll('.map-top-left, .map-top-right')].filter(row => row.offsetParent);
+  if (!bar || !rows.length) return;
   // `top` and offsetLeft count from the workspace's padding box, so measure from inside its border.
-  const gap = 8, parent = row.offsetParent, box = parent.getBoundingClientRect(), width = row.offsetWidth, height = row.offsetHeight, left = row.offsetLeft;
+  const gap = 8, parent = rows[0].offsetParent, box = parent.getBoundingClientRect();
   const origin = { left: box.left + parent.clientLeft, top: box.top + parent.clientTop };
   const blockers = [...document.querySelectorAll('.map-floating-filters .filter-status > *, .map-floating-filters .context-actions')]
     .map(el => el.getBoundingClientRect()).filter(r => r.width && r.height).map(r => ({ left: r.left - origin.left, right: r.right - origin.left, top: r.top - origin.top, bottom: r.bottom - origin.top }));
-  let top = bar.getBoundingClientRect().bottom - origin.top + gap;
-  for (let moved = true; moved;) {
-    moved = false;
-    for (const b of blockers) {
-      if (b.left < left + width + gap && b.right + gap > left && b.top < top + height && b.bottom > top) { top = b.bottom + gap; moved = true; }
+  const start = bar.getBoundingClientRect().bottom - origin.top + gap;
+  for (const row of rows) {
+    const width = row.offsetWidth, height = row.offsetHeight, left = row.offsetLeft;
+    let top = start;
+    for (let moved = true; moved;) {
+      moved = false;
+      for (const b of blockers) {
+        if (b.left < left + width + gap && b.right + gap > left && b.top < top + height && b.bottom > top) { top = b.bottom + gap; moved = true; }
+      }
     }
+    row.style.top = `${Math.round(top)}px`;
+    // On a narrow map the tools would land on the left row, so a placed row blocks the next one.
+    blockers.push({ left, right: left + width, top, bottom: top + height });
   }
-  row.style.top = `${Math.round(top)}px`;
 }
 
 /** Screen space covered by floating controls and the open panel, in pixels. */
 export function mapPadding() {
   const mobile = isMobile();
+  const controls = Math.max(0, ...[...document.querySelectorAll('.map-top-left, .map-top-right')].filter(el => el.offsetParent).map(el => el.offsetTop + el.offsetHeight));
   return {
-    top: state.panel && mobile ? 105 : 165,
+    top: (controls || (state.panel && mobile ? 85 : 145)) + 20,
     right: state.panel && !mobile ? (document.querySelector('#issue-panel')?.offsetWidth || 360) + 45 : 45,
     bottom: state.panel && mobile ? map.element.clientHeight * .58 + 25 : 115,
     left: 45,
@@ -137,10 +146,10 @@ export function initMap() {
   map = new CivicMap(element, { onSelect: selectMap, onEmpty: clearSelection, onMove: updateMapMeta, onArea, icon: typeIcon, colorFor: typeColor, assets: infrastructure, boundaries: wardBoundaries, home: TORONTO_CENTER });
   map.center = state.center; map.zoom = state.zoom; map.mode = state.mapMode; map.layers = state.layers; map.showHeat = state.heat; map.activeArea = state.filters.area;
   map.setData(filtered(), state.selected); renderPanel(); updateMapMeta();
-  controlsObserver = new ResizeObserver(placeTopLeft);
+  controlsObserver = new ResizeObserver(placeTopControls);
   controlsObserver.observe(document.querySelector('.map-floating-filters'));
   controlsObserver.observe(document.querySelector('.map-workspace'));
-  placeTopLeft();
+  placeTopControls();
   attachSearch(document.querySelector('#global-search'), {
     icon, getItems: query => searchSuggestions(filtered(), query),
     onChoose: item => {
@@ -175,7 +184,7 @@ export function refreshMapFilters() {
   document.querySelectorAll('.map-floating-filters .filter-context [data-action]').forEach(b => b.onclick = () => action(b.dataset.action));
   document.querySelector('.map-summary .muted').textContent = `· ${rows.length} ${sampleWord()}issues`;
   document.querySelectorAll('[data-legend]').forEach(b => b.classList.toggle('legend-active', b.dataset.legend === state.filters.type));
-  bindFilterChips(); updateMapMeta(); placeTopLeft();
+  bindFilterChips(); updateMapMeta(); placeTopControls();
 }
 
 export function setMapMode(mode) {
@@ -274,7 +283,7 @@ export function renderPanel() {
   const p = state.panel;
   if (p.mode === 'issue') {
     const i = findIssue(p.id);
-    el.innerHTML = `<div class="panel-heading"><button class="text-button" data-action="panel-back">${icon('back')} ${p.back ? `Back to ${p.back.mode === 'route' ? 'route' : 'results'}` : 'Issue details'}</button><button class="icon-button" data-action="close-panel" aria-label="Close issue details">${icon('close')}</button></div>${detailHtml(i)}<div class="panel-footer"><button class="button icon-only" data-action="save-issue" aria-pressed="${state.saved.includes(i.issue_id)}" aria-label="${state.saved.includes(i.issue_id) ? 'Saved' : 'Save'}" title="${state.saved.includes(i.issue_id) ? 'Saved' : 'Save'}">${icon('bookmark', state.saved.includes(i.issue_id) ? 'saved-icon' : '')}</button><button class="button icon-only" data-action="share-issue" aria-label="Share" title="Share">${icon('external')}</button><button class="button" data-action="correct-issue">${icon('edit')} Suggest correction</button></div>`;
+    el.innerHTML = `<div class="panel-heading"><button class="text-button" data-action="panel-back">${icon('back')} ${p.back ? `Back to ${p.back.mode === 'route' ? 'route' : 'results'}` : 'Issue details'}</button><button class="icon-button" data-action="close-panel" aria-label="Close issue details">${icon('close')}</button></div>${detailHtml(i)}<div class="panel-footer"><button class="button icon-only" data-action="save-issue" aria-pressed="${state.saved.includes(i.issue_id)}" aria-label="${state.saved.includes(i.issue_id) ? 'Saved' : 'Save'}" title="${state.saved.includes(i.issue_id) ? 'Saved' : 'Save'}">${icon('bookmark', state.saved.includes(i.issue_id) ? 'saved-icon' : '')}</button><button class="button icon-only" data-action="share-issue" aria-label="Share" title="Share">${icon('share')}</button><button class="button" data-action="correct-issue">${icon('edit')} Suggest correction</button></div>`;
     el.querySelector('[data-action="save-issue"]').onclick = () => toggleSave([i.issue_id]);
     el.querySelector('[data-action="correct-issue"]').onclick = () => correctionModal(i);
     el.querySelector('[data-action="share-issue"]').onclick = () => shareIssue(i);

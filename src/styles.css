@@ -221,9 +221,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-2);he
 tbody tr:last-child td{border-bottom:0}
 tbody tr:nth-child(even){background:var(--surface-2)}
 tbody tr:hover,tbody tr.row-selected{background:var(--accent-soft)}
-table input[type=checkbox]{appearance:none;width:12px;height:12px;border:1px solid var(--accent);border-radius:3px;vertical-align:middle;display:inline-grid;place-items:center;background:transparent;cursor:pointer}
-table input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
-table input[type=checkbox]:checked:after{content:'\2713';font-size:12px;color:var(--text)}
 th:first-child,td:first-child{width:30px;padding-left:14px;padding-right:0}
 .table-id{font-size:12px;background:none;color:var(--accent-text);padding:0}
 .table-type{display:flex;align-items:center;gap:7px;color:var(--text-2);font-size:12px}
@@ -712,7 +709,7 @@ h1{font-size:22px}
 .map-control:active,.button:active{transform:scale(.96)}
 .map-bottom-right,.map-top-right{transition:right 240ms cubic-bezier(.2,.8,.2,1)}
 .issue-panel{will-change:transform,opacity}
-.workspace-content:not(:has(.map-workspace)){animation:workspace-reveal 220ms ease-out}
+.workspace-content.view-enter:not(:has(.map-workspace)){animation:workspace-reveal 220ms ease-out}
 @keyframes workspace-reveal{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .panel-open .map-floating-filters{right:377px}
 .panel-open .map-floating-filters .filterbar{flex-wrap:wrap;gap:7px}
@@ -813,6 +810,15 @@ h1{font-size:22px}
 .table-selection-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px;background:var(--accent-soft);border-bottom:1px solid var(--border-strong);font-size:12px;color:var(--text-2)}
 .table-selection-bar>span{display:flex;align-items:center;gap:7px}.table-selection-bar>div{display:flex;gap:18px;align-items:center}.table-selection-bar .text-button{font-size:12px;color:var(--accent-text)}
 .table-selection-bar .icon{width:14px;height:14px}
+.table-selection-bar[hidden]{display:none}
+/* Column picker: a popover in the top layer, placed under its button by placeColumnMenu() in data-view.js. */
+.columns-count{color:var(--text-3);font-weight:400}
+.columns-menu{position:fixed;inset:auto;margin:0;width:220px;padding:6px;overflow:auto;background:var(--surface);color:var(--text-2);border:1px solid var(--border);border-radius:9px;box-shadow:var(--shadow-sm)}
+.columns-menu-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 8px 8px;margin-bottom:4px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-3)}
+.columns-option{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;font-size:13px;cursor:pointer}
+.columns-option:hover{background:var(--surface-2)}
+.columns-option:has(:disabled){color:var(--text-3);cursor:default}
+.columns-option:has(:disabled):hover{background:none}
 .table-scroll{max-height:65dvh;scrollbar-gutter:stable}
 thead{position:sticky;top:0;z-index:2;box-shadow:var(--shadow-sm)}
 th[aria-sort=ascending],th[aria-sort=descending]{background:var(--accent-soft);color:var(--accent-text)}
@@ -1284,16 +1290,19 @@ a.button{color:inherit;text-decoration:none}
 .map-control:hover{background:var(--surface-2)}
 .live-dot{display:none}
 .uncertainty-area{background:rgb(37 99 235 / .08);border:1.5px dashed var(--accent);box-shadow:none}
-/* Pins: a teardrop in the category colour with its tip on the location; clusters are numbered circles. */
-.map-pin,.map-scene .map-pin{width:30px;height:31px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;display:block;transform:translate(-50%,-100%) scale(calc(1 / var(--camera-scale,1)));transform-origin:50% 100%;filter:drop-shadow(0 1px 1.5px rgb(16 24 40 / .35))}
-.map-pin::before{content:'';position:absolute;left:4px;top:1px;width:22px;height:22px;background:var(--pin);border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg)}
-.map-pin .icon{position:absolute;left:8px;top:5px;width:14px;height:14px;stroke-width:2.2}
+/* Pins: a teardrop in the category colour with its tip on the location; clusters are numbered circles.
+   Geometry: a 26px square (white rim included) turned 45° has its round head centred at (15,14) in the 30×33 pin, and
+   its point 13√2 ≈ 18.4px below that centre, at the pin's bottom edge, which is the location. The 14px icon is centred
+   on the head. box-sizing is set here because the global border-box rule does not reach pseudo-elements. */
+.map-pin,.map-scene .map-pin{width:30px;height:33px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#fff;display:block;transform:translate(-50%,-100%) scale(calc(1 / var(--camera-scale,1)));transform-origin:50% 100%;filter:drop-shadow(0 1px 1.5px rgb(16 24 40 / .35))}
+.map-pin::before{content:'';box-sizing:border-box;position:absolute;left:2px;top:1px;width:26px;height:26px;background:var(--pin);border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg)}
+.map-pin .icon{position:absolute;left:8px;top:7px;width:14px;height:14px;stroke-width:2.25}
 .map-pin:hover,.map-scene .map-pin:hover{box-shadow:none;filter:drop-shadow(0 2px 3px rgb(16 24 40 / .45));z-index:6}
 .map-pin.selected,.map-scene .map-pin.selected{box-shadow:none;transform:translate(-50%,-100%) scale(calc(1.25 / var(--camera-scale,1)));z-index:7}
 .map-pin.cluster,.map-scene .map-pin.cluster{width:34px;height:34px;border:2px solid #fff;border-radius:50%;background:var(--accent);color:#fff;font:600 13px/30px Inter,system-ui,sans-serif;text-align:center;transform:translate(-50%,-50%) scale(calc(1 / var(--camera-scale,1)));transform-origin:50% 50%}
 .map-pin.cluster::before{display:none}
 .map-pin.cluster.selected{background:var(--accent-hover)}
-.map-pin.sev-high:after{top:-4px;right:-3px;width:14px;height:14px;font:700 11px/12px Inter,system-ui,sans-serif;background:var(--danger);color:var(--on-danger);border:1.5px solid #fff}
+.map-pin.sev-high:after{box-sizing:border-box;top:-3px;right:-2px;width:15px;height:15px;font:700 10px/1 Inter,system-ui,sans-serif;background:var(--danger);color:var(--on-danger);border:1.5px solid #fff}
 .route-stop{transform:translate(8px,-44px)}
 .map-route-button{background:var(--surface);border-color:var(--border-strong);color:var(--text)}
 .map-route-button .icon{color:var(--success)}
@@ -1341,6 +1350,45 @@ h2+.eyebrow,h3+.eyebrow{display:block;margin-top:4px}
 /* Glyphs centred in their bubbles. */
 .map-pin.sev-high:after,.legend-severity i{display:grid;place-items:center;line-height:1}
 .map-pin.cluster{display:grid;place-items:center;line-height:1}
+
+/* Finish review, round 3. One height per control family, a touch shorter than before, so rows line up: buttons 36px
+   (32px small), everything floating on the map 34px like its search field (32px on phones), nav items 42px. */
+.button,.panel-footer .button,.modal-footer .button,.table-actions .button{min-height:36px;padding-top:0;padding-bottom:0}
+.button.small{min-height:32px}
+.button.icon-only{width:36px;padding:0}
+@media(min-width:951px){.upload-button{min-height:38px;padding-top:0!important;padding-bottom:0!important}}
+@media(min-width:951px) and (min-height:701px){.sidebar .nav-item{min-height:42px;padding-top:11px;padding-bottom:11px}}
+@media(min-width:651px){
+  .map-control{width:34px;height:34px}
+  .map-segment{padding:2px}
+  .map-segment button{height:28px;padding-top:0;padding-bottom:0}
+  .map-route-button{height:34px;padding-top:0;padding-bottom:0}
+  .map-floating-filters .filter-select{height:34px}
+}
+@media(min-width:1600px){.map-control{width:38px;height:38px}}
+@media(max-width:650px){
+  .map-segment{padding:2px}
+  .map-segment button{height:26px;padding-top:0;padding-bottom:0}
+  .map-route-button{height:32px;padding-top:0;padding-bottom:0}
+  .map-top-right .map-control{width:30px;height:32px}
+  /* The Layers tool opens the same dialog, so phones drop the text link and the top controls share one row under the
+     filters. An active infrastructure filter still shows its chip. */
+  .map-floating-filters .context-actions>.text-button{display:none}
+  .map-floating-filters .context-actions:not(:has(.scope-chip)){display:none}
+  /* The tinted pill marks the current tab; the extra bar along the top edge doubled it. */
+  .sidebar .nav-item.active:before{content:none}
+}
+/* Checkboxes: one drawn style everywhere, with Lucide's check (or its minus, for a partial selection) centred in the
+   box. The check's strokes span y 6–17, so its viewBox drops half a unit to centre them. */
+input[type=checkbox]{appearance:none;flex-shrink:0;width:16px;height:16px;margin:0;border:1.5px solid color-mix(in srgb,var(--text-4),transparent 30%);border-radius:4px;background:var(--surface) center/12px 12px no-repeat;vertical-align:middle;cursor:pointer;transition:background-color .15s,border-color .15s}
+input[type=checkbox]:hover{border-color:var(--accent)}
+input[type=checkbox]:checked,input[type=checkbox]:indeterminate{background-color:var(--accent);border-color:var(--accent)}
+input[type=checkbox]:checked{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -0.5 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")}
+input[type=checkbox]:indeterminate{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E")}
+input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=checkbox]:disabled{opacity:.45;cursor:default}
+/* The drag-to-place pin is Lucide's map pin, filled, with its centre dot left open. */
+.picker-pin .icon circle{fill:var(--surface)}
 
 /* Photo geolocation with Claude (src/geolocate.js): header indicator, upload card, Photo locations dialog */
 .geo-jobs{display:flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;padding:5px 11px;color:var(--text-2);font-size:12px;white-space:nowrap}
