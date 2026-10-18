@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily refresh of the GeoIssue simulated dataset, so its last 24 hours stay current
+
+[Timer]
+OnCalendar=*-*-* 09:00:00 UTC
+Persistent=true
+Unit=geoissue-simulate.service
+
+[Install]
+WantedBy=timers.target

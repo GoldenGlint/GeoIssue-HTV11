@@ -1,7 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS geoissue;
 
 CREATE TABLE IF NOT EXISTS geoissue.issues (
-    dataset TEXT NOT NULL CHECK (dataset IN ('pipeline', 'replay')),
+    dataset TEXT NOT NULL CHECK (dataset IN ('collected', 'simulated')),
     issue_id TEXT NOT NULL,
     public_issue JSONB NOT NULL,
     PRIMARY KEY (dataset, issue_id)
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS geoissue.issues (
 
 CREATE TABLE IF NOT EXISTS geoissue.sightings (
     reported_at TIMESTAMPTZ NOT NULL,
-    dataset TEXT NOT NULL CHECK (dataset IN ('pipeline', 'replay')),
+    dataset TEXT NOT NULL CHECK (dataset IN ('collected', 'simulated')),
     sighting_id TEXT NOT NULL,
     issue_id TEXT NOT NULL,
     ward_id TEXT NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS geoissue.sightings (
 CREATE INDEX IF NOT EXISTS sightings_source_key ON geoissue.sightings (dataset, sighting_id);
 
 CREATE TABLE IF NOT EXISTS geoissue.pipeline_state (
-    dataset TEXT PRIMARY KEY CHECK (dataset IN ('pipeline', 'replay')),
+    dataset TEXT PRIMARY KEY CHECK (dataset IN ('collected', 'simulated')),
     metadata JSONB NOT NULL
 );
 

@@ -12,7 +12,8 @@ from .config import setting
 
 UTC = timezone.utc
 HOUR = timedelta(hours=1)
-DATASETS = ("pipeline", "replay")
+DATASETS = ("collected", "simulated")
+SIMULATED = Path(__file__).resolve().parent.parent / "data" / "simulated" / "issues.json"
 CATEGORIES = ("Pothole", "Sidewalk damage", "Graffiti", "Litter", "Flooding", "Other")
 
 
@@ -52,7 +53,7 @@ def moment(value):
 
 def dataset_name(value):
     if value not in DATASETS:
-        raise ValueError("dataset must be pipeline or replay")
+        raise ValueError("dataset must be collected or simulated")
     return value
 
 
@@ -83,7 +84,7 @@ def initialize():
         conn.execute(Path(__file__).with_name("tiger-schema.sql").read_text())
 
 
-def sync(public, events, report, areas=None, dataset="pipeline"):
+def sync(public, events, report, areas=None, dataset="collected"):
     """Atomically synchronize a complete handoff; never reconstruct events from a count."""
     dataset_name(dataset)
     now = datetime.now(UTC)
@@ -115,7 +116,7 @@ def sync(public, events, report, areas=None, dataset="pipeline"):
             conn.execute("DELETE FROM geoissue.issues WHERE dataset = %s AND NOT (issue_id = ANY(%s::text[]))",
                          (dataset, [issue["issue_id"] for issue in public]))
             metadata = {"report": report, "areas": areas, "imported_at": iso(now),
-                        "dataset": dataset, "simulated": dataset == "replay" or any(i.get("is_demo") for i in public),
+                        "dataset": dataset, "simulated": dataset == "simulated" or any(i.get("is_demo") for i in public),
                         "reports": len(rows), "coverage_start": iso(min(row[0] for row in rows)) if rows else None}
             conn.execute("""INSERT INTO geoissue.pipeline_state VALUES (%s, %s::jsonb)
                 ON CONFLICT (dataset) DO UPDATE SET metadata = EXCLUDED.metadata""", (dataset, json.dumps(metadata)))
@@ -130,14 +131,14 @@ def sync(public, events, report, areas=None, dataset="pipeline"):
     return metadata
 
 
-def issues(dataset="pipeline"):
+def issues(dataset="collected"):
     with connection() as conn:
         return [row[0] for row in conn.execute("""SELECT public_issue FROM geoissue.issues
             WHERE dataset = %s ORDER BY (public_issue->>'priority_score')::integer DESC NULLS LAST, issue_id""",
             (dataset_name(dataset),)).fetchall()]
 
 
-def pipeline(dataset="pipeline"):
+def pipeline(dataset="collected"):
     with connection() as conn:
         row = conn.execute("SELECT metadata FROM geoissue.pipeline_state WHERE dataset = %s",
                            (dataset_name(dataset),)).fetchone()
@@ -148,7 +149,7 @@ def activity_options(query):
     """Bounded, allowlisted filters; never accept arbitrary SQL or client-supplied dates."""
     if set(query) - {"dataset", "days", "ward", "type"} or any(len(v) != 1 for v in query.values()):
         raise ValueError("Unsupported or repeated activity filter")
-    dataset = dataset_name(query.get("dataset", ["pipeline"])[0])
+    dataset = dataset_name(query.get("dataset", ["collected"])[0])
     days = query.get("days", ["30"])[0]
     ward = query.get("ward", [""])[0]
     category = query.get("type", [""])[0]
@@ -190,7 +191,7 @@ def summarize_activity(rows, days, now, coverage_start=None):
             "baseline_available": baseline_available, "comparison_end": iso(end)}
 
 
-def activity(dataset="pipeline", days=30, ward="", category=""):
+def activity(dataset="collected", days=30, ward="", category=""):
     now = datetime.now(UTC)
     with connection() as conn, conn.transaction():
         conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
@@ -226,44 +227,28 @@ def database_stats():
             "reports_by_dataset": counts, "shared_columnstore": storage}
 
 
-def replay(events=10000):
-    """Deterministic history + a flooding surge, isolated from collected evidence."""
-    if not 100 <= events <= 100000:
-        raise ValueError("replay events must be between 100 and 100000")
-    existing = pipeline("replay")
-    anchor = moment(existing["report"]["generated_at"]) if existing.get("report") else datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
-    public, sightings = {}, []
-    for n in range(events):
-        surge = n % 5 == 0
-        ward = "10" if surge else str(n % 25 + 1)
-        category = "Flooding" if surge else CATEGORIES[n % len(CATEGORIES)]
-        issue_id = f"REPLAY-{ward}-{CATEGORIES.index(category)}"
-        reported = anchor - timedelta(minutes=1 + n % 1440) if surge else anchor - timedelta(minutes=1 + n * 137 % (10 * 1440))
-        if issue_id not in public:
-            public[issue_id] = {"issue_id": issue_id, "incident_id": issue_id, "issue_type": category,
-                "severity": "Medium", "resolution_status": "Open", "verification_status": "Needs review",
-                "ward_id": ward, "ward_name": "Simulated ward", "neighbourhood_id": "unassigned",
-                "neighbourhood_name": "Simulated location", "address": "Simulated Toronto report",
-                "geometry": {"type": "Point", "coordinates": [-79.59 + int(ward) * 0.016, 43.68]},
-                "location_radius_m": 1000, "geo_confidence": 0, "geo_method": "Fictional replay",
-                "geo_trace": [], "geo_clues": [], "nearby_assets": [], "infrastructure_type": None,
-                "asset_id": None, "asset_name": None, "distance_m": None, "detection_confidence": 0,
-                "sightings_count": 0, "priority_score": 25, "priority_reasons": ["Fictional replay"],
-                "source_category": "Community submission", "description": "Simulated data for the Tiger Data demonstration.",
-                "explanation": "This record does not describe a real civic issue.", "evidence_thumbnail": None,
-                "evidence_credit": None, "is_demo": True, "first_seen_at": iso(reported), "last_seen_at": iso(reported)}
-        issue = public[issue_id]
-        issue["sightings_count"] += 1
-        issue["first_seen_at"] = min(issue["first_seen_at"], iso(reported))
-        issue["last_seen_at"] = max(issue["last_seen_at"], iso(reported))
-        sightings.append({"sighting_id": f"replay-{n}", "issue_id": issue_id, "ward_id": ward,
-                          "issue_type": category, "reported_at": iso(reported), "timestamp_basis": "source"})
-    report = {"generated_at": iso(anchor), "counts": {"input_records": events, "records": events,
-              "sightings": events, "issues": len(public), "dropped": 0}, "simulated": True}
-    return sync(list(public.values()), sightings, report, dataset="replay")
+def simulate(path=SIMULATED):
+    """The fictional sample issues and their reports, moved forward so the newest is about an hour old.
+
+    Re-run to bring them forward again. Reports are spread evenly from each issue's first to last sighting."""
+    sample = json.loads(Path(path).read_text(encoding="utf-8"))
+    anchor = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
+    shift = anchor - moment(sample["generated_at"])
+    public, sightings = [], []
+    for issue in sample["issues"]:
+        first, last = moment(issue["first_seen_at"]) + shift, moment(issue["last_seen_at"]) + shift
+        public.append({**issue, "first_seen_at": iso(first), "last_seen_at": iso(last)})
+        count = issue["sightings_count"]
+        for n in range(count):
+            sightings.append({"sighting_id": f"{issue['issue_id']}-{n}", "issue_id": issue["issue_id"],
+                              "ward_id": str(issue["ward_id"]), "issue_type": issue["issue_type"],
+                              "reported_at": iso(first + (last - first) * (n / (count - 1) if count > 1 else 0)),
+                              "timestamp_basis": "source"})
+    report = {"generated_at": iso(anchor), "counts": {"sightings": len(sightings), "issues": len(public)}, "simulated": True}
+    return sync(public, sightings, report, dataset="simulated")
 
 
-def benchmark(dataset="replay"):
+def benchmark(dataset="simulated"):
     params = (dataset_name(dataset), datetime.now(UTC) - timedelta(days=90))
     raw = """SELECT time_bucket('1 hour', reported_at) AS bucket, ward_id, issue_type, count(*)
         FROM geoissue.sightings WHERE dataset = %s AND reported_at >= time_bucket('1 hour', %s::timestamptz)
@@ -301,16 +286,15 @@ def compress_history():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("init", "replay", "benchmark", "compress"))
-    parser.add_argument("--events", type=int, default=10000)
-    parser.add_argument("--dataset", choices=DATASETS, default="replay")
+    parser.add_argument("command", choices=("init", "simulate", "benchmark", "compress"))
+    parser.add_argument("--dataset", choices=DATASETS, default="simulated")
     args = parser.parse_args()
     try:
         if args.command == "init":
             initialize()
             print("Tiger Data schema ready.")
-        elif args.command == "replay":
-            print(json.dumps(replay(args.events), indent=2))
+        elif args.command == "simulate":
+            print(json.dumps(simulate(), indent=2))
         elif args.command == "compress":
             print(json.dumps(compress_history(), indent=2))
         else:

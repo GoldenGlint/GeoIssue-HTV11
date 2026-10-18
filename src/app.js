@@ -1,6 +1,6 @@
 // App shell: sidebar, page header, shared filters, routing, actions and keyboard shortcuts.
 // Each page lives in src/views/; dialogs live in src/modals.js.
-import { categories, issueRepository, wards, neighbourhoods, TORONTO_CENTER, DEMO_DATE, REFERENCE_DATE, setReferenceDate } from './data.js';
+import { categories, issueRepository, wards, neighbourhoods, TORONTO_CENTER, REFERENCE_DATE, setReferenceDate } from './data.js';
 import { icon } from './icons.js';
 import { esc, date } from './format.js';
 import { state, DEFAULT_FILTERS, filtered, scopedRows, findIssue, persist, areaLabel, applyCorrection, reviewQueue, applyLocalSightings } from './state.js';
@@ -84,19 +84,16 @@ function pageHtml() {
     default: return collectionHtml();
   }
 }
-// Which dataset is showing, with a switch when pipeline output exists (`python -m analysis`).
+// Which Tiger Data dataset is showing: issues the pipeline collected, or fictional simulated ones.
 function dataSourceHtml() {
-  const { sample, pipeline, replay } = state.sources;
-  if (!pipeline && !replay) return `<span class="data-source">${icon('database')} Sample data · ${sample}</span>`;
-  // Phones get short labels so the count stays visible beside the page title.
-  const short = matchMedia('(max-width:650px)').matches, collected = issueRepository.backend('pipeline').type === 'tiger';
-  const options = [['sample', short ? 'Sample' : 'Sample data', sample], ['pipeline', collected ? (short ? 'Collected' : 'Collected data') : (short ? 'Snapshot' : 'File snapshot'), pipeline], ['replay', short ? 'Replay' : 'Simulated replay', replay]];
-  return `<label class="data-source" title="${esc(state.dataBackend.warning || '')}">${icon('database')}<select id="data-source" aria-label="Data shown">${options.filter(([, , count]) => count).map(([value, label, count]) => `<option value="${value}" ${state.dataSource === value ? 'selected' : ''}>${label} · ${count}</option>`).join('')}</select></label>`;
+  const { collected, simulated } = state.sources;
+  if (!collected && !simulated) return `<span class="data-source" title="${esc(state.dataBackend.warning || '')}">${icon('database')} ${state.dataBackend.type === 'tiger' ? 'No issues yet' : 'Database unavailable'}</span>`;
+  const options = [['collected', 'Collected', collected], ['simulated', 'Simulated', simulated]];
+  return `<label class="data-source">${icon('database')}<select id="data-source" aria-label="Data shown">${options.filter(([, , count]) => count).map(([value, label, count]) => `<option value="${value}" ${state.dataSource === value ? 'selected' : ''}>${label} · ${count}</option>`).join('')}</select></label>`;
 }
 function footerHtml() {
   const generated = state.pipeline.report?.generated_at;
-  const label = state.dataSource === 'replay' ? 'Simulated replay' : state.dataBackend.type === 'tiger' ? 'Collected data' : 'File snapshot';
-  const source = state.dataBackend.warning || (state.dataSource !== 'sample' ? `${label}${generated ? ` · generated ${new Date(generated).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}` : ''}` : `Fictional sample data · As of ${date(REFERENCE_DATE, { year: 'numeric' })}`);
+  const source = state.dataBackend.warning || (state.dataSource === 'collected' ? `Collected data${generated ? ` · generated ${new Date(generated).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}` : ''}` : `Simulated data · fictional issues · As of ${date(REFERENCE_DATE, { year: 'numeric' })}`);
   return `<footer class="page-footer"><span>GeoIssue · Built for a more responsive city</span><span>${source}</span></footer>`;
 }
 // The page fades in when you arrive on it, not each time it redraws for a sort, filter or page change.
@@ -170,14 +167,13 @@ export function setRole(role) {
 }
 async function loadIssues() {
   state.sources = await issueRepository.sources();
-  // Analysed posts are shown when there are any, unless this browser picked a dataset in the header.
-  if (!state.sources[state.dataSource]) state.dataSource = state.sources.pipeline ? 'pipeline' : 'sample';
+  // Collected issues are shown when there are any, unless this browser picked a dataset in the header.
+  if (!state.sources[state.dataSource]) state.dataSource = state.sources.collected || !state.sources.simulated ? 'collected' : 'simulated';
   state.issues = await issueRepository.list(state.dataSource);
   state.dataBackend = issueRepository.backend(state.dataSource);
-  const pipeline = state.dataSource !== 'sample';
-  [state.pipeline.report, state.pipeline.areas] = pipeline ? [issueRepository.pipelineReport(state.dataSource), issueRepository.areaSummaries(state.dataSource)] : [null, null];
-  // Ages and "last N days" count back from when the pipeline ran, so newly scraped posts are never in the future.
-  setReferenceDate(state.dataBackend.type === 'tiger' ? new Date().toISOString() : pipeline ? state.pipeline.report?.generated_at || new Date().toISOString() : DEMO_DATE);
+  [state.pipeline.report, state.pipeline.areas] = [issueRepository.pipelineReport(state.dataSource), issueRepository.areaSummaries(state.dataSource)];
+  // Ages and "last N days" count back from now. Simulated issues are moved forward each time they are loaded.
+  setReferenceDate(new Date().toISOString());
   applyLocalSightings();
   // Corrections accepted in this browser stay applied across reloads (an API would return updated issues).
   state.corrections.filter(c => c.status === 'Accepted').forEach(applyCorrection);
@@ -186,18 +182,24 @@ async function switchDataSource(source) {
   state.dataSource = source; persist('dataSource', source);
   state.selected = []; state.panel = null; state.scope = null; state.page = 1;
   await loadIssues();
-  toast(`Showing ${source === 'replay' ? 'simulated replay' : source === 'pipeline' ? 'pipeline output' : 'sample data'}: ${state.issues.length} issues`);
+  toast(`Showing ${source} data: ${state.issues.length} issues`);
   render();
   frameAnalysed();
 }
 
-// Refresh only changed live issue snapshots. Activity has its own lightweight polling lifecycle.
+// Refresh only changed live issue snapshots, and keep retrying while Tiger Data is unavailable. Activity has its own
+// lightweight polling lifecycle.
 let refreshingIssues = false;
 setInterval(async () => {
-  if (refreshingIssues || document.hidden || state.dataBackend.type !== 'tiger' || document.querySelector('.modal-backdrop')) return;
+  if (refreshingIssues || document.hidden || document.querySelector('.modal-backdrop')) return;
   const source = state.dataSource;
   refreshingIssues = true;
   try {
+    if (state.dataBackend.type !== 'tiger') {
+      await loadIssues();
+      if (state.dataBackend.type === 'tiger') render();
+      return;
+    }
     const before = JSON.stringify(await issueRepository.list(source));
     const snapshot = await issueRepository.refresh(source);
     if (source !== state.dataSource || before === JSON.stringify(snapshot.issues)) return;
@@ -215,7 +217,7 @@ setInterval(async () => {
 // The analysed posts are few and spread across the city, so the map starts with all of them in view. It jumps
 // there: the new map's first resize callback would stop an animation.
 function frameAnalysed() {
-  if (state.dataSource === 'pipeline' && state.view === 'map' && !state.panel && filtered().length) requestAnimationFrame(() => frameIssues(filtered(), 15, 0));
+  if (state.dataSource === 'collected' && state.view === 'map' && !state.panel && filtered().length) requestAnimationFrame(() => frameIssues(filtered(), 15, 0));
 }
 function bindIssueLinks(root) {
   root.querySelectorAll('[data-issue]').forEach(b => b.onclick = () => {
@@ -308,7 +310,7 @@ async function dismissSplash() {
 // A shared link opens its issue even when that is in the other dataset. The switch isn't remembered.
 async function loadSharedIssueDataset() {
   const shared = new URLSearchParams(location.hash.split('?')[1] || '').get('issue');
-  const other = state.dataSource === 'pipeline' ? 'sample' : 'pipeline';
+  const other = state.dataSource === 'collected' ? 'simulated' : 'collected';
   if (!shared || findIssue(shared) || !state.sources[other]) return;
   const previous = state.dataSource;
   state.dataSource = other;

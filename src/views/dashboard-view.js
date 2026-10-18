@@ -8,7 +8,7 @@ import { nav, updateFilteredView, render } from '../app.js';
 import { apiStatus, writeDigest } from '../api.js';
 import { activityPanelHtml, bindActivity } from '../activity.js';
 
-const SAMPLE_SPAN_DAYS = 90; // the sample data covers the 90 days up to DEMO_DATE
+const SAMPLE_SPAN_DAYS = 90; // the simulated data covers the 90 days up to when it was loaded
 const statuses = ['Open', 'In review', 'Resolved'], statusColors = ['var(--accent)', 'var(--warning)', 'var(--success)'];
 const windowDays = () => Number(state.filters.days) || SAMPLE_SPAN_DAYS;
 // Only compare when the previous period is fully inside the sample data; otherwise the "change" would be invented.
@@ -85,7 +85,7 @@ function wardDigestHtml(rows, previous) {
     const delta = previous ? previous.length ? ` (${rows.length >= previous.length ? 'up' : 'down'} ${Math.abs(Math.round((rows.length - previous.length) / previous.length * 100))}% from the previous ${state.filters.days} days)` : ' (none in the previous period)' : '';
     const period = state.filters.days ? `In the last ${state.filters.days} days${isSampleData() ? ' of sample data' : ''}` : `Across all ${sampleWord()}records`;
     const tiles = [['Open', rows.filter(i => i.resolution_status === 'Open').length], ['In review', rows.filter(i => i.resolution_status === 'In review').length], ['Resolved', resolved], ['Needs verification', rows.filter(i => i.verification_status === 'Needs review').length]];
-    body = `<p class="digest-text">${period}, <strong>${esc(wardLabel(ward))}</strong> logged <strong>${plural(rows.length, state.dataSource === 'sample' ? 'sample issue' : 'issue')}</strong>${delta}. The most common type was <strong>${esc(topType)}</strong> (${topCount}). <strong>${high}</strong> ${high === 1 ? 'is' : 'are'} high severity and <strong>${percent(resolved, rows.length)}%</strong> ${resolved === 1 ? 'is' : 'are'} resolved. The busiest location was <strong>${esc(topPlace)}</strong> (${plural(placeCount, 'issue')}).</p>${writtenDigestHtml(ward, rows)}<div class="digest-stats">${tiles.map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join('')}</div>`;
+    body = `<p class="digest-text">${period}, <strong>${esc(wardLabel(ward))}</strong> logged <strong>${plural(rows.length, state.dataSource === 'simulated' ? 'sample issue' : 'issue')}</strong>${delta}. The most common type was <strong>${esc(topType)}</strong> (${topCount}). <strong>${high}</strong> ${high === 1 ? 'is' : 'are'} high severity and <strong>${percent(resolved, rows.length)}%</strong> ${resolved === 1 ? 'is' : 'are'} resolved. The busiest location was <strong>${esc(topPlace)}</strong> (${plural(placeCount, 'issue')}).</p>${writtenDigestHtml(ward, rows)}<div class="digest-stats">${tiles.map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join('')}</div>`;
   }
   return `<section class="card ward-digest"><div class="card-header"><h2>${icon('ballot')} Ward digest</h2>${picker}</div><div class="digest-body">${election}${body}<div class="digest-foot">${icon('shield')}<span>The first paragraph is a fixed template built from the filtered records: counts are observed, not inferred. Ward boundaries are the City of Toronto’s 25 wards.</span></div></div></section>`;
 }
@@ -107,18 +107,18 @@ function areaStats(ward, rows) {
 }
 const digestKey = (ward, rows) => JSON.stringify(areaStats(ward, rows));
 function writtenDigestHtml(ward, rows) {
-  const fromPipeline = state.dataSource === 'pipeline' && state.pipeline.areas?.by_area?.ward_id?.find(a => String(a.name) === ward)?.summary;
+  const fromPipeline = state.dataSource === 'collected' && state.pipeline.areas?.by_area?.ward_id?.find(a => String(a.name) === ward)?.summary;
   if (fromPipeline) {
     const gemini = fromPipeline.method?.startsWith('gemini');
     return `<div class="digest-written"><p>${esc(fromPipeline.text)}</p><span>${gemini ? `Written by Gemini (${esc(fromPipeline.method.slice(7))}) from this ward’s counts during the pipeline run` : 'Template summary from the pipeline run'} · covers all pipeline issues in the ward, not just the current filters</span></div>`;
   }
   const cached = digestCache.get(digestKey(ward, rows));
-  if (cached?.text) return `<div class="digest-written"><p>${esc(cached.text)}</p><span>Written by Gemini (${esc(cached.method.slice(7))}) from the counts below${state.dataSource === 'sample' ? ' · sample data' : ''}. Check it before sharing.</span></div>`;
+  if (cached?.text) return `<div class="digest-written"><p>${esc(cached.text)}</p><span>Written by Gemini (${esc(cached.method.slice(7))}) from the counts below${state.dataSource === 'simulated' ? ' · simulated data' : ''}. Check it before sharing.</span></div>`;
   return `<div class="digest-written pending" id="digest-ai" hidden><button class="button small" id="write-digest">${icon('sparkles')} Write a summary with Gemini</button><span id="digest-error" class="form-error"></span></div>`;
 }
 
 function pipelineHtml() {
-  const report = state.dataSource !== 'sample' ? state.pipeline.report : null, verified = state.issues.filter(i => i.verification_status === 'Verified').length;
+  const report = state.dataSource === 'collected' ? state.pipeline.report : null, verified = state.issues.filter(i => i.verification_status === 'Verified').length;
   let stages, subtitle, foot, firstNote;
   if (report?.counts) {
     // The analysis run's own counts (data/analyzed/report.json), so every number is measured.
@@ -128,12 +128,6 @@ function pipelineHtml() {
     firstNote = 'From the photo analysis';
     const reasons = Object.entries(countBy(report.dropped || [], 'reason')).map(([reason, n]) => `${n} ${reason}`).join(', ');
     foot = `Counts from the analysis report. Duplicate sightings were merged into unique issues${reasons ? `; dropped: ${reasons}` : ''}. Bars use a log scale.`;
-    if (report.simulated) {
-      stages = [['Simulated reports', c.sightings || 0, true], ['Simulated unique issues', c.issues || 0, true], ['Verified', 0, true]];
-      subtitle = 'Simulated report replay';
-      firstNote = 'Fictional reports';
-      foot = 'All replay records are fictional. No photos were collected or analysed to create these counts. Bars use a log scale.';
-    }
   } else {
     const recent = state.issues.filter(i => age(i) < demoPipeline.window_days);
     stages = [['Posts scanned', demoPipeline.posts_scanned, false], ['With images', demoPipeline.with_images, false], ['Toronto-relevant', demoPipeline.toronto_relevant, false], ['Public scenes', demoPipeline.public_scenes, false],
@@ -158,7 +152,7 @@ export function dashboardHtml() {
     <div class="dashboard-lower">
       <section class="card"><div class="card-header"><h2>${icon('pin')} Neighbourhood hotspots</h2><span class="subtle-label">${isSampleData() ? 'Sample counts' : 'Counts'}</span></div>${areas.length ? areas.map(({ id, name, count }, j) => `<button class="hotspot-row" data-area-filter="${esc(id)}"><span class="rank">${j + 1}</span><span>${esc(name)}</span><div class="bar-track"><i style="width:${count / areas[0].count * 100}%"></i></div><strong>${count}</strong>${icon('arrow')}</button>`).join('') : emptyHtml('No neighbourhoods', 'Try clearing your filters.')}</section>
       <section class="card"><div class="card-header"><h2>${icon('clock')} Recent detections</h2><button class="text-button" data-nav="data">View all ↗</button></div>${recent.map(issueRow).join('') || emptyHtml('No detections', 'Try clearing your filters.')}</section>
-      <section class="card insights-card"><div class="card-header"><h2>${icon('lightbulb')} At a glance</h2></div><div class="insight"><span class="stat-icon red">${icon('warning')}</span><div><strong>${counts[0]?.count ? counts[0].type : 'No issues'}</strong><small>Most common issue · ${counts[0]?.count || 0} of ${rows.length} filtered records</small></div></div><div class="insight"><span class="stat-icon blue">${icon('pin')}</span><div><strong>${esc(areas[0]?.name || 'No areas')}</strong><small>Highest ${sampleWord()}activity · by ${sampleWord()}record count</small></div></div><div class="insight-foot">${icon('shield')} ${state.dataSource === 'sample' ? 'These insights describe fictional records. Connect verified data before drawing conclusions.' : 'Counts cover issues found in public photos and uploads, not every issue in the city.'}</div></section>
+      <section class="card insights-card"><div class="card-header"><h2>${icon('lightbulb')} At a glance</h2></div><div class="insight"><span class="stat-icon red">${icon('warning')}</span><div><strong>${counts[0]?.count ? counts[0].type : 'No issues'}</strong><small>Most common issue · ${counts[0]?.count || 0} of ${rows.length} filtered records</small></div></div><div class="insight"><span class="stat-icon blue">${icon('pin')}</span><div><strong>${esc(areas[0]?.name || 'No areas')}</strong><small>Highest ${sampleWord()}activity · by ${sampleWord()}record count</small></div></div><div class="insight-foot">${icon('shield')} ${state.dataSource === 'simulated' ? 'These insights describe fictional records. Connect verified data before drawing conclusions.' : 'Counts cover issues found in public photos and uploads, not every issue in the city.'}</div></section>
     </div></div>`;
 }
 

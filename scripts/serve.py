@@ -420,7 +420,7 @@ class Handler(SimpleHTTPRequestHandler):
                 else:
                     if set(query) - {"dataset"} or any(len(v) != 1 for v in query.values()):
                         raise ValueError("Only one dataset filter is supported")
-                    dataset = tiger.dataset_name(query.get("dataset", ["pipeline"])[0])
+                    dataset = tiger.dataset_name(query.get("dataset", ["collected"])[0])
                     data = tiger.issues(dataset) if path == "/api/issues" else tiger.pipeline(dataset)
                 return self.send_json(200, data)
             except ValueError as error:

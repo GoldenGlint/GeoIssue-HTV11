@@ -1,8 +1,8 @@
-/** Fictional demo dataset for the GeoIssue prototype.
- * Replace issueRepository.list() with your API; data-contract.md documents the issue shape.
- * Records are generated deterministically, so every reload (and every teammate) sees the same data.
- * Coordinates are coarse and fictional. Wards come from the City of Toronto ward boundaries (point-in-polygon).
- * Backend authorization/privacy processing must happen before returning real records.
+/** Reference data for the GeoIssue prototype, the fictional sample issues, and issueRepository.
+ * Issues come from Tiger Data through scripts/serve.py: the collected dataset, and a simulated one made from the
+ * sample issues below (scripts/export-simulated.mjs, then `python -m analysis.tiger simulate`).
+ * data-contract.md documents the issue shape. Sample coordinates are coarse and fictional. Wards come from the
+ * City of Toronto ward boundaries (point-in-polygon).
  */
 import { osmStations, osmRoads } from './osm-infrastructure.js';
 import { wardBoundaries } from './ward-boundaries.js';
@@ -89,8 +89,8 @@ export const infrastructure = assetSeed.map(([type, name, coordinates], j) => ({
 // Sample ingestion metrics for the last 30 days. Replace with the pipeline's signal monitor.
 export const demoPipeline = { window_days: 30, posts_scanned: 48230, with_images: 10940, toronto_relevant: 2185, public_scenes: 1260 };
 
-// Deterministic PRNG (mulberry32) so the sample data is stable across reloads.
-let seed = 20261017;
+// Deterministic PRNG (mulberry32) so the sample data is the same on every run.
+let seed;
 const random = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const pick = list => list[Math.floor(random() * list.length)];
 const between = (min, max) => min + random() * (max - min);
@@ -208,6 +208,7 @@ function locate(source, address, near, hood) {
 }
 
 function generateIssues(count) {
+  seed = 20261017;
   const now = Date.parse(DEMO_DATE), issues = [];
   for (let n = 0; n < count; n++) {
     const day = weighted(dayWeights), storm = stormDays.includes(day);
@@ -246,27 +247,10 @@ function generateIssues(count) {
     return { issue_id: `CL-${10712 - j}`, incident_id: `INC-${4240 - j}`, ...issue, priority_score: score, priority_reasons: reasons };
   });
 }
-export const demoIssues = generateIssues(240);
+export const sampleIssues = () => generateIssues(240);
 
-// Sample evidence photos (assets/evidence/credits.json) illustrate each category; they never depict the record itself.
-async function evidenceByCategory() {
-  try {
-    const response = await fetch(new URL('../assets/evidence/credits.json', import.meta.url));
-    if (!response.ok) return {};
-    const groups = {};
-    for (const credit of await response.json()) (groups[credit.category] ||= []).push({ ...credit, url: new URL(`../assets/evidence/${credit.file}`, import.meta.url).href });
-    return groups;
-  } catch { return {}; }
-}
-
-// Written by `python -m analysis` (see analysis/README.md). Missing files mean the pipeline hasn't been run.
-const analyzedFile = async name => {
-  try {
-    const response = await fetch(new URL(`../data/analyzed/${name}`, import.meta.url), { cache: 'no-store' });
-    return response.ok ? await response.json() : null;
-  } catch { return null; }
-};
-const pipelineCache = new Map();
+const DATASETS = ['collected', 'simulated'];
+const cache = new Map();
 async function databaseSnapshot(dataset) {
   const [issues, metadata] = await Promise.all(['issues', 'pipeline'].map(async endpoint => {
     const response = await fetch(`/api/${endpoint}?dataset=${dataset}`, { cache: 'no-store', signal: AbortSignal.timeout(12000) });
@@ -277,45 +261,20 @@ async function databaseSnapshot(dataset) {
   return { issues, ...metadata, backend: { type: 'tiger', simulated: metadata.simulated } };
 }
 
-async function loadPipeline(dataset, configured) {
-  if (configured) {
-    try { const snapshot = await databaseSnapshot(dataset); pipelineCache.set(dataset, snapshot); return snapshot; }
-    catch {
-      if (dataset === 'replay') return { issues: [] };
-    }
-  }
-  const [issues, report, areas] = await Promise.all(['issues.public.json', 'report.json', 'areas.json'].map(analyzedFile));
-  const snapshot = { issues: Array.isArray(issues) ? issues : [], report, areas,
-    backend: { type: 'file', warning: configured ? 'Tiger Data unavailable · showing file snapshot' : '' } };
-  pipelineCache.set(dataset, snapshot);
-  return snapshot;
-}
-
 export const issueRepository = {
-  /** Issue counts per dataset. The sample is always available; pipeline output only after `python -m analysis`. */
+  /** Issue counts per dataset. A dataset Tiger Data can't return counts 0 and reports itself unavailable. */
   async sources() {
-    const status = await fetch('/api/status', { cache: 'no-store', signal: AbortSignal.timeout(12000) })
-      .then(r => r.ok ? r.json() : {}).catch(() => ({}));
-    const [pipeline, replay] = await Promise.all([loadPipeline('pipeline', status.tiger), status.tiger ? loadPipeline('replay', true) : { issues: [] }]);
-    return { sample: demoIssues.length, pipeline: pipeline.issues.length, replay: replay.issues.length };
+    const counts = await Promise.all(DATASETS.map(dataset => databaseSnapshot(dataset)
+      .then(snapshot => { cache.set(dataset, snapshot); return snapshot.issues.length; })
+      .catch(() => { cache.delete(dataset); return 0; })));
+    return Object.fromEntries(DATASETS.map((dataset, j) => [dataset, counts[j]]));
   },
-  backend: source => pipelineCache.get(source)?.backend || { type: 'sample' },
-  async refresh(source) { const snapshot = await databaseSnapshot(source); pipelineCache.set(source, snapshot); return snapshot; },
+  backend: source => cache.get(source)?.backend || { type: 'unavailable', warning: 'Tiger Data unavailable · retrying' },
+  async refresh(source) { const snapshot = await databaseSnapshot(source); cache.set(source, snapshot); return snapshot; },
   /** Pipeline run report (counts per stage) and per-area stats and summaries, or null when not available. */
-  pipelineReport: (source = 'pipeline') => pipelineCache.get(source)?.report || null,
-  areaSummaries: (source = 'pipeline') => pipelineCache.get(source)?.areas || null,
-  async list(source = 'sample') {
-    if (source !== 'sample') return structuredClone(pipelineCache.get(source)?.issues || []);
-    const photos = await evidenceByCategory(), issues = structuredClone(demoIssues);
-    for (const [j, issue] of issues.entries()) {
-      const options = photos[issue.issue_type];
-      if (!options?.length) continue;
-      const photo = options[j % options.length];
-      issue.evidence_thumbnail = photo.url;
-      issue.evidence_credit = { title: photo.title, author: photo.author, license: photo.license, license_url: photo.license_url, source_url: photo.source_url, is_sample: true };
-    }
-    return issues;
-  },
+  pipelineReport: source => cache.get(source)?.report || null,
+  areaSummaries: source => cache.get(source)?.areas || null,
+  list: async source => structuredClone(cache.get(source)?.issues || []),
   async submit(draft) {
     // Replace with POST /api/submissions. Do not publish uploads until privacy review.
     return { ...draft, issue_id: `LOCAL-${Date.now().toString(36).toUpperCase()}`, verification_status: 'Pending review', local_only: true };

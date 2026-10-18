@@ -40,7 +40,7 @@ function statsHtml(rows) {
   const review = rows.filter(i => i.verification_status === 'Needs review').length;
   const confidence = rows.length ? Math.round(rows.reduce((sum, i) => sum + i.detection_confidence, 0) / rows.length * 100) : 0;
   return `<div class="stat-grid">${[
-    statCard({ label: 'Total records', value: state.issues.length, note: state.dataSource === 'pipeline' ? 'Pipeline output' : 'Accessible sample dataset', color: 'blue' }),
+    statCard({ label: 'Total records', value: state.issues.length, note: state.dataSource === 'collected' ? 'Collected by the pipeline' : 'Fictional simulated dataset', color: 'blue' }),
     statCard({ label: 'Filtered results', value: rows.length, note: `${percent(rows.length, state.issues.length)}% of all records`, color: 'cyan' }),
     statCard({ label: 'Awaiting verification', value: review, note: 'Needs a volunteer review', color: 'amber' }),
     statCard({ label: 'Avg. detection confidence', value: rows.length ? `${confidence}%` : '–', note: 'Across filtered records', color: 'green' }),

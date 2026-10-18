@@ -7,7 +7,7 @@ Published issues and photos live in `/var/lib/geoissue/published`, outside the G
 ## Before you start
 
 - A Vultr account and a small Cloud Compute plan (2 GB RAM is the starting size).
-- An SSH public key, and a hostname you can point at the VM.
+- An SSH public key, and a hostname you can point at the VM. Without one, `<ip-with-dashes>.sslip.io` (for example `203-0-113-5.sslip.io`) already points at the VM and gets HTTPS too.
 - `GEMINI_API_KEY` and `TIGER_DATABASE_URL`. They go in `/etc/geoissue/env` on the server, never in Git or chat.
 
 In the Vultr firewall and on the VM, allow SSH from the team plus public TCP 80 and 443. Do not expose port 5173.
@@ -44,6 +44,8 @@ Initialize Tiger Data only when that database has no GeoIssue schema. This keeps
 sudo -u geoissue bash -lc 'set -a; . /etc/geoissue/env; set +a; cd /opt/geoissue; .venv/bin/python -m analysis.tiger init'
 ```
 
+Every issue the site shows comes from Tiger Data: the **collected** dataset (pipeline output) and the **simulated** one (the fictional sample issues in `data/simulated/issues.json`). `geoissue-simulate.timer`, installed below, reloads the simulated dataset once a day and moves it forward so its newest reports are recent.
+
 ## Seed the site before the first collection
 
 The committed public snapshot is the site until a cloud run succeeds. It is not proof that collection is live.
@@ -67,8 +69,10 @@ Optional: copy local screening and description caches into `scraping/data/` on t
 sudo cp /opt/geoissue/deploy/geoissue.service /etc/systemd/system/
 sudo cp /opt/geoissue/deploy/geoissue-ingest.service /etc/systemd/system/
 sudo cp /opt/geoissue/deploy/geoissue-ingest.timer /etc/systemd/system/
+sudo cp /opt/geoissue/deploy/geoissue-simulate.service /opt/geoissue/deploy/geoissue-simulate.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now geoissue.service
+sudo systemctl enable --now geoissue.service geoissue-simulate.timer
+sudo systemctl start geoissue-simulate.service   # load the simulated dataset now
 ```
 
 Do not enable `geoissue-ingest.timer` here.
@@ -82,8 +86,10 @@ sudo systemctl edit caddy
 
 ```
 [Service]
-Environment=GEOISSUE_DOMAIN=geoissue.example.com
+Environment="GEOISSUE_DOMAIN=geoissue.example.com, 203-0-113-5.sslip.io"
 ```
+
+Caddy serves and gets a certificate for each comma-separated name. The sslip.io name works as soon as the VM is up; the domain gets its certificate once its DNS A record points at the VM (restart Caddy then to retry straight away).
 
 ```sh
 sudo systemctl restart caddy
@@ -132,7 +138,7 @@ Published generations are outside the checkout and stay put. If the timer was en
 ## Logs
 
 ```sh
-journalctl -u geoissue.service -u geoissue-ingest.service --since "today"
+journalctl -u geoissue.service -u geoissue-ingest.service -u geoissue-simulate.service --since "today"
 ```
 
 ## Rollback
@@ -167,9 +173,9 @@ A failed ingest deletes its unpublished candidate and leaves `current` where it 
 ## Teardown
 
 ```sh
-sudo systemctl disable --now geoissue.service geoissue-ingest.timer
+sudo systemctl disable --now geoissue.service geoissue-ingest.timer geoissue-simulate.timer
 sudo systemctl stop geoissue-ingest.service
-sudo rm /etc/systemd/system/geoissue.service /etc/systemd/system/geoissue-ingest.service /etc/systemd/system/geoissue-ingest.timer
+sudo rm /etc/systemd/system/geoissue.service /etc/systemd/system/geoissue-ingest.service /etc/systemd/system/geoissue-ingest.timer   /etc/systemd/system/geoissue-simulate.service /etc/systemd/system/geoissue-simulate.timer
 sudo systemctl daemon-reload
 sudo rm -rf /opt/geoissue /var/lib/geoissue /etc/geoissue
 sudo userdel geoissue

@@ -143,7 +143,7 @@ class IngestTests(unittest.TestCase):
         def analyze(*args, **kwargs):
             return write_public(kwargs["out_dir"], [ISSUE])
 
-        def sync(public, events, report, areas=None, dataset="pipeline"):
+        def sync(public, events, report, areas=None, dataset="collected"):
             synced.append([issue["issue_id"] for issue in public])
             return {"reports": len(events)}
 

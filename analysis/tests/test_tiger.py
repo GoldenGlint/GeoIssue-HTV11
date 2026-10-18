@@ -63,9 +63,28 @@ class TigerTest(unittest.TestCase):
         short = tiger.summarize_activity(rows, 7, now, tiger.iso(NOW - timedelta(days=4)))
         self.assertFalse(any(ward["emerging"] for ward in short["wards"]))
 
+    def test_simulated_issues_move_forward_with_one_report_per_sighting(self):
+        sample = {"generated_at": "2026-10-17T12:00:00Z", "issues": [
+            {"issue_id": "CL-1", "ward_id": "10", "issue_type": "Flooding", "sightings_count": 3, "is_demo": True,
+             "first_seen_at": "2026-10-10T12:00:00Z", "last_seen_at": "2026-10-16T12:00:00Z"},
+            {"issue_id": "CL-2", "ward_id": "4", "issue_type": "Litter", "sightings_count": 1, "is_demo": True,
+             "first_seen_at": "2026-10-17T06:00:00Z", "last_seen_at": "2026-10-17T06:00:00Z"}]}
+        with tempfile.TemporaryDirectory() as tmp, patch.object(tiger, "sync", side_effect=lambda *args, **kwargs: (args, kwargs)):
+            path = Path(tmp) / "issues.json"
+            path.write_text(json.dumps(sample))
+            (public, sightings, report), options = tiger.simulate(path)
+        self.assertEqual(options, {"dataset": "simulated"})
+        shift = tiger.moment(report["generated_at"]) - tiger.moment(sample["generated_at"])
+        self.assertEqual(tiger.moment(public[0]["last_seen_at"]), tiger.moment("2026-10-16T12:00:00Z") + shift)
+        self.assertLessEqual(tiger.moment(report["generated_at"]), datetime.now(timezone.utc))
+        self.assertEqual([s["sighting_id"] for s in sightings], ["CL-1-0", "CL-1-1", "CL-1-2", "CL-2-0"])
+        self.assertEqual([s["reported_at"] for s in sightings[:3]],
+                         [public[0]["first_seen_at"], tiger.iso(tiger.moment("2026-10-13T12:00:00Z") + shift), public[0]["last_seen_at"]])
+        self.assertEqual(report["counts"], {"sightings": 4, "issues": 2})
+
     def test_filter_validation(self):
         self.assertEqual(tiger.activity_options({"ward": ["10"], "type": ["Flooding"]}),
-                         {"dataset": "pipeline", "days": 30, "ward": "10", "category": "Flooding"})
+                         {"dataset": "collected", "days": 30, "ward": "10", "category": "Flooding"})
         for query in ({"days": ["100000"]}, {"days": ["7", "30"]}, {"ward": ["26"]},
                       {"type": ["'; DROP TABLE issues; --"]}, {"sql": ["SELECT 1"]}, {"dataset": ["private"]}):
             with self.subTest(query=query), self.assertRaises(ValueError):
@@ -137,7 +156,7 @@ class TigerApiTest(unittest.TestCase):
     def test_valid_activity_route_passes_only_validated_arguments(self):
         with patch.object(tiger, "activity", return_value={"reports": 2}) as activity:
             self.assertEqual(self.get("/api/activity?days=7&ward=10&type=Flooding"), (200, {"reports": 2}))
-            activity.assert_called_once_with(dataset="pipeline", days=7, ward="10", category="Flooding")
+            activity.assert_called_once_with(dataset="collected", days=7, ward="10", category="Flooding")
 
     def test_database_errors_are_explicit_and_do_not_leak_credentials(self):
         with patch.object(tiger, "issues", side_effect=RuntimeError("postgresql://user:secret@private-host")):
@@ -148,8 +167,8 @@ class TigerApiTest(unittest.TestCase):
         self.assertEqual(self.get("/.env")[0], 404)
 
     def test_storage_metrics_route_is_read_only_and_rejects_parameters(self):
-        with patch.object(tiger, "database_stats", return_value={"reports_by_dataset": {"pipeline": 6}}) as stats:
-            self.assertEqual(self.get("/api/tiger"), (200, {"reports_by_dataset": {"pipeline": 6}}))
+        with patch.object(tiger, "database_stats", return_value={"reports_by_dataset": {"collected": 6}}) as stats:
+            self.assertEqual(self.get("/api/tiger"), (200, {"reports_by_dataset": {"collected": 6}}))
             self.assertEqual(self.get("/api/tiger?sql=anything")[0], 400)
             stats.assert_called_once_with()
         with patch.object(tiger, "database_stats", side_effect=RuntimeError("postgresql://user:secret@private-host")):
@@ -173,12 +192,12 @@ class TigerDatabaseTest(unittest.TestCase):
             report = {"generated_at": tiger.iso(now)}
             tiger.sync(public, events, report)
             with tiger.connection() as conn:
-                before = conn.execute("SELECT sighting_id, reported_at, ingested_at FROM geoissue.sightings WHERE dataset = 'pipeline' ORDER BY sighting_id").fetchall()
+                before = conn.execute("SELECT sighting_id, reported_at, ingested_at FROM geoissue.sightings WHERE dataset = 'collected' ORDER BY sighting_id").fetchall()
             self.assertGreaterEqual(tiger.compress_history()["converted_or_already_columnstore_chunks"], 1)
             tiger.sync(public, events, report)
             with tiger.connection() as conn:
-                self.assertEqual(before, conn.execute("SELECT sighting_id, reported_at, ingested_at FROM geoissue.sightings WHERE dataset = 'pipeline' ORDER BY sighting_id").fetchall())
-                self.assertEqual(conn.execute("SELECT sum(reports) FROM geoissue.ward_activity_hourly WHERE dataset = 'pipeline'").fetchone()[0], 2)
+                self.assertEqual(before, conn.execute("SELECT sighting_id, reported_at, ingested_at FROM geoissue.sightings WHERE dataset = 'collected' ORDER BY sighting_id").fetchall())
+                self.assertEqual(conn.execute("SELECT sum(reports) FROM geoissue.ward_activity_hourly WHERE dataset = 'collected'").fetchone()[0], 2)
             self.assertEqual(tiger.issues(), public)
             self.assertEqual(tiger.activity()["reports"], 1)
             bad = copy.deepcopy(events)
@@ -188,8 +207,8 @@ class TigerDatabaseTest(unittest.TestCase):
             self.assertEqual(tiger.pipeline()["reports"], 2)
             tiger.sync(public, events[1:], report)
             with tiger.connection() as conn:
-                self.assertEqual(conn.execute("SELECT sum(reports) FROM geoissue.ward_activity_hourly WHERE dataset = 'pipeline'").fetchone()[0], 1)
-            self.assertTrue(tiger.benchmark("pipeline")["results_match"])
+                self.assertEqual(conn.execute("SELECT sum(reports) FROM geoissue.ward_activity_hourly WHERE dataset = 'collected'").fetchone()[0], 1)
+            self.assertTrue(tiger.benchmark("collected")["results_match"])
 
 
 if __name__ == "__main__":

@@ -1,0 +1,14 @@
+[Unit]
+Description=GeoIssue simulated dataset (move the fictional issues forward to now)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=geoissue
+Group=geoissue
+WorkingDirectory=/opt/geoissue
+EnvironmentFile=/etc/geoissue/env
+ExecStart=/opt/geoissue/.venv/bin/python -m analysis.tiger simulate
+TimeoutStartSec=10min
+NoNewPrivileges=true

@@ -17,15 +17,13 @@ export function tigerProofHtml(data) {
   const counts = data.reports_by_dataset, storage = data.shared_columnstore;
   const reduction = storage.storage_reduction_percent;
   const savings = reduction > 0 ? `${reduction.toFixed(1)}% smaller historical chunks` : `${storage.compressed_chunks || 0} chunks in columnstore`;
-  return `<strong>${Number(counts.pipeline || 0).toLocaleString()}</strong> collected reports <span>·</span> <strong>${Number(counts.replay || 0).toLocaleString()}</strong> simulated reports <span>·</span> <strong>${esc(savings)}</strong><small>Live database totals. Storage measurement covers converted chunks across both datasets.</small>`;
+  return `<strong>${Number(counts.collected || 0).toLocaleString()}</strong> collected reports <span>·</span> <strong>${Number(counts.simulated || 0).toLocaleString()}</strong> simulated reports <span>·</span> <strong>${esc(savings)}</strong><small>Live database totals. Storage measurement covers converted chunks across both datasets.</small>`;
 }
 
 export function activityPanelHtml(backend, source) {
   const live = backend.type === 'tiger';
-  const text = backend.warning || (source === 'sample'
-    ? 'Sample issues do not include an independent report history. Choose collected data or a simulated replay to explore activity.'
-    : 'This file snapshot contains issue totals. Report activity appears when a connected history is available.');
-  return `<section class="card activity-card" aria-labelledby="activity-title"><div class="card-header"><h2 id="activity-title">${icon('chart')} Report activity</h2><div class="activity-meta"><span class="subtle-label" id="activity-status">${live ? source === 'replay' ? 'Simulated replay · refreshes every 15 s' : 'Refreshes every 15 s' : 'Snapshot'}</span>${live ? `<button class="activity-source subtle-label" data-action="tiger-info" aria-label="About Tiger Data">${icon('database')} Tiger Data</button>` : ''}</div></div><div id="activity-content">${live ? '<p class="chart-caption" role="status">Loading report history…</p>' : `<p class="chart-caption">${esc(text)}</p>`}</div></section>`;
+  const text = backend.warning || 'Report activity appears when Tiger Data is available.';
+  return `<section class="card activity-card" aria-labelledby="activity-title"><div class="card-header"><h2 id="activity-title">${icon('chart')} Report activity</h2><div class="activity-meta"><span class="subtle-label" id="activity-status">${live ? source === 'simulated' ? 'Simulated · refreshes every 15 s' : 'Refreshes every 15 s' : 'Unavailable'}</span>${live ? `<button class="activity-source subtle-label" data-action="tiger-info" aria-label="About Tiger Data">${icon('database')} Tiger Data</button>` : ''}</div></div><div id="activity-content">${live ? '<p class="chart-caption" role="status">Loading report history…</p>' : `<p class="chart-caption">${esc(text)}</p>`}</div></section>`;
 }
 
 export function activityBody(data) {
@@ -62,7 +60,7 @@ export function bindActivity(source, filters, backend, onWard) {
         if (!slot.isConnected) return;
         last = data;
         slot.innerHTML = activityBody(data);
-        status.textContent = `${data.simulated ? 'Simulated replay · refreshes' : 'Refreshes'} every 15 s`;
+        status.textContent = `${data.simulated ? 'Simulated · refreshes' : 'Refreshes'} every 15 s`;
       } catch {
         if (!slot.isConnected) return;
         status.textContent = 'Connection unavailable';

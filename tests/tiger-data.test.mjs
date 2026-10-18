@@ -3,34 +3,19 @@ import assert from 'node:assert/strict';
 import { issueRepository } from '../src/data.js';
 import { activityOptions, activityBody, activityPanelHtml, tigerProofHtml } from '../src/activity.js';
 
-test('static hosting keeps public snapshots and never claims a live database', async t => {
+test('without Tiger Data both datasets are empty and say the database is unavailable', async t => {
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });
-  globalThis.fetch = async url => {
-    if (String(url) === '/api/status') return { ok: false };
-    const data = String(url).endsWith('issues.public.json') ? [{ issue_id: 'public-snapshot' }] : {};
-    return { ok: true, json: async () => data };
-  };
-  const sources = await issueRepository.sources();
-  assert.equal(sources.pipeline, 1);
-  assert.equal(sources.replay, 0);
-  assert.equal(issueRepository.backend('pipeline').type, 'file');
-  assert.deepEqual(await issueRepository.list('pipeline'), [{ issue_id: 'public-snapshot' }]);
+  const requested = [];
+  globalThis.fetch = async url => { requested.push(String(url)); return { ok: false }; };
+  assert.deepEqual(await issueRepository.sources(), { collected: 0, simulated: 0 });
+  assert.equal(issueRepository.backend('collected').type, 'unavailable');
+  assert.match(issueRepository.backend('simulated').warning, /Tiger Data unavailable/);
+  assert.deepEqual(await issueRepository.list('collected'), []);
+  assert.ok(requested.every(url => url.startsWith('/api/')), 'no file snapshot is fetched');
 });
 
-test('configured but unavailable database visibly falls back to the file snapshot', async t => {
-  const original = globalThis.fetch;
-  t.after(() => { globalThis.fetch = original; });
-  globalThis.fetch = async url => {
-    if (String(url) === '/api/status') return { ok: true, json: async () => ({ tiger: true }) };
-    if (String(url).startsWith('/api/')) return { ok: false };
-    return { ok: true, json: async () => String(url).endsWith('issues.public.json') ? [{ issue_id: 'fallback' }] : {} };
-  };
-  assert.equal((await issueRepository.sources()).pipeline, 1);
-  assert.match(issueRepository.backend('pipeline').warning, /unavailable.*snapshot/);
-});
-
-test('database datasets keep replay separate and refresh current issues', async t => {
+test('database datasets keep simulated issues separate and refresh current issues', async t => {
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });
   let version = 1;
@@ -39,20 +24,20 @@ test('database datasets keep replay separate and refresh current issues', async 
     if (url === '/api/status') return { ok: true, json: async () => ({ tiger: true }) };
     const dataset = new URL(url, 'http://localhost').searchParams.get('dataset');
     return { ok: true, json: async () => url.startsWith('/api/issues')
-      ? [{ issue_id: `${dataset}-${version}` }] : { report: { version }, simulated: dataset === 'replay' } };
+      ? [{ issue_id: `${dataset}-${version}` }] : { report: { version }, simulated: dataset === 'simulated' } };
   };
-  assert.equal((await issueRepository.sources()).replay, 1);
-  assert.equal(issueRepository.backend('pipeline').type, 'tiger');
-  assert.equal(issueRepository.backend('replay').simulated, true);
+  assert.equal((await issueRepository.sources()).simulated, 1);
+  assert.equal(issueRepository.backend('collected').type, 'tiger');
+  assert.equal(issueRepository.backend('simulated').simulated, true);
   version = 2;
-  await issueRepository.refresh('pipeline');
-  assert.equal((await issueRepository.list('pipeline'))[0].issue_id, 'pipeline-2');
-  assert.equal((await issueRepository.list('replay'))[0].issue_id, 'replay-1');
+  await issueRepository.refresh('collected');
+  assert.equal((await issueRepository.list('collected'))[0].issue_id, 'collected-2');
+  assert.equal((await issueRepository.list('simulated'))[0].issue_id, 'simulated-1');
 });
 
 test('activity scope excludes unsupported issue filters and labels simulated reports', () => {
-  const options = activityOptions('replay', { days: '', area: 'ward:10', type: 'Flooding', query: 'private', status: 'Resolved' });
-  assert.deepEqual(Object.fromEntries(options), { dataset: 'replay', days: '90', ward: '10', type: 'Flooding' });
+  const options = activityOptions('simulated', { days: '', area: 'ward:10', type: 'Flooding', query: 'private', status: 'Resolved' });
+  assert.deepEqual(Object.fromEntries(options), { dataset: 'simulated', days: '90', ward: '10', type: 'Flooding' });
   const html = activityBody({ series: [{ bucket: '2026-10-17T12:00:00Z', reports: 8 }], wards: [],
     days: 7, reports: 8, undated_reports: 1, simulated: true, baseline_available: false, as_of: '2026-10-17T12:00:00Z' });
   assert.match(html, /Fictional reports/);
@@ -62,13 +47,11 @@ test('activity scope excludes unsupported issue filters and labels simulated rep
 });
 
 test('Tiger details stay behind a small source link and storage claims use measured savings', () => {
-  for (const type of ['sample', 'file']) {
-    assert.doesNotMatch(activityPanelHtml({ type }, type), /data-action="tiger-info"/);
-  }
-  const panel = activityPanelHtml({ type: 'tiger' }, 'pipeline');
+  assert.doesNotMatch(activityPanelHtml({ type: 'unavailable' }, 'collected'), /data-action="tiger-info"/);
+  const panel = activityPanelHtml({ type: 'tiger' }, 'collected');
   assert.match(panel, /aria-label="About Tiger Data"/);
   assert.doesNotMatch(panel, /Powered by|tiger-intro|tiger-proof|activity-powered/);
-  const stats = { reports_by_dataset: { pipeline: 6, replay: 10000 },
+  const stats = { reports_by_dataset: { collected: 6, simulated: 10000 },
     shared_columnstore: { compressed_chunks: 8, storage_reduction_percent: 55.74 } };
   assert.match(tigerProofHtml(stats), /6<\/strong> collected reports/);
   assert.match(tigerProofHtml(stats), /10,000<\/strong> simulated reports/);

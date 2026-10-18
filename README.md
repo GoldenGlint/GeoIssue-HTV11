@@ -9,7 +9,7 @@ Start with the [collection package guide](scraping/README.md) for setup, command
 | Web app: run it, plug in data, what is implemented | [Frontend](#frontend) below |
 | Photos to map-ready issues: locate, merge, priority, area stats | [analysis/README.md](analysis/README.md) |
 | Issue fields shared by the analysis and the app | [data-contract.md](data-contract.md) |
-| Tiger Data setup, live report activity, simulated replay and benchmarks | [Tiger Data integration](tiger-data-plan.md) |
+| Tiger Data setup, collected and simulated datasets, live report activity and benchmarks | [Tiger Data integration](tiger-data-plan.md) |
 | Vultr hosting, on-demand ingestion, deployment and demo checks | [Vultr implementation plan](vultr-plan.md), [deploy guide](deploy/README.md) |
 | Working collectors and review tools | [scraping/README.md](scraping/README.md) |
 | Current collection status, freshness policy, and model handoff | [Collection workflow](scraping/docs/COLLECTION.md) |
@@ -38,9 +38,9 @@ python scripts/serve.py     # http://127.0.0.1:5173
 
 `scripts/serve.py` serves the app and a small local API (`/api/status`, `/api/triage`, `/api/digest`) that calls Gemini with the key from `.env`, so the key never reaches the browser. It never serves hidden files such as `.env`. Without a key, the app works and the AI features say they are off.
 
-For Tiger Data, follow [the integration guide](tiger-data-plan.md): install the optional PostgreSQL driver, set `TIGER_DATABASE_URL`, initialize the schema, then add `--tiger` to the analysis command. The same server supplies database-backed issues and hourly report activity. The dashboard refreshes every 15 seconds and clearly labels file snapshots and simulated replay. Gemini and Tiger Data work independently.
+For Tiger Data, follow [the integration guide](tiger-data-plan.md): install the optional PostgreSQL driver, set `TIGER_DATABASE_URL`, initialize the schema, then add `--tiger` to the analysis command. The same server supplies database-backed issues and hourly report activity. The dashboard refreshes every 15 seconds and clearly labels the simulated dataset. Gemini and Tiger Data work independently.
 
-With Node.js 18 or newer, `npm run dev` serves the app without the Gemini API. No installation or build step is required either way. Don't use `python -m http.server` once a `.env` exists: it would serve the key. ES modules require HTTP; opening `index.html` directly is not supported.
+With Node.js 18 or newer, `npm run dev` serves the app without the Gemini API or Tiger Data, so it has no issues to show; use `scripts/serve.py` with `TIGER_DATABASE_URL` for data. No installation or build step is required either way. Don't use `python -m http.server` once a `.env` exists: it would serve the key. ES modules require HTTP; opening `index.html` directly is not supported.
 
 The app opens in light mode; the header sun/moon button or Preferences → Appearance switches to dark or follows the system setting. Both themes are colour tokens at the top of `src/styles.css` (light on `:root`, dark under `[data-theme="dark"]`); use the tokens rather than raw colours, and `npm test` checks that every text token meets WCAG AA contrast in both themes. `PRODUCT.md` and `DESIGN.md` describe the product and the visual system.
 
@@ -102,7 +102,7 @@ The public demo uses coarse fictional coordinates. CSV omits coordinates; GeoJSO
 | `src/state.js` | Shared UI state, browser persistence, local sightings |
 | `src/issues.js`, `src/priority.js` | Filter, sort and search logic; priority score and reasons |
 | `src/ui.js`, `src/format.js`, `src/icons.js` | Shared components, formatting helpers, icons |
-| `src/data.js` | Sample data, wards, infrastructure, `issueRepository` (sample or pipeline output) |
+| `src/data.js` | Sample issue generator, wards, infrastructure, `issueRepository` (collected or simulated issues from Tiger Data) |
 | `src/ward-boundaries.js`, `src/osm-infrastructure.js` | Generated geodata (see scripts/) |
 | `src/map.js` | Map engine |
 | `src/styles.css` | Responsive styles |

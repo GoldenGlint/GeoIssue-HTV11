@@ -5,7 +5,7 @@ import { state, DEFAULT_FILTERS, shouldShowMapEmptyNotice, dismissMapEmptyNotice
 test('empty map notice stays dismissed while panning and returns for a new search or empty episode', t => {
   const original = { filters: state.filters, dataSource: state.dataSource, panel: state.panel, mapEmptyDismissedFor: state.mapEmptyDismissedFor };
   t.after(() => Object.assign(state, original));
-  Object.assign(state, { filters: { ...DEFAULT_FILTERS }, dataSource: 'pipeline', panel: null, mapEmptyDismissedFor: null });
+  Object.assign(state, { filters: { ...DEFAULT_FILTERS }, dataSource: 'collected', panel: null, mapEmptyDismissedFor: null });
   assert.equal(shouldShowMapEmptyNotice(0), true);
   dismissMapEmptyNotice();
   assert.equal(shouldShowMapEmptyNotice(0), false);
@@ -13,7 +13,7 @@ test('empty map notice stays dismissed while panning and returns for a new searc
   state.filters.type = 'Flooding';
   assert.equal(shouldShowMapEmptyNotice(0), true);
   dismissMapEmptyNotice();
-  state.dataSource = 'replay';
+  state.dataSource = 'simulated';
   assert.equal(shouldShowMapEmptyNotice(0), true);
   dismissMapEmptyNotice();
   assert.equal(shouldShowMapEmptyNotice(2), false);

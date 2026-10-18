@@ -7,7 +7,7 @@
 3. Build an hourly continuous aggregate by dataset, ward and category. Enable real-time aggregation, schedule refreshes, and explicitly refresh historical imports. Let Hypercore move older chunks into columnstore.
 4. Add read-only issue, pipeline and activity endpoints to the existing Python server. Database credentials stay on the server. Without a configured/available database, keep the existing public-file experience and label it as a snapshot.
 5. Add an activity panel to the dashboard, refreshed every 15 seconds. Distinguish reports from unique issues and compare the last 24 complete hours with the preceding seven days. Apply a minimum report threshold before calling a ward an emerging hotspot.
-6. Provide a labelled simulated replay and a benchmark that checks raw/aggregate agreement before reporting timings. Check ingestion, API validation, privacy and fallback behavior; run the existing project checks.
+6. Provide a labelled simulated dataset and a benchmark that checks raw/aggregate agreement before reporting timings. Check ingestion, API validation, privacy and fallback behavior; run the existing project checks.
 
 ## Setup
 
@@ -38,12 +38,12 @@ The pipeline dataset is an authoritative snapshot of the complete handoff, not a
 ## Demo and measurement
 
 ```sh
-.venv/bin/python -m analysis.tiger replay --events 10000
+.venv/bin/python -m analysis.tiger simulate
 .venv/bin/python -m analysis.tiger compress
-.venv/bin/python -m analysis.tiger benchmark --dataset replay
+.venv/bin/python -m analysis.tiger benchmark --dataset simulated
 ```
 
-The replay uses a separate dataset, marks every issue as fictional, and adds a flooding-report surge. Select **Simulated replay** in the app header. Re-run with `--events 11000` to add more simulated reports while the activity panel is open. The replay is a labelled simulation, not a live source collector.
+Every issue the app shows comes from Tiger Data. The `dataset` column separates **collected** issues (pipeline output) from **simulated** ones, and the header selector switches between them. `simulate` loads the 240 fictional sample issues from `data/simulated/issues.json` (regenerate with `node scripts/export-simulated.mjs`), one report per sighting, moved forward so the newest report is about an hour old. Re-run it to bring them forward again; on the Vultr host `geoissue-simulate.timer` does this daily. The simulated dataset is a labelled simulation, not a live source collector. Without Tiger Data the app shows that the database is unavailable and retries; there is no file fallback.
 
 The benchmark compares identical hourly raw and aggregate results, reports median database query times, and reports hypertable storage sizes and measured columnstore savings. `compress` immediately converts chunks older than a day; the automatic policy handles future history. Storage statistics cover both datasets in the shared hypertable. Small datasets or cold caches may show no speedup, and columnstore overhead can increase the size of tiny chunks. No compression percentage or speedup is promised.
 
@@ -51,7 +51,7 @@ The benchmark compares identical hourly raw and aggregate results, reports media
 
 - `GET /api/status`: Gemini availability and whether Tiger Data is configured.
 - `GET /api/tiger`: imported collected/simulated report totals and measured storage savings across converted chunks in the shared hypertable. Read-only, with no connection details.
-- `GET /api/issues?dataset=pipeline|replay`: public `Issue[]` only.
+- `GET /api/issues?dataset=collected|simulated`: public `Issue[]` only.
 - `GET /api/pipeline?dataset=…`: pipeline report, area summaries and ingestion metadata.
 - `GET /api/activity?dataset=…&days=7|30|90&ward=1..25&type=…`: hourly independent-report counts, the latest 24 complete hours versus the preceding seven days, and emerging wards. `days` defaults to 30.
 
@@ -59,7 +59,7 @@ The activity panel has its own explicit ward, category and period scope, taken f
 
 Activity uses the source report timestamp where available and records ingestion time separately. Unknown source dates are bucketed by their first ingestion time and labelled in the response; a report timestamp is not a verified photo capture date. Baselines cover the loaded dataset only and do not establish how many physical defects exist in a ward.
 
-Public responses use the existing privacy-rounded issue representation. Import and replay are local CLI operations; the browser has no database write or arbitrary SQL endpoint. Uploads, corrections and volunteer decisions retain their existing browser-local behavior.
+Public responses use the existing privacy-rounded issue representation. Import and simulate are CLI operations; the browser has no database write or arbitrary SQL endpoint. Uploads, corrections and volunteer decisions retain their existing browser-local behavior.
 
 ## Verification
 

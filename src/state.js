@@ -16,9 +16,9 @@ export const state = {
   role: 'Public', sort: 'first_seen_at', direction: -1, page: 1, perPage: 10, dataTab: 'records', hiddenColumns: read('hiddenColumns', []),
   layers: [], mapMode: 'pan', heat: false, center: TORONTO_CENTER, zoom: 13,
   mapEmptyDismissedFor: null,
-  // Samples, collected pipeline issues (Tiger Data or files), and a separate simulated Tiger replay.
-  dataSource: read('dataSource', null), sources: { sample: 0, pipeline: 0, replay: 0 }, pipeline: { report: null, areas: null },
-  dataBackend: { type: 'sample' },
+  // Tiger Data's two datasets: issues the pipeline collected, and fictional simulated issues with their reports.
+  dataSource: read('dataSource', null), sources: { collected: 0, simulated: 0 }, pipeline: { report: null, areas: null },
+  dataBackend: { type: 'unavailable' },
 };
 
 export const filtered = (filters = state.filters) => state.issues.filter(i => issueMatches(i, filters));

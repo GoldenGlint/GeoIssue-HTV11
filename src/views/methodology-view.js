@@ -7,11 +7,9 @@ const status = kind => ({ live: '<span class="method-status live">Live in this p
 
 export function methodologyHtml() {
   const counts = state.pipeline.report?.counts;
-  const issues = state.dataSource === 'replay'
-    ? `${state.issues.length} fictional issues and their simulated reports, stored in a separate Tiger Data replay dataset. They do not describe real places or conditions.`
-    : state.dataSource === 'pipeline'
-    ? `Pipeline output from <code>python -m analysis</code>${counts ? `: ${counts.records ?? counts.input_records} photos analysed → ${(counts.sightings || 0) + (counts.dropped || 0)} civic issues found → ${counts.sightings} located in Toronto → ${counts.issues} unique issues` : ''}.`
-    : `${state.sources.sample} fictional records generated for the demo (deterministic, so everyone sees the same data). Switch to pipeline output in the header once <code>python -m analysis</code> has run.`;
+  const issues = state.dataSource === 'simulated'
+    ? `${state.issues.length} fictional issues and their simulated reports, stored in Tiger Data as the simulated dataset. They do not describe real conditions.`
+    : `Pipeline output from <code>python -m analysis --tiger</code>, stored in Tiger Data as the collected dataset${counts ? `: ${counts.records ?? counts.input_records} photos analysed → ${(counts.sightings || 0) + (counts.dropped || 0)} civic issues found → ${counts.sightings} located in Toronto → ${counts.issues} unique issues` : ''}.`;
   const steps = [
     ['Collect', 'Public posts from official platform APIs and photos people upload here. No logged-in scraping and no private accounts.', 'planned'],
     ['Check photos', 'Collected public-post evidence can display in full. For uploads, Gemini suggests the issue type and severity, checks for person-focused or private scenes, and identifies faces and licence plates for the upload form’s blurring tools.', 'live'],
@@ -22,7 +20,7 @@ export function methodologyHtml() {
   ];
   const sources = [
     ['Issues', issues],
-    ['Report history', state.dataBackend.type === 'tiger' ? 'Stored in Tiger Data alongside current issue records. Timestamped reports power hourly ward trends; older report chunks use compressed column storage. <button class="text-button" data-action="tiger-info">How Tiger Data powers GeoIssue →</button>' : 'The current source is a sample or file snapshot. A connected Tiger Data source provides timestamped report history and hourly ward trends.'],
+    ['Report history', state.dataBackend.type === 'tiger' ? 'Stored in Tiger Data alongside current issue records. Timestamped reports power hourly ward trends; older report chunks use compressed column storage. <button class="text-button" data-action="tiger-info">How Tiger Data powers GeoIssue →</button>' : 'Tiger Data is unavailable right now. When connected, it stores timestamped report history that powers hourly ward trends.'],
     ['Evidence photos', 'Analysed issues display their collected photos in full. Fictional records use sample photos under CC BY / CC BY-SA that illustrate the category, not the record itself. Sample credits: <a href="assets/evidence/CREDITS.md" target="_blank" rel="noopener">assets/evidence/CREDITS.md</a>.'],
     ['Ward boundaries', 'City of Toronto “City Wards” open data (25-ward model). Contains information licensed under the Open Government Licence – Toronto.'],
     ['TTC stations and highways', 'OpenStreetMap, © OpenStreetMap contributors (ODbL). Distances to the nearest station, school and highway drive the proximity filter and priority.'],
