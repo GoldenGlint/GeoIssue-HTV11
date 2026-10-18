@@ -132,10 +132,54 @@ def sync(public, events, report, areas=None, dataset="collected"):
 
 
 def issues(dataset="collected"):
+    """Imported issues and published submissions (those with a location)."""
     with connection() as conn:
-        return [row[0] for row in conn.execute("""SELECT public_issue FROM geoissue.issues
-            WHERE dataset = %s ORDER BY (public_issue->>'priority_score')::integer DESC NULLS LAST, issue_id""",
-            (dataset_name(dataset),)).fetchall()]
+        return [row[0] for row in conn.execute("""SELECT public_issue FROM (
+                SELECT public_issue FROM geoissue.issues WHERE dataset = %(dataset)s
+                UNION ALL
+                SELECT public_issue FROM geoissue.submissions WHERE dataset = %(dataset)s AND public_issue IS NOT NULL) AS shown
+            ORDER BY (public_issue->>'priority_score')::integer DESC NULLS LAST, public_issue->>'issue_id'""",
+            {"dataset": dataset_name(dataset)}).fetchall()]
+
+
+def add_submission(submission_id, token_sha256, submission, photos, issue):
+    """Store a submission and its photos together. issue is None while Claude is still finding the location."""
+    with connection() as conn, conn.transaction():
+        conn.execute("""INSERT INTO geoissue.submissions
+            (submission_id, location_status, token_sha256, submission, public_issue, located_at)
+            VALUES (%s, %s, %s, %s::jsonb, %s::jsonb, CASE WHEN %s THEN now() END)""",
+            (submission_id, submission["location_status"], token_sha256, json.dumps(submission),
+             json.dumps(issue) if issue else None, issue is not None))
+        with conn.cursor() as cursor:
+            cursor.executemany("INSERT INTO geoissue.submission_photos VALUES (%s, %s, %s, %s)",
+                               [(submission_id, n, mime, data) for n, (mime, data) in enumerate(photos)])
+
+
+def submission(submission_id):
+    """(submission, token_sha256, created_at, location_status, photo count), or None."""
+    with connection() as conn:
+        return conn.execute("""SELECT submission, token_sha256, created_at, location_status,
+            (SELECT count(*) FROM geoissue.submission_photos p WHERE p.submission_id = s.submission_id)
+            FROM geoissue.submissions s WHERE submission_id = %s""", (submission_id,)).fetchone()
+
+
+def locate_submission(submission_id, submission, issue):
+    """Give a waiting submission Claude's answer. False when it was no longer waiting."""
+    with connection() as conn:
+        return conn.execute("""UPDATE geoissue.submissions SET submission = %s::jsonb, location_status = %s,
+            public_issue = %s::jsonb, located_at = now() WHERE submission_id = %s AND location_status = 'locating'""",
+            (json.dumps(submission), submission["location_status"], json.dumps(issue) if issue else None,
+             submission_id)).rowcount == 1
+
+
+def submission_photo(submission_id, position):
+    """(mime, bytes) of a published submission's photo, or None."""
+    with connection() as conn:
+        row = conn.execute("""SELECT p.mime, p.data FROM geoissue.submission_photos p
+            JOIN geoissue.submissions s USING (submission_id)
+            WHERE p.submission_id = %s AND p.position = %s AND s.public_issue IS NOT NULL""",
+            (submission_id, position)).fetchone()
+    return (row[0], bytes(row[1])) if row else None
 
 
 def pipeline(dataset="collected"):

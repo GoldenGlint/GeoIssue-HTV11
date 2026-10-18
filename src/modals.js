@@ -10,10 +10,10 @@ import { toast, showModal, closeModal, modalHeader, detailHtml, bindEvidence } f
 import { render, nav, toggleSave, setRole, action, themeButtonHtml } from './app.js';
 import { themePreference, setTheme } from './theme.js';
 import { getMap, openIssue, frameIssues, renderPanel } from './views/map-view.js';
-import { apiStatus, triagePhoto } from './api.js';
+import { apiStatus, triagePhoto, photoForUpload } from './api.js';
 import { blurPhoto } from './blur.js';
 import { tigerProofHtml } from './activity.js';
-import { geolocationAvailable, geolocationModel, locatePhoto, cancelJob, cancelButton, onJobs, findJob, isActive, jobCoords, jobHeadline, lastStep, zoomFor, locationFromJob } from './geolocate.js';
+import { geolocationAvailable, geolocationModel, locatePhoto, cancelJob, cancelButton, onJobs, findJob, isActive, jobCoords, jobHeadline, lastStep, zoomFor, locationFromJob, localClaudeOn, localClaudeOffered, setLocalClaude } from './geolocate.js';
 
 // photos: { file, url (original), blurredUrl, boxes (from Gemini), manualBoxes, status, result, error, showOriginal }
 // geoJob: the Claude geolocation job for the first photo; geoApplied: the answer the pin was moved to
@@ -62,15 +62,15 @@ function renderGeo() {
   const job = uploadDraft.geoJob && findJob(uploadDraft.geoJob), photo = uploadDraft.photos[0], unknown = unknownMode();
   if (!job) {
     el.innerHTML = unknown
-      ? `<div class="ai-card geo-card">${icon('locate')}<span><strong>${photo ? 'Claude will find where this was taken' : 'Add a photo and Claude will find where it was taken'}</strong>It reads signs and landmarks, then checks candidate spots against street-level imagery, in the background on this computer. It starts when you choose Locate with Claude or submit the issue, and its answer becomes the location.<small>Uses Claude ${esc(geolocationModel())} through Claude Code. The photo is sent to Anthropic.</small></span><div class="geo-card-actions"><button type="button" class="button small" id="geo-start" ${photo ? '' : 'disabled'}>${icon('locate')} ${photo ? 'Locate with Claude' : 'Add a photo first'}</button></div></div>`
-      : `<div class="ai-card geo-card">${icon('locate')}<span><strong>Not sure exactly where it was?</strong> Claude can work it out from the photo: it reads signs and landmarks, then checks candidate spots against street-level imagery. It runs in the background on this computer and usually takes a few minutes.<small>Uses Claude ${esc(geolocationModel())} through Claude Code. The photo is sent to Anthropic.</small></span><div class="geo-card-actions"><button type="button" class="button small" id="geo-start" ${photo ? '' : 'disabled'}>${icon('locate')} ${photo ? 'Locate with Claude' : 'Add a photo first'}</button></div></div>`;
+      ? `<div class="ai-card geo-card">${icon('locate')}<span><strong>${photo ? 'Claude will find where this was taken' : 'Add a photo and Claude will find where it was taken'}</strong>It reads signs and landmarks, then checks candidate spots against street-level imagery, in the background. It starts when you choose Locate with Claude or submit the issue, and its answer becomes the location.</span><div class="geo-card-actions"><button type="button" class="button small" id="geo-start" ${photo ? '' : 'disabled'}>${icon('locate')} ${photo ? 'Locate with Claude' : 'Add a photo first'}</button></div></div>`
+      : `<div class="ai-card geo-card">${icon('locate')}<span><strong>Not sure exactly where it was?</strong> Claude can work it out from the photo: it reads signs and landmarks, then checks candidate spots against street-level imagery. It runs in the background and usually takes a few minutes.</span><div class="geo-card-actions"><button type="button" class="button small" id="geo-start" ${photo ? '' : 'disabled'}>${icon('locate')} ${photo ? 'Locate with Claude' : 'Add a photo first'}</button></div></div>`;
     $('#geo-start')?.addEventListener('click', startGeo);
     return;
   }
   if (isActive(job)) {
     const step = lastStep(job);
     const note = unknown ? 'You can submit now: the location is added to your submission when Claude finishes, even if you close this page.' : 'Runs in the background: keep filling in the form, or close this dialog. It stays listed under Photo locations in the page header.';
-    el.innerHTML = `<div class="ai-card loading" data-geo-job="${job.id}"><span class="spinner"></span><span><strong>Claude is locating your photo · ${esc(jobHeadline(job).replace(/^Locating · /, ''))}</strong>${step ? esc(step.label) : 'Starting Claude Code…'}<small>${note}</small></span><div class="geo-card-actions">${cancelButton(job.id, 'id="geo-cancel"')}</div></div>`;
+    el.innerHTML = `<div class="ai-card loading" data-geo-job="${job.id}"><span class="spinner"></span><span><strong>Claude is locating your photo · ${esc(jobHeadline(job).replace(/^Locating · /, ''))}</strong>${step ? esc(step.label) : 'Starting Claude…'}<small>${note}</small></span><div class="geo-card-actions">${cancelButton(job.id, 'id="geo-cancel"')}</div></div>`;
     $('#geo-cancel').onclick = () => cancelJob(job.id);
     return;
   }
@@ -263,7 +263,7 @@ export async function uploadModal(review = false) {
     <div id="nearby-reports" class="nearby-reports" hidden></div>
     <label class="form-label" data-known-location>Nearest address or intersection <span>*</span><div class="input-with-icon">${icon('pin')}<input name="address" placeholder="e.g. King St W & Spadina Ave, Toronto" value="${esc(uploadDraft.address)}" minlength="5" maxlength="200" required></div><small>Helps reviewers find the spot. Address search connects here when geocoding is ready.</small></label>
     <label class="checkbox-label" data-known-location><input name="confirmed" type="checkbox" ${uploadDraft.confirmed ? 'checked' : ''} required> I confirm this approximate location is in Toronto.</label>
-    <p class="fine-print">Your photos stay on this device in this demo; only blurred versions would be submitted. Please avoid faces, plates, and private interiors.</p>
+    <p class="fine-print">Only the blurred versions of your photos are submitted and published. Please avoid faces, plates, and private interiors.</p>
   </div><div class="modal-footer"><span class="subtle-label">* Required information</span><button class="button primary" type="submit">Review issue ${icon('arrow')}</button></div></form>`, { label: 'Upload new issue', onClose: () => { destroyPicker(); stopGeo?.(); stopGeo = null; } });
   const form = $('#upload-form'), error = $('#upload-error'), input = $('#photo-input');
   const saveDraft = () => { uploadDraft.category = form.category.value; uploadDraft.severity = form.severity.value; uploadDraft.description = form.description.value; uploadDraft.address = form.address.value; uploadDraft.confirmed = form.confirmed.checked; };
@@ -315,7 +315,7 @@ function uploadReview() {
         : ['Claude finds the location from the photo', 'Claude starts when you submit, and its answer becomes the location.'];
   } else where = [uploadDraft.address, `${coordinateText(uploadDraft.coordinates)} · ${geo ? `${byClaude(geo)} · confirmed by you` : 'approximate location · confirmed by you'}`];
   const ai = uploadDraft.ai?.is_civic_issue ? `<p class="fine-print">${icon('sparkles')} Category, severity and description were suggested by Gemini (${esc(uploadDraft.ai.model)}) and ${uploadDraft.aiFilled.length === 3 ? 'left as suggested' : 'edited by you'}.</p>` : '';
-  showModal(`${modalHeader('', 'Review your issue')}${steps(true)}<div class="modal-body"><div class="review-photos">${uploadDraft.photos.map(p => `<img src="${p.blurredUrl || p.url}" alt="Photo to submit${p.blurredUrl ? ', blurred' : ''}">`).join('')}</div>${blurred ? `<p class="review-blur">${icon('shield')} ${plural(blurred, 'area')} blurred. Only the blurred photos would be submitted.</p>` : ''}<h3>${esc(uploadDraft.category)}${uploadDraft.severity ? ` · ${esc(uploadDraft.severity)} severity` : ''}</h3><p>${esc(uploadDraft.description)}</p><div class="confidence-note">${icon(unknown ? 'locate' : 'pin')}<div><strong>${esc(where[0])}</strong><span>${esc(where[1])}</span></div></div>${ai}<div class="notice-banner">${icon('shield')} Avoid personal information and identifiable people. Submissions require privacy processing and verification before publication.</div><p class="fine-print">Prototype mode: only the issue details are stored in this browser, with the pin rounded to about 100 m. Photos are previewed locally and are not uploaded. This does not create a Toronto 311 request.</p></div><div class="modal-footer"><button class="button" id="upload-back">Back to details</button><button class="button primary" id="upload-submit">Submit local demo ${icon('arrow')}</button></div>`, { label: 'Review your issue' });
+  showModal(`${modalHeader('', 'Review your issue')}${steps(true)}<div class="modal-body"><div class="review-photos">${uploadDraft.photos.map(p => `<img src="${p.blurredUrl || p.url}" alt="Photo to submit${p.blurredUrl ? ', blurred' : ''}">`).join('')}</div>${blurred ? `<p class="review-blur">${icon('shield')} ${plural(blurred, 'area')} blurred. Only the blurred photos are submitted.</p>` : ''}<h3>${esc(uploadDraft.category)}${uploadDraft.severity ? ` · ${esc(uploadDraft.severity)} severity` : ''}</h3><p>${esc(uploadDraft.description)}</p><div class="confidence-note">${icon(unknown ? 'locate' : 'pin')}<div><strong>${esc(where[0])}</strong><span>${esc(where[1])}</span></div></div>${ai}<div class="notice-banner">${icon('shield')} Avoid personal information and identifiable people. Your issue and photos are published on the map, marked Needs review until a volunteer checks them.</div><p class="fine-print">The issue and its photos are stored in GeoIssue’s database with the pin rounded to about 100 m, and the public map rounds it further until it is verified. This does not create a Toronto 311 request.</p></div><div class="modal-footer"><button class="button" id="upload-back">Back to details</button><button class="button primary" id="upload-submit">Submit issue ${icon('arrow')}</button></div>`, { label: 'Review your issue' });
   $('#upload-back').onclick = () => uploadModal();
   $('#upload-submit').onclick = async e => {
     const button = e.currentTarget;
@@ -331,15 +331,20 @@ function uploadReview() {
       const location = !unknown ? { coordinates: uploadDraft.coordinates.map(v => Number(v.toFixed(3))), geolocation: geo && { job_id: geo.job_id, verified: geo.verified, radius_m: geo.radius_m, model: geo.model } }
         : locationFromJob(job) || { coordinates: null, location_status: 'locating', geolocation: { job_id: uploadDraft.geoJob, model: job?.model || geolocationModel() } };
       const address = unknown ? uploadDraft.address || location.geolocation.place_description || '' : uploadDraft.address;
-      const result = await issueRepository.submit({ category: uploadDraft.category, severity: uploadDraft.severity || null, description: uploadDraft.description, address, ...location, blurred_areas: blurred, ai_suggestion: ai, created_at: new Date().toISOString() });
+      // The photos as submitted: blurred where the reporter blurred them, downscaled, and re-encoded without metadata.
+      const photos = await Promise.all(uploadDraft.photos.map(async p => {
+        const { base64, mime } = await photoForUpload(p.blurredUrl ? await fetch(p.blurredUrl).then(r => r.blob()) : p.file, 2048);
+        return { image: base64, mime };
+      }));
+      const result = await issueRepository.submit({ category: uploadDraft.category, severity: uploadDraft.severity || null, description: uploadDraft.description, address, ...location, blurred_areas: blurred, ai_suggestion: ai, created_at: new Date().toISOString(), photos });
       state.pending.push(result); persist('pending', state.pending);
       for (const p of uploadDraft.photos) { URL.revokeObjectURL(p.url); if (p.blurredUrl) URL.revokeObjectURL(p.blurredUrl); }
       uploadDraft = freshDraft();
-      showModal(`${modalHeader('', 'Thanks for looking out')}<div class="submission-success">${icon('shield')}<h3>Your sample issue is pending review</h3><code>${result.issue_id}</code><p>Details were saved locally and appear under Saved → Your submissions. No photos were uploaded or published. Connect the submission API to send reports to your team.</p>${result.location_status === 'locating' ? `<p>${icon('locate')} Claude is still finding where the photo was taken. The location is added to the submission when it finishes, even if you close this page.</p>` : ''}${badge('Pending review')}</div><div class="modal-footer"><button class="button primary" data-close>Back to workspace</button></div>`, { label: 'Submission received' });
+      showModal(`${modalHeader('', 'Thanks for looking out')}<div class="submission-success">${icon('shield')}<h3>Your issue is pending review</h3><code>${result.issue_id}</code><p>It is saved with its photos and listed under Saved → Your submissions.</p>${result.location_status === 'locating' ? `<p>${icon('locate')} Claude is still finding where the photo was taken. The issue goes on the map under Collected data when it finishes. Keep GeoIssue open in this browser, or come back to it: this browser sends Claude’s answer.</p>` : '<p>It is on the map under Collected data, marked Needs review until a volunteer checks it.</p>'}${badge('Pending review')}</div><div class="modal-footer"><button class="button primary" data-close>Back to workspace</button></div>`, { label: 'Submission received' });
       render();
-    } catch {
+    } catch (error) {
       $('#upload-submit').disabled = false;
-      toast('Submission failed. Your details and photos are preserved; please retry.');
+      toast(`Submission failed: ${error.message}. Your details and photos are preserved; please retry.`);
     }
   };
 }
@@ -497,7 +502,7 @@ function exportData(rows, format) {
 
 export function settingsModal() {
   const roles = ['Public', 'Volunteer', 'City Staff'];
-  showModal(`${modalHeader('', 'Preferences')}<div class="modal-body"><label class="form-label">Demo account type${selectHtml({ id: 'settings-role', options: roles, value: state.role, variant: 'block' })}</label><label class="form-label">Appearance${selectHtml({ id: 'settings-theme', options: [['light', 'Light'], ['dark', 'Dark'], ['system', 'Match system']], value: themePreference(), variant: 'block' })}</label><div class="setting-row"><div><h3>Local viewing history</h3><p>Remember recently opened issues on this browser.</p></div><input id="history-toggle" type="checkbox" role="switch" aria-label="Enable viewing history" ${state.historyEnabled ? 'checked' : ''}></div><div class="setting-row"><div><h3>Saved issues</h3><p>${state.saved.length} bookmarks stored locally.</p></div><button class="button small" id="clear-saves">Clear saved</button></div><div class="setting-row"><div><h3>Local submissions</h3><p>${state.pending.length} sample submissions. Photos are never stored.</p></div><button class="button small" id="clear-pending">Clear</button></div><p class="fine-print">The account selector previews roles. Authentication, permissions, and cross-device persistence are backend integration points.</p></div><div class="modal-footer"><button class="button primary" data-close>Done</button></div>`, { label: 'Preferences' });
+  showModal(`${modalHeader('', 'Preferences')}<div class="modal-body"><label class="form-label">Demo account type${selectHtml({ id: 'settings-role', options: roles, value: state.role, variant: 'block' })}</label><label class="form-label">Appearance${selectHtml({ id: 'settings-theme', options: [['light', 'Light'], ['dark', 'Dark'], ['system', 'Match system']], value: themePreference(), variant: 'block' })}</label><div class="setting-row"><div><h3>Local viewing history</h3><p>Remember recently opened issues on this browser.</p></div><input id="history-toggle" type="checkbox" role="switch" aria-label="Enable viewing history" ${state.historyEnabled ? 'checked' : ''}></div><div class="setting-row"><div><h3>Saved issues</h3><p>${state.saved.length} bookmarks stored locally.</p></div><button class="button small" id="clear-saves">Clear saved</button></div><div class="setting-row"><div><h3>Your submissions</h3><p>${state.pending.length} sent from this browser. Clearing only forgets them here; they stay in the database.</p></div><button class="button small" id="clear-pending">Clear</button></div>${localClaudeOffered() ? `<div class="setting-row"><div><h3>Claude on this computer</h3><p>Locate photos with Claude Code on this computer: run <code>python scripts/serve.py</code> here, signed in to Claude Code. Your browser may ask once to let this site connect to apps on this device. <span id="local-claude-status">${localClaudeStatus()}</span></p></div><input id="local-claude-toggle" type="checkbox" role="switch" aria-label="Use Claude on this computer" ${localClaudeOn() ? 'checked' : ''}></div>` : ''}<p class="fine-print">The account selector previews roles. Authentication, permissions, and cross-device persistence are backend integration points.</p></div><div class="modal-footer"><button class="button primary" data-close>Done</button></div>`, { label: 'Preferences' });
   document.querySelector('#settings-role').onchange = e => setRole(e.target.value);
   document.querySelector('#settings-theme').onchange = e => {
     setTheme(e.target.value);
@@ -507,7 +512,16 @@ export function settingsModal() {
   document.querySelector('#history-toggle').onchange = e => { state.historyEnabled = e.target.checked; persist('historyEnabled', state.historyEnabled); };
   document.querySelector('#clear-saves').onclick = () => { state.saved = []; persist('saved', []); render(); settingsModal(); };
   document.querySelector('#clear-pending').onclick = () => { state.pending = []; persist('pending', []); render(); settingsModal(); };
+  const latch = document.querySelector('#local-claude-toggle');
+  if (latch) latch.onchange = async () => {
+    const status = document.querySelector('#local-claude-status');
+    status.textContent = latch.checked ? 'Connecting…' : '';
+    await setLocalClaude(latch.checked);
+    if (status.isConnected) status.textContent = localClaudeStatus();
+    render();
+  };
 }
+const localClaudeStatus = () => !localClaudeOn() ? '' : geolocationAvailable() ? 'Connected.' : 'Not found yet. It connects when the server starts.';
 
 export function tigerModal() {
   const flow = [

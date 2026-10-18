@@ -51,3 +51,24 @@ SELECT add_continuous_aggregate_policy('geoissue.ward_activity_hourly',
     end_offset => INTERVAL '1 hour',
     schedule_interval => INTERVAL '1 minute',
     if_not_exists => true);
+
+-- Issues people submit in the app, with their photos exactly as submitted. Kept apart from geoissue.issues, which
+-- each pipeline import replaces. public_issue stays empty while Claude is still finding the location.
+CREATE TABLE IF NOT EXISTS geoissue.submissions (
+    submission_id TEXT PRIMARY KEY,
+    dataset TEXT NOT NULL DEFAULT 'collected' CHECK (dataset IN ('collected', 'simulated')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    located_at TIMESTAMPTZ,
+    location_status TEXT NOT NULL CHECK (location_status IN ('provided', 'locating', 'located', 'unverified', 'not_found')),
+    token_sha256 TEXT NOT NULL,
+    submission JSONB NOT NULL,
+    public_issue JSONB
+);
+
+CREATE TABLE IF NOT EXISTS geoissue.submission_photos (
+    submission_id TEXT NOT NULL REFERENCES geoissue.submissions(submission_id) ON DELETE CASCADE,
+    position SMALLINT NOT NULL,
+    mime TEXT NOT NULL,
+    data BYTEA NOT NULL,
+    PRIMARY KEY (submission_id, position)
+);

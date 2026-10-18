@@ -14,9 +14,14 @@ const where = i => {
   if (g?.radius_m == null) return place;
   return `${place} · located by Claude, ${g.verified ? `verified by street-level imagery (±${g.radius_m} m)` : `not verified (±${g.radius_m.toLocaleString()} m), so the location needs a check`}`;
 };
+// Where a submission stands: those with a token are in Tiger Data; older ones were kept in this browser only.
+const submissionState = i => !i.token ? 'Stored in this browser only'
+  : i.location_status === 'locating' ? 'In the database · waiting for Claude’s location'
+  : i.location_status === 'not_found' ? 'In the database · not on the map without a location'
+  : i.unsent_location ? 'In the database · sending Claude’s location' : 'On the map under Collected data';
 const pendingCard = i => isSighting(i)
   ? `<div class="card pending-card"><div><h3>Added to ${esc(i.joined_issue_id)} · ${esc(i.category)}</h3><span class="eyebrow">${esc(i.issue_id)} · Sighting${i.created_at ? ` · ${date(i.created_at)}` : ''}</span>${i.description ? `<p>${esc(i.description)}</p>` : ''}<p>${where(i)}</p></div>${badge('Sighting added', 'verified')}<button class="button small" data-issue="${esc(i.joined_issue_id)}">Open issue</button></div>`
-  : `<div class="card pending-card"><div><h3>${esc(i.category)}${i.severity ? ` · ${esc(i.severity)} severity` : ''}</h3><span class="eyebrow">${esc(i.issue_id)} · Local submission${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><p>${esc(i.description)}</p><p>${where(i)}</p>${i.ai_suggestion ? `<p class="fine-print">Gemini suggested ${esc(i.ai_suggestion.category)} · ${esc(i.ai_suggestion.severity)} (${Math.round(i.ai_suggestion.confidence * 100)}%)${i.blurred_areas ? ` · ${i.blurred_areas} area${i.blurred_areas === 1 ? '' : 's'} blurred` : ''}</p>` : ''}</div>${badge('Pending review')}<span class="subtle-label">Privacy processing not connected</span></div>`;
+  : `<div class="card pending-card"><div><h3>${esc(i.category)}${i.severity ? ` · ${esc(i.severity)} severity` : ''}</h3><span class="eyebrow">${esc(i.issue_id)} · ${i.token ? 'Submission' : 'Local submission'}${i.created_at ? ` · ${date(i.created_at)}` : ''}</span><p>${esc(i.description)}</p><p>${where(i)}</p>${i.ai_suggestion ? `<p class="fine-print">Gemini suggested ${esc(i.ai_suggestion.category)} · ${esc(i.ai_suggestion.severity)} (${Math.round(i.ai_suggestion.confidence * 100)}%)${i.blurred_areas ? ` · ${i.blurred_areas} area${i.blurred_areas === 1 ? '' : 's'} blurred` : ''}</p>` : ''}</div>${badge('Pending review')}<span class="subtle-label">${submissionState(i)}</span></div>`;
 
 /** A suggested correction; reviewers get Accept and Dismiss. */
 const correctionCard = (c, review = false) => {
@@ -32,7 +37,7 @@ export function collectionHtml() {
   const saved = state.view === 'saved', ids = saved ? state.saved : state.recent;
   const visible = new Set(filtered().map(i => i.issue_id));
   const all = ids.map(findIssue).filter(Boolean), issues = all.filter(i => visible.has(i.issue_id)), hidden = all.length - issues.length;
-  const submissions = saved && state.pending.length ? `<div class="collection-heading"><h2>Your submissions <span>${state.pending.length}</span></h2><span class="subtle-label">Stored in this browser · waiting for review</span></div><div class="submission-list">${state.pending.map(pendingCard).join('')}</div>` : '';
+  const submissions = saved && state.pending.length ? `<div class="collection-heading"><h2>Your submissions <span>${state.pending.length}</span></h2><span class="subtle-label">Waiting for review</span></div><div class="submission-list">${state.pending.map(pendingCard).join('')}</div>` : '';
   const corrections = saved && state.corrections.length ? `<div class="collection-heading"><h2>Your corrections <span>${state.corrections.length}</span></h2><span class="subtle-label">Stored in this browser</span></div><div class="submission-list">${[...state.corrections].reverse().map(c => correctionCard(c)).join('')}</div>` : '';
   const empty = emptyHtml(saved ? 'A place for the issues you care about' : 'Nothing here yet', hidden ? 'Your items are hidden by the current filters. Reset filters to see them.' : saved ? 'Open an issue and choose Save issue. Your bookmarks stay in this browser.' : 'Issues you open will appear here when local history is enabled.');
   return `<div class="collection-page">${submissions}${corrections}<div class="collection-heading"><h2>${saved ? 'Saved issues' : 'Your recent activity'} <span>${issues.length}</span></h2><div class="collection-actions">${hidden ? `<span class="subtle-label">${hidden} hidden by filters</span><button class="button small" data-action="reset">Reset filters</button>` : ''}${saved ? '' : '<button class="button small" data-action="clear-recents">Clear history</button>'}</div></div>${issues.length ? `<div class="collection-grid">${issues.map(savedCard).join('')}</div>` : empty}</div>`;

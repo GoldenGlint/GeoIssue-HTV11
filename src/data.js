@@ -261,6 +261,13 @@ async function databaseSnapshot(dataset) {
   return { issues, ...metadata, backend: { type: 'tiger', simulated: metadata.simulated } };
 }
 
+async function postJson(path, body) {
+  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error(data.error || `Request failed (${response.status})`), { status: response.status });
+  return data;
+}
+
 export const issueRepository = {
   /** Issue counts per dataset. A dataset Tiger Data can't return counts 0 and reports itself unavailable. */
   async sources() {
@@ -275,9 +282,20 @@ export const issueRepository = {
   pipelineReport: source => cache.get(source)?.report || null,
   areaSummaries: source => cache.get(source)?.areas || null,
   list: async source => structuredClone(cache.get(source)?.issues || []),
-  async submit(draft) {
-    // Replace with POST /api/submissions. Do not publish uploads until privacy review.
-    return { ...draft, issue_id: `LOCAL-${Date.now().toString(36).toUpperCase()}`, verification_status: 'Pending review', local_only: true };
+  /** Stores an issue and its photos ([{ image: base64, mime }]) in Tiger Data. With a location it is published at once;
+   *  while Claude is still locating it waits for locateSubmission(). Returns the entry this browser keeps. */
+  async submit({ photos, ...draft }) {
+    const data = await postJson('/api/submissions', { ...draft, photos });
+    return { ...draft, issue_id: data.submission_id, token: data.token, photo_count: photos.length, verification_status: 'Pending review' };
+  },
+  /** Sends Claude's answer for a submission made while it was still locating. True once the database has it. */
+  async locateSubmission({ issue_id, token, location_status, coordinates, geolocation }) {
+    try {
+      await postJson(`/api/submissions/${encodeURIComponent(issue_id)}/location`, { token, location_status, coordinates, geolocation });
+    } catch (error) {
+      if (error.status !== 409) throw error; // 409: an earlier attempt already got through
+    }
+    return true;
   },
   async submitCorrection(draft) {
     // Replace with POST /api/issues/{issue_id}/corrections. A reviewer accepts or dismisses it; nothing changes until then.

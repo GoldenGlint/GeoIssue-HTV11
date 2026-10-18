@@ -1,19 +1,21 @@
-// Photo geolocation with Claude Code. scripts/serve.py runs each photo as a background job on this computer
-// (research/geoloc_tests/claude_geoloc.py); this module polls the jobs, shows them in the page header and the
-// Photo locations dialog, and tells listeners such as the upload dialog when they change. A job keeps running
-// when the page closes, and the app picks it up again on the next load.
+// Photo geolocation with Claude Code. scripts/serve.py runs each photo as a background job on the computer it runs on
+// (research/geoloc_tests/claude_geoloc.py): the one serving this page, or, for the hosted app, the visitor's own once
+// they turn on Settings → Claude on this computer. This module connects to it whenever it is up, polls the jobs, shows
+// them in the page header and the Photo locations dialog, and tells listeners such as the upload dialog when they
+// change. A job keeps running when the page closes, and the app picks it up again on the next load.
 import { icon } from './icons.js';
 import { esc, plural } from './format.js';
 import { toast, showModal, modalHeader, closeModal } from './ui.js';
-import { apiStatus, startGeolocation, geolocationJobs, geolocationJob, cancelGeolocation } from './api.js';
+import { geolocationService, geoUrl, startGeolocation, geolocationJobs, geolocationJob, cancelGeolocation } from './api.js';
+import { issueRepository } from './data.js';
 import { formatDecimal, googleStreetViewUrl, googleMapsUrl } from './coordinates.js';
 import { state, read, persist } from './state.js';
 import { nav, render } from './app.js';
 import { getMap } from './views/map-view.js';
 
 const FINAL = ['done', 'no_answer', 'failed', 'cancelled'];
-const POLL_MS = 3000;
-let jobs = [], timer = null, service = null, failures = 0;
+const POLL_MS = 3000, LATCH_MS = 30000;
+let jobs = [], timer = null, service = null, failures = 0, latchTimer = null;
 const cancelling = new Set(); // asked to stop, still running: their Cancel buttons stay disabled across polls
 let seen = new Set(read('geoSeen', [])); // finished jobs already looked at, so the header stops announcing them
 const listeners = new Set();
@@ -44,9 +46,32 @@ export function jobHeadline(job) {
   }
 }
 
-export async function initGeolocation() {
-  service = (await apiStatus()).geolocate || null;
+/** Whether this browser asked to use Claude on this computer from the hosted app. */
+export const localClaudeOn = () => read('localClaude', false);
+/** Whether that setting applies: the server this page came from can't run jobs itself. */
+export const localClaudeOffered = () => !geolocationAvailable() || !!service?.local;
+
+export async function initGeolocation(timeout) {
+  clearTimeout(latchTimer);
+  service = await geolocationService(localClaudeOn(), timeout);
   if (geolocationAvailable()) await refresh();
+  // Latch on whenever this computer's Claude comes up, without a reload.
+  else if (localClaudeOn()) latchTimer = setTimeout(latch, LATCH_MS);
+}
+async function latch() {
+  await initGeolocation();
+  if (!geolocationAvailable()) return;
+  toast('Connected to Claude on this computer');
+  if (!document.querySelector('.modal')) render();
+}
+/** Turns Settings → Claude on this computer on or off. Resolves to whether it is connected. */
+export async function setLocalClaude(on) {
+  persist('localClaude', on);
+  clearTimeout(timer);
+  if (service?.local) { service = null; jobs = []; }
+  await initGeolocation(30000); // the browser may first ask to let this site reach apps on this device
+  updateIndicator();
+  return geolocationAvailable();
 }
 
 async function refresh() {
@@ -54,6 +79,12 @@ async function refresh() {
   const latest = await geolocationJobs();
   if (!latest) { // server unreachable (restarting?): keep what we know, and try again more slowly
     failures++;
+    if (service?.local && failures >= 3) { // this computer's Claude went away: unlatch, and wait for it again
+      service = null; failures = 0;
+      updateIndicator();
+      latchTimer = setTimeout(latch, LATCH_MS);
+      return;
+    }
     timer = jobs.some(isActive) ? setTimeout(refresh, Math.min(30000, POLL_MS * 2 ** failures)) : null;
     return;
   }
@@ -85,21 +116,29 @@ export function locationFromJob(job) {
   };
 }
 
+// The submission waits in Tiger Data until this browser sends Claude's answer (only it holds the token). An answer
+// that couldn't be sent yet is retried on the next refresh or page load.
 async function resolveSubmissions() {
-  const waiting = state.pending.filter(p => p.location_status === 'locating' && p.geolocation?.job_id);
+  const waiting = state.pending.filter(p => (p.location_status === 'locating' && p.geolocation?.job_id) || p.unsent_location);
   if (!waiting.length) return;
   let changed = 0;
   for (const entry of waiting) {
-    // a job that has dropped off the recent list is fetched on its own
-    const job = findJob(entry.geolocation.job_id) || await geolocationJob(entry.geolocation.job_id);
-    const found = locationFromJob(job);
-    if (!found) continue;
-    Object.assign(entry, found, { address: entry.address || found.geolocation.place_description || '' });
-    changed++;
+    if (entry.location_status === 'locating') {
+      // a job that has dropped off the recent list is fetched on its own
+      const job = findJob(entry.geolocation.job_id) || await geolocationJob(entry.geolocation.job_id);
+      const found = locationFromJob(job);
+      if (!found) continue;
+      Object.assign(entry, found, { address: entry.address || found.geolocation.place_description || '', unsent_location: !!entry.token });
+      changed++;
+    }
+    if (entry.unsent_location) {
+      try { await issueRepository.locateSubmission(entry); entry.unsent_location = false; changed++; } catch { /* retried later */ }
+    }
   }
   if (!changed) return;
   persist('pending', state.pending);
-  toast(changed === 1 ? 'Claude finished locating a submitted photo. Its location is under Saved → Your submissions.' : `Claude finished locating ${changed} submitted photos.`);
+  const published = waiting.filter(p => !p.unsent_location && p.coordinates).length;
+  toast(published ? `Claude finished locating ${published === 1 ? 'a submitted photo. The issue is now on the map' : `${published} submitted photos. They are now on the map`} under Collected.` : 'Claude finished with a submitted photo. See Saved → Your submissions.');
   if (['saved', 'verify'].includes(state.view) && !document.querySelector('.modal')) render();
 }
 
@@ -151,7 +190,7 @@ function stepsHtml(steps, live) {
 }
 function resultHtml(job) {
   const f = job.result.final, coords = jobCoords(job);
-  const sheets = (job.references || []).map((m, i) => `<a href="/api/geolocate/${job.id}/references/${esc(m)}" target="_blank" rel="noopener"><img src="/api/geolocate/${job.id}/references/${esc(m)}" alt="Street-level references compared in match ${i + 1}" loading="lazy"></a>`).join('');
+  const sheets = (job.references || []).map((m, i) => `<a href="${geoUrl(`/api/geolocate/${job.id}/references/${esc(m)}`)}" target="_blank" rel="noopener"><img src="${geoUrl(`/api/geolocate/${job.id}/references/${esc(m)}`)}" alt="Street-level references compared in match ${i + 1}" loading="lazy"></a>`).join('');
   return `${f.place_description ? `<p class="geo-place">${esc(f.place_description)}</p>` : ''}<div class="geo-facts"><span>${formatDecimal(coords)}</span><span>±${Math.round(f.radius_m).toLocaleString()} m</span><span>${Math.round(f.confidence * 100)}% confident</span>${job.result.error_m != null ? `<span>${Math.round(job.result.error_m)} m from the known spot</span>` : ''}</div>
     <details class="geo-details"><summary>How Claude found it</summary><p>${esc(f.evidence)}</p>${stepsHtml(job.steps || [], false)}${sheets ? `<p class="fine-print">Street-level references compared (Mapillary, CC BY-SA):</p><div class="geo-sheets">${sheets}</div>` : ''}</details>`;
 }
@@ -161,7 +200,7 @@ function jobHtml(job) {
   const coords = jobCoords(job), radius = job.result?.final?.radius_m;
   let body = '', actions = '';
   if (isActive(job)) {
-    body = job.steps?.length ? stepsHtml(job.steps.slice(-4), true) : '<p class="geo-place">Starting Claude Code…</p>';
+    body = job.steps?.length ? stepsHtml(job.steps.slice(-4), true) : '<p class="geo-place">Starting Claude…</p>';
     actions = cancelButton(job.id, `data-geo-cancel="${job.id}"`);
   } else if (coords) {
     body = resultHtml(job);
@@ -171,7 +210,7 @@ function jobHtml(job) {
     actions = `<button class="button small" data-geo-retry="${job.id}">${icon('refresh')} Try again</button>`;
   }
   const kind = job.state === 'done' ? (job.result.final.verified ? 'verified' : 'unverified') : job.state;
-  return `<article class="geo-job ${kind}" data-geo-job="${job.id}" data-sig="${esc(`${job.state}|${job.steps?.length}|${radius}`)}"><img class="geo-job-photo" src="/api/geolocate/${job.id}/photo" alt="Photo being located"><div class="geo-job-body"><strong class="geo-job-title">${isActive(job) ? '<span class="spinner"></span>' : icon(kind === 'verified' ? 'check' : kind === 'unverified' ? 'warning' : 'locate')}${esc(jobHeadline(job))}</strong><small class="geo-job-meta">${when} · Claude ${esc(job.model)}${took}</small>${body}<div class="geo-job-actions">${actions}</div></div></article>`;
+  return `<article class="geo-job ${kind}" data-geo-job="${job.id}" data-sig="${esc(`${job.state}|${job.steps?.length}|${radius}`)}"><img class="geo-job-photo" src="${geoUrl(`/api/geolocate/${job.id}/photo`)}" alt="Photo being located"><div class="geo-job-body"><strong class="geo-job-title">${isActive(job) ? '<span class="spinner"></span>' : icon(kind === 'verified' ? 'check' : kind === 'unverified' ? 'warning' : 'locate')}${esc(jobHeadline(job))}</strong><small class="geo-job-meta">${when} · Claude ${esc(job.model)}${took}</small>${body}<div class="geo-job-actions">${actions}</div></div></article>`;
 }
 
 // Re-renders only the cards that changed, so open details and scroll position survive polling.
@@ -192,7 +231,7 @@ export function geoJobsModal() {
   seen = new Set([...seen, ...jobs.filter(j => FINAL.includes(j.state)).map(j => j.id)]);
   persist('geoSeen', [...seen].slice(-200));
   let stop = null;
-  showModal(`${modalHeader('Claude Code on this computer', 'Photo locations')}<div class="modal-body"><p class="modal-intro">Claude reads each photo for signs and landmarks, searches maps and City street furniture, and checks candidate spots against street-level imagery. Only an image match counts as verified; other answers are leads with a wide radius.</p><div id="geo-job-list" class="geo-job-list"></div></div><div class="modal-footer"><span class="subtle-label">Jobs keep running when this dialog or the page is closed</span><label class="button">${icon('upload')} Locate a photo<input id="geo-new-photo" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><button class="button primary" data-close>Done</button></div>`, { wide: true, label: 'Photo locations', onClose: () => stop?.() });
+  showModal(`${modalHeader('', 'Photo locations')}<div class="modal-body"><p class="modal-intro">Claude reads each photo for signs and landmarks, searches maps and City street furniture, and checks candidate spots against street-level imagery. Only an image match counts as verified; other answers are leads with a wide radius.</p><div id="geo-job-list" class="geo-job-list"></div></div><div class="modal-footer"><span class="subtle-label">Jobs keep running when this dialog or the page is closed</span><label class="button">${icon('upload')} Locate a photo<input id="geo-new-photo" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><button class="button primary" data-close>Done</button></div>`, { wide: true, label: 'Photo locations', onClose: () => stop?.() });
   const list = document.querySelector('#geo-job-list');
   document.querySelector('#geo-new-photo').onchange = async e => {
     const file = e.target.files[0];
@@ -217,7 +256,7 @@ export function showOnMap(job) {
 async function retry(id, button) {
   button.disabled = true;
   try {
-    const blob = await fetch(`/api/geolocate/${id}/photo`).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.blob(); });
+    const blob = await fetch(geoUrl(`/api/geolocate/${id}/photo`)).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.blob(); });
     await locatePhoto(new File([blob], 'photo', { type: blob.type || 'image/jpeg' }));
   } catch (error) {
     button.disabled = false;

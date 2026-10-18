@@ -289,7 +289,7 @@ class Progress:
                           "duration_s": round((e.get("duration_ms") or 0) / 1000, 1)}
             if e.get("is_error") or e.get("subtype") != "success":
                 # usage limits and login problems arrive here, with the message in "result"
-                s["error"] = s.get("error") or str(e.get("result") or f"Claude Code ended with {e.get('subtype')}")[:300]
+                s["error"] = s.get("error") or str(e.get("result") or f"Claude ended with {e.get('subtype')}")[:300]
             elif e.get("result"):
                 s["note"] = str(e["result"])[:600]
         # a tool call must show while it runs (a match takes minutes); only heartbeats such as
@@ -378,7 +378,7 @@ def run_job(job_dir, image, minutes, model, effort, truth, max_running):
     status.update(state="running", started_at=now_iso())
     status.pop("waiting_for", None)
     if not claude_bin():
-        status.update(state="failed", error="Claude Code (the claude command) is not installed or not on PATH")
+        status.update(state="failed", error="Claude isn't available right now")
         write_status(job_dir, status)
         return status
     (job_dir / "system.md").write_text(SYSTEM, encoding="utf-8")
@@ -395,7 +395,7 @@ def run_job(job_dir, image, minutes, model, effort, truth, max_running):
             proc = subprocess.Popen(claude_command(job_dir, model, effort, minutes), cwd=job_dir, env=env,
                                     stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=err, **detached())
         except OSError as error:
-            status.update(state="failed", error=f"Claude Code didn't start: {error}", finished_at=now_iso())
+            status.update(state="failed", error=f"Claude didn't start: {error}", finished_at=now_iso())
             progress.flush(force=True)
             return status
         status["claude_pid"] = proc.pid
@@ -440,7 +440,7 @@ def run_job(job_dir, image, minutes, model, effort, truth, max_running):
         status["state"] = "failed"
     elif proc.returncode:
         tail = (job_dir / "claude.err").read_text(encoding="utf-8", errors="replace").strip()[-300:]
-        status.update(state="failed", error=f"Claude Code exited with code {proc.returncode}" + (f": {tail}" if tail else ""))
+        status.update(state="failed", error=f"Claude stopped with code {proc.returncode}" + (f": {tail}" if tail else ""))
     else:
         status.update(state="no_answer", error="Claude ended without calling final_answer")
     status["finished_at"] = now_iso()

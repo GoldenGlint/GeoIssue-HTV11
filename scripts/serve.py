@@ -21,6 +21,14 @@ Endpoints
                        ([ymin, xmin, ymax, xmax], 0–1000) for blurring
   POST /api/digest  {"area": {...areas.json-style stats}, "label": "ward"} -> {"text", "method"}
 
+Issues people submit are stored in Tiger Data with their photos as submitted (analysis/submissions.py):
+  POST /api/submissions                  {category, severity, description, address, coordinates | location_status
+                                          "locating", geolocation, photos: [{image: base64, mime}], ...}
+                                          -> 201 {submission_id, token, location_status, issue}
+  POST /api/submissions/<id>/location    {token, location_status, coordinates, geolocation}: Claude's answer for a
+                                          submission sent while it was still locating -> {issue}; 409 once located
+  GET  /api/submissions/<id>/photos/<n>  a published submission's photo
+
 Photo geolocation with Claude Code (research/geoloc_tests/claude_geoloc.py) runs as a background job on
 this machine, using the local Claude Code login, so it keeps going if the page or this server closes:
   POST /api/geolocate               {"image": base64, "mime"} -> the new job's status
@@ -32,6 +40,9 @@ GEOLOC_PYTHON is the Python with the vision tools installed (default: research/g
 the repo root); GEOLOC_MODEL (default opus), GEOLOC_EFFORT (high), GEOLOC_MINUTES (10) and GEOLOC_MAX_RUNNING (1)
 tune it; a job's Mapillary downloads are deleted when it ends unless GEOLOC_KEEP_DOWNLOADS is set. Only this app may use these endpoints (Host and Origin are checked, POSTs must be JSON), at most 5 jobs
 run or wait at once, and the job folders (data/geolocate/) are not on the static allowlist.
+A hosted copy of the app (GEOISSUE_CLAUDE_ORIGINS, default https://geoissue.photo) may also use them from the
+visitor's browser, once the visitor turns on Settings -> Claude on this computer. Requests must still arrive on this
+computer's loopback address, so each person's runs use their own Claude Code login.
 """
 import argparse
 import base64
@@ -42,6 +53,7 @@ import re
 import sys
 import threading
 import tomllib
+from datetime import datetime, timezone
 import urllib.error
 import urllib.request
 from functools import partial
@@ -52,7 +64,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from analysis.stages import summaries  # noqa: E402  (shared key lookup and digest prompt)
-from analysis import tiger
+from analysis import submissions, tiger
 from analysis.config import setting
 GEOLOC = ROOT / "research" / "geoloc_tests"
 sys.path.insert(0, str(GEOLOC))
@@ -61,6 +73,9 @@ import claude_geoloc  # noqa: E402  (standard library only: job files and the ba
 CATEGORIES = ["Pothole", "Sidewalk damage", "Graffiti", "Litter", "Flooding", "Other"]
 MAX_BODY = 12 * 1024 * 1024
 ENV_FILES = [".env", "spikes/.env"]
+# Hosted copies of the app allowed to use this computer's Claude from the visitor's browser (see the docstring).
+CLAUDE_ORIGINS = {o.strip() for o in setting("GEOISSUE_CLAUDE_ORIGINS", "https://geoissue.photo").split(",") if o.strip()}
+SUBMISSION_ID = r"SUB-[0-9A-F]{10}"
 
 
 def default_model():
@@ -163,6 +178,41 @@ def digest(body):
     if key not in digest_cache:
         digest_cache[key] = gemini([{"text": prompt}], {"temperature": 0.2})
     return {"text": digest_cache[key], "method": f"gemini:{MODEL}"}
+
+
+# ---- Submitted issues, stored in Tiger Data ----
+def create_submission(body):
+    cfg = submissions.config()
+    submission, photos = submissions.parse(body, cfg)
+    submission_id, token = submissions.new_ids()
+    now = datetime.now(timezone.utc)
+    located = submission["location_status"] != "locating"
+    issue = submissions.build_issue(submission_id, submission, now, len(photos), cfg, now) if located else None
+    tiger.add_submission(submission_id, submissions.token_hash(token), submission, photos, issue)
+    return {"submission_id": submission_id, "token": token, "location_status": submission["location_status"], "issue": issue}
+
+
+def locate_submission(submission_id, body):
+    """Claude's answer for a submission sent while it was still locating; only its own browser has the token."""
+    stored = tiger.submission(submission_id)
+    if not stored:
+        raise LookupError("no such submission")
+    submission, token_sha256, created_at, status, photo_count = stored
+    if not submissions.token_matches(body.get("token"), token_sha256):
+        raise PermissionError("only the browser that sent this submission can add its location")
+    if status != "locating":
+        raise FileExistsError("this submission already has its location")
+    cfg = submissions.config()
+    status, coordinates, claude = submissions.location(body, cfg)
+    if status not in ("located", "unverified", "not_found"):
+        raise ValueError("send how Claude's run ended: located, unverified or not_found")
+    claude = {**(submission.get("geolocation") or {}), **(claude or {})}
+    submission = {**submission, "location_status": status, "coordinates": coordinates, "geolocation": claude,
+                  "address": submission["address"] or (claude.get("place_description") or "")[:200]}
+    issue = submissions.build_issue(submission_id, submission, created_at, photo_count, cfg) if coordinates else None
+    if not tiger.locate_submission(submission_id, submission, issue):
+        raise FileExistsError("this submission already has its location")
+    return {"submission_id": submission_id, "location_status": status, "issue": issue}
 
 
 # ---- Photo geolocation with Claude Code ----
@@ -321,7 +371,43 @@ def ingest_status():
 class Handler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache")
+        origin = self.claude_origin()
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
         super().end_headers()
+
+    def local_hosts(self):
+        port = self.server.server_address[1]
+        return {f"127.0.0.1:{port}", f"localhost:{port}"}
+
+    def claude_origin(self):
+        """The hosted app's origin when it is asking this computer's Claude to locate photos, else None."""
+        origin, path = self.headers.get("Origin"), urlsplit(self.path).path
+        if origin in CLAUDE_ORIGINS and self.headers.get("Host") in self.local_hosts() and (
+                path == "/api/status" or path == "/api/geolocate" or path.startswith("/api/geolocate/")):
+            return origin
+        return None
+
+    def do_OPTIONS(self):
+        """CORS preflight for the hosted app. Allow-Private-Network answers Chrome's local-network check."""
+        if not self.claude_origin():
+            return self.send_json(403, {"error": "not allowed"})
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
+        self.send_header("Access-Control-Max-Age", "600")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def send_bytes(self, mime, body):
+        self.send_response(200)
+        self.send_header("Content-Type", mime)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
 
     def send_json(self, status, payload):
         body = json.dumps(payload).encode()
@@ -345,13 +431,40 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(body)
 
     def same_origin(self):
-        """Geolocation calls must come from this app on this computer: a run uses the local Claude Code login.
-        The Host check stops DNS rebinding; the Origin check stops other sites posting here (a no-cors POST
-        with a text/plain body needs no preflight)."""
-        port = self.server.server_address[1]
-        hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+        """Geolocation calls must come from this app on this computer, served here or hosted (CLAUDE_ORIGINS): a run
+        uses the local Claude Code login. The Host check stops DNS rebinding; the Origin check stops other sites
+        posting here (a no-cors POST with a text/plain body needs no preflight)."""
+        hosts = self.local_hosts()
         origin = self.headers.get("Origin")
-        return self.headers.get("Host") in hosts and (origin is None or origin in {f"http://{h}" for h in hosts})
+        return self.headers.get("Host") in hosts and (origin is None or origin in {f"http://{h}" for h in hosts} or origin in CLAUDE_ORIGINS)
+
+    def submissions_post(self, path):
+        length = int(self.headers.get("Content-Length") or 0)
+        if not 0 < length <= MAX_BODY:
+            return self.send_json(413, {"error": f"A submission is limited to {MAX_BODY // (1024 * 1024)} MB. Use fewer or smaller photos."})
+        body = self.rfile.read(length)
+        if not (self.headers.get("Content-Type") or "").startswith("application/json"):
+            return self.send_json(415, {"error": "send the submission as JSON"})
+        update = re.fullmatch(rf"/api/submissions/({SUBMISSION_ID})/location", path)
+        if path != "/api/submissions" and not update:
+            return self.send_json(404, {"error": "not found"})
+        try:
+            data = json.loads(body)
+            if update:
+                return self.send_json(200, locate_submission(update.group(1), data))
+            return self.send_json(201, create_submission(data))
+        except LookupError as error:
+            return self.send_json(404, {"error": str(error)})
+        except PermissionError as error:
+            return self.send_json(403, {"error": str(error)})
+        except FileExistsError as error:
+            return self.send_json(409, {"error": str(error)})
+        except (ValueError, TypeError, AttributeError) as error:
+            return self.send_json(400, {"error": str(error)})
+        except tiger.Unavailable as error:
+            return self.send_json(503, {"error": str(error)})
+        except Exception:
+            return self.send_json(503, {"error": "Tiger Data is unavailable, so the submission wasn't saved. Try again shortly."})
 
     def geolocate_get(self, parts):
         if not parts:
@@ -433,6 +546,13 @@ class Handler(SimpleHTTPRequestHandler):
             if not self.same_origin():
                 return self.send_json(403, {"error": "requests must come from this app"})
             return self.geolocate_get([p for p in path.split("/")[3:] if p])
+        photo = re.fullmatch(rf"/api/submissions/({SUBMISSION_ID})/photos/(\d)", path)
+        if photo:
+            try:
+                found = tiger.submission_photo(photo.group(1), int(photo.group(2)))
+            except Exception:
+                return self.send_json(503, {"error": "Tiger Data is unavailable"})
+            return self.send_bytes(*found) if found else self.send_json(404, {"error": "no such photo"})
         if path.startswith("/api/"):
             return self.send_json(404, {"error": "Unknown API endpoint"})
         target = analysis_file(path) if path.startswith("/data/analyzed/") else repo_file(path)
@@ -447,6 +567,8 @@ class Handler(SimpleHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == "/api/geolocate" or path.startswith("/api/geolocate/"):
             return self.geolocate_post(path)
+        if path == "/api/submissions" or path.startswith("/api/submissions/"):
+            return self.submissions_post(path)
         routes = {"/api/triage": triage, "/api/digest": digest}
         route = routes.get(path)
         if not route:
